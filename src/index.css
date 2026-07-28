@@ -1,0 +1,273 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TableX — Design System (spec §3, §50)
+   Regula 60-30-10:
+     60% fundal/canvas · 30% structura/navigatie · 10% accent (verde smarald)
+
+   REGULA NE-NEGOCIABILA: nicio culoare hardcodata in componente.
+   Orice culoare se ia de aici, ca token semantic. Vezi CLAUDE.md.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --radius: 0.375rem; /* rounded-md peste tot (§50.2) */
+
+  /* ── 60% — dominant / canvas ─────────────────────────────────────── */
+  --background: #f8fafc; /* Slate 50 — fara efect de orbire la soare, pe terasa */
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  /* ── 10% — accent / actiuni principale ───────────────────────────── */
+  --primary: #059669; /* Verde Smarald */
+  --primary-foreground: #ffffff;
+
+  /* ── 30% — structura & navigatie (Carbon Slate) ──────────────────── */
+  --secondary: #e2e8f0;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #ecfdf5;
+  --accent-foreground: #065f46;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #059669;
+
+  /* Sidebar-ul e purtatorul principal al celor 30% (#1E293B) */
+  --sidebar: #1e293b;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #052e1f;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #334155;
+  --sidebar-ring: #10b981;
+
+  /* ── Traffic Light System — Harta 2D (§3, §7.4) ──────────────────── */
+  --status-liber: #10b981; /* verde — masa libera / rezervare confirmata */
+  --status-liber-foreground: #052e1f;
+  --status-liber-soft: #d1fae5;
+  --status-ocupat: #ef4444; /* rosu — masa ocupata / conflict */
+  --status-ocupat-foreground: #ffffff;
+  --status-ocupat-soft: #fee2e2;
+  --status-expirare: #f59e0b; /* amber — expira in 15-20 min / pending */
+  --status-expirare-foreground: #451a03;
+  --status-expirare-soft: #fef3c7;
+  --status-eveniment: #8b5cf6; /* violet — bilet eveniment / VIP */
+  --status-eveniment-foreground: #ffffff;
+  --status-eveniment-soft: #ede9fe;
+  --status-inactiv: #94a3b8; /* masa dezactivata / indisponibila */
+  --status-inactiv-foreground: #0f172a;
+  --status-inactiv-soft: #f1f5f9;
+
+  /* ── Canvas Floor Plan — Layer 1 (structura) ─────────────────────── */
+  --canvas-fundal: #ffffff;
+  --canvas-grid: #e2e8f0;
+  --canvas-perete: #1e293b;
+  --canvas-usa: #94a3b8;
+  --canvas-bar: #475569;
+  --canvas-zona-speciala: #cbd5e1;
+  --canvas-planta: #16a34a;
+  --canvas-piscina: #38bdf8;
+  --canvas-selectie: #059669;
+
+  /* ── Grafice ─────────────────────────────────────────────────────── */
+  --chart-1: #059669;
+  --chart-2: #1e293b;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #64748b;
+}
+
+.dark {
+  /* 60% — ambianta de seara / fine dining */
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+
+  --primary: #10b981; /* varianta mai luminoasa, pe fundal inchis */
+  --primary-foreground: #052e1f;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #134e4a;
+  --accent-foreground: #d1fae5;
+  --destructive: #f87171;
+  --destructive-foreground: #450a0a;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #10b981;
+
+  --sidebar: #0f172a;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #052e1f;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #10b981;
+
+  --status-liber: #10b981;
+  --status-liber-foreground: #052e1f;
+  --status-liber-soft: #064e3b;
+  --status-ocupat: #ef4444;
+  --status-ocupat-foreground: #ffffff;
+  --status-ocupat-soft: #7f1d1d;
+  --status-expirare: #f59e0b;
+  --status-expirare-foreground: #451a03;
+  --status-expirare-soft: #78350f;
+  --status-eveniment: #8b5cf6;
+  --status-eveniment-foreground: #ffffff;
+  --status-eveniment-soft: #4c1d95;
+  --status-inactiv: #475569;
+  --status-inactiv-foreground: #f8fafc;
+  --status-inactiv-soft: #1e293b;
+
+  --canvas-fundal: #0f172a;
+  --canvas-grid: #1e293b;
+  --canvas-perete: #cbd5e1;
+  --canvas-usa: #64748b;
+  --canvas-bar: #94a3b8;
+  --canvas-zona-speciala: #334155;
+  --canvas-planta: #4ade80;
+  --canvas-piscina: #7dd3fc;
+  --canvas-selectie: #10b981;
+
+  --chart-1: #10b981;
+  --chart-2: #cbd5e1;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #94a3b8;
+}
+
+/* Expune variabilele ca utilitare Tailwind v4 (bg-primary, text-status-liber, ...) */
+@theme inline {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-status-liber: var(--status-liber);
+  --color-status-liber-foreground: var(--status-liber-foreground);
+  --color-status-liber-soft: var(--status-liber-soft);
+  --color-status-ocupat: var(--status-ocupat);
+  --color-status-ocupat-foreground: var(--status-ocupat-foreground);
+  --color-status-ocupat-soft: var(--status-ocupat-soft);
+  --color-status-expirare: var(--status-expirare);
+  --color-status-expirare-foreground: var(--status-expirare-foreground);
+  --color-status-expirare-soft: var(--status-expirare-soft);
+  --color-status-eveniment: var(--status-eveniment);
+  --color-status-eveniment-foreground: var(--status-eveniment-foreground);
+  --color-status-eveniment-soft: var(--status-eveniment-soft);
+  --color-status-inactiv: var(--status-inactiv);
+  --color-status-inactiv-foreground: var(--status-inactiv-foreground);
+  --color-status-inactiv-soft: var(--status-inactiv-soft);
+
+  --color-canvas-fundal: var(--canvas-fundal);
+  --color-canvas-grid: var(--canvas-grid);
+  --color-canvas-perete: var(--canvas-perete);
+  --color-canvas-usa: var(--canvas-usa);
+  --color-canvas-bar: var(--canvas-bar);
+  --color-canvas-zona-speciala: var(--canvas-zona-speciala);
+  --color-canvas-planta: var(--canvas-planta);
+  --color-canvas-piscina: var(--canvas-piscina);
+  --color-canvas-selectie: var(--canvas-selectie);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --font-heading: var(--font-sans);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    @apply font-sans;
+  }
+
+  body {
+    @apply antialiased bg-background text-foreground;
+  }
+
+  /* §50.6 — shake scurt pe campurile invalide, la submit */
+  @keyframes tablex-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20%,
+    60% {
+      transform: translateX(-4px);
+    }
+    40%,
+    80% {
+      transform: translateX(4px);
+    }
+  }
+
+  .camp-invalid {
+    animation: tablex-shake 0.32s ease-in-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .camp-invalid {
+      animation: none;
+    }
+  }
+}
