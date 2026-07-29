@@ -1,15 +1,17 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 1b (schema SQL) -->
-<!-- NEXT_TASK: Faza 1c - Supabase client + Auth contexts + Router -->
+<!-- LAST_COMPLETED: Faza 1c (auth + router + contexte) + Faza 1d (RLS) -->
+<!-- NEXT_TASK: Faza 2 - Landing page completa + 2D floor plan viewer -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
+<!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~6-7% MVP implementat
+**Status:** ~15% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
-**Ultima sesiune:** Faza 1a+1b completate (schema SQL + design system)
+**Ultima sesiune:** Faza 1c (client Supabase, 3 contexte, 5 garzi, 9 pagini) + Faza 1d (RLS pe 19 tabele)
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
+**Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote)
 
 ---
 
@@ -49,8 +51,9 @@ src/
 |------|-------|--------|------------------|-------|
 | 1a | Fundație + Design System | ✅ DONE | - | Index.css + shadcn/ui |
 | 1b | Schema SQL | ✅ DONE | - | Migrations: enums, tenancy, floor_plan, rezervari |
-| **1c** | **Supabase Client + Contexts + Router** | 🔴 TODO | ~1 session | Env setup, 3 contexts, 5 guards, login/signup |
-| 2 | Landing + 2D Floor Plan Viewer | 🔴 TODO | ~1.5 sessions | Marketing site + interactive seating demo |
+| 1c | Supabase Client + Contexts + Router | ✅ DONE | - | Client tipat, AuthProvider, 5 garzi, 9 pagini |
+| 1d | Row Level Security | ✅ DONE | - | RLS + politici pe 19 tabele, vedere `restaurante_publice` |
+| **2** | **Landing + 2D Floor Plan Viewer** | 🔴 TODO | ~1.5 sessions | Marketing site + interactive seating demo |
 | 3 | Onboarding Flow | 🔴 TODO | ~1 session | Org creation, user invitation, slug generator |
 | 4 | Dashboard & Calendar | 🔴 TODO | ~3 sessions | HEAVIEST — navbar+sidebar+calendar (D/W/M)+list+walk-in |
 | 5 | Real-time + Remaining Features | 🔴 TODO | ~2 sessions | Subscriptions, notifications, edge cases |
@@ -85,8 +88,8 @@ git ls-files -o --exclude-standard
 
 3.2 Current Session Branch
 
-# You are on: master
-# Do NOT create feature branches — master is primary branch
+# You are on: main
+# Do NOT create feature branches — main is primary branch
 git branch -a
 
 3.3 Last Completed Files
@@ -126,24 +129,43 @@ git branch -a
 - All dropdowns: shadcn/ui Select/DropdownMenu
 
 ---
-5. FAZA 1c: SUPABASE SETUP + CONTEXTS + ROUTER (NEXT TARGET)
+5. FAZA 1c + 1d: AUTH, ROUTER, RLS — ✅ COMPLETATE
 
-Duration: ~1 session (Haiku)
-Complexity: Medium
-Dependencies: None — all prior work complete
+Duration: 1 session (Opus 5)
+Dependencies: none
 
-5.1 Tasks Checklist
+5.1 Ce s-a livrat
 
-- [ ] Create src/lib/supabase.ts (Supabase client initialization)
-- [ ] Create src/contexts/AuthContext.tsx (Auth state + login/logout)
-- [ ] Create src/contexts/ThemeContext.tsx (Light/dark mode toggle)
-- [ ] Create src/contexts/NotificationContext.tsx (Toast notifications)
-- [ ] Create src/lib/routes.ts (Route guards: isAuthenticated, isAdmin, etc.)
-- [ ] Create src/pages/auth/LoginPage.tsx (Magic link + email/password forms)
-- [ ] Create src/pages/auth/SignupPage.tsx (Registration flow)
-- [ ] Create src/pages/NotFoundPage.tsx (404 catch-all)
-- [ ] Create src/App.tsx (Router + context providers)
-- [ ] Update .env.example (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_SUPABASE_PROJECT_ID)
+- [x] src/types/database.ts — tipuri generate din schema remote
+- [x] src/lib/supabase.ts — client tipat, PKCE, fail-fast pe env lipsa
+- [x] src/lib/rute.ts — RUTE (sursa unica de cai) + ruteDupaLogin()
+- [x] src/lib/erori.ts — traducere erori Supabase in romana
+- [x] src/lib/validari.ts — scheme zod partajate (email, parola, telefon RO)
+- [x] src/contexts/auth-context.ts + AuthProvider.tsx — sesiune + profil
+      (union discriminat admin | super_admin), login parola/magic link,
+      signup, resetare parola, retrimitere confirmare
+- [x] src/contexts/ThemeProvider.tsx — next-themes (aceeasi sursa ca ui/sonner)
+- [x] src/contexts/notificari-context.ts + NotificariProvider.tsx — toast-uri
+- [x] src/hooks/useAuth.ts, useTema.ts, useNotificari.ts
+- [x] src/components/rute-protejate.tsx — 5 garzi (Oaspete, Protejata, Admin,
+      Manager, SuperAdmin) + ecrane de blocaj (cont dezactivat / suspendat)
+- [x] 9 pagini: Landing, Login, Signup, ResetareParola, ParolaNoua,
+      VerificaEmail, Dashboard (stub), SuperAdmin (stub), 404, Mentenanta
+- [x] src/router.tsx + src/App.tsx (ThemeProvider > QueryClient > Auth > Notificari)
+- [x] supabase/migrations/20260730090000_rls.sql — RLS pe 19 tabele,
+      helper-e current_restaurant_id() / is_manager() / is_super_admin(),
+      vedere restaurante_publice pentru widget
+
+5.1.1 Amanat intentionat (nu e uitat)
+
+- Crearea restaurantului la signup → Faza 3 (onboarding). Momentan datele
+  (nume persoana, nume restaurant, telefon) stau in user_metadata.
+- Acceptarea invitatiei prin token → RPC dedicat in Faza 3; tabelele de
+  invitatii nu sunt citibile de anon (by design).
+- Scrierea rezervarilor de catre widgetul anonim → Faza 2/5, prin RPC sau
+  edge function, nu prin politica de insert pentru anon (risc de spam).
+- 5 erori de lint preexistente in src/components/ui/* si hooks/use-mobile.ts
+  (cod generat de shadcn). Codul propriu trece lint curat.
 
 5.2 ENV Variables (Copy from Supabase Dashboard)
 
@@ -151,59 +173,52 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_SUPABASE_PROJECT_ID=xxxxx
 
-5.3 Auth Context Skeleton
+5.3 Forma reala a contextului de auth (src/contexts/auth-context.ts)
 
-interface User {
-  id: string;
-  email: string;
-  organization_id?: string; // Null for non-org users
-}
+// Un cont e ORI admin de restaurant, ORI membru al echipei TableX —
+// niciodata ambele (trigger verifica_apartenenta_unica). De aici union-ul:
+type Profil =
+  | { tip: 'admin'; cont: Tables<'admin_users'>; restaurant: Tables<'restaurants'> }
+  | { tip: 'super_admin'; cont: Tables<'super_admin_users'> }
 
-interface AuthContextValue {
-  user: User | null;
-  loading: boolean;
-  login(email: string, password: string): Promise<void>;
-  logout(): Promise<void>;
-  signUp(email: string, password: string, organizationName: string): Promise<void>;
-}
+// Din ValoareAuth: sesiune, utilizator, profil, incarcare, esteAutentificat,
+// esteAdmin, esteManager, esteSuperAdmin, autentificare, trimiteMagicLink,
+// inregistrare, retrimiteConfirmare, trimiteResetareParola,
+// seteazaParolaNoua, deconectare, reincarcaProfil
 
-5.4 Router Skeleton
+5.4 Rute reale (src/lib/rute.ts — sursa unica; nu hardcoda cai in componente)
 
-// 5 Guards:
-- isAuthenticated: User logged in?
-- isAdmin: User is org admin?
-- isOrgMember: User in organization context?
-- isGuest: NOT logged in?
-- isSuperAdmin: Super admin only?
+/                  Landing (public)
+/login             RutaOaspete
+/signup            RutaOaspete
+/resetare-parola   RutaOaspete
+/parola-noua       fara garda (ruleaza pe sesiunea de recovery)
+/verifica-email    fara garda
+/mentenanta        fara garda
+/app               RutaProtejata > RutaAdmin
+/superadmin        RutaProtejata > RutaSuperAdmin
+/r/:slug           widget public (Faza 2, inca neinregistrat in router)
+*                  404
 
-// Routes:
-/                           # Landing (public)
-/auth/login                 # Login (guest only)
-/auth/signup                # Signup (guest only)
-/dashboard                  # Protected (isAuthenticated)
-/org/:slug/...             # Org routes
-/admin                      # Super admin panel
-/404                        # Catch-all
+Garzi: RutaOaspete, RutaProtejata, RutaAdmin, RutaManager, RutaSuperAdmin
+(src/components/rute-protejate.tsx). RutaManager e scrisa, dar inca nefolosita
+in router — se ataseaza la /app/setari in Faza 4.
 
-5.5 Implementation Order
+5.5 Verificat in aceasta sesiune
 
-1. Supabase client initialization (lib/supabase.ts)
-2. AuthContext + useAuth hook
-3. ThemeContext + useTheme hook
-4. NotificationContext + useToast hook
-5. Route guards (lib/routes.ts)
-6. LoginPage (React Query + form)
-7. SignupPage
-8. App.tsx (Router + providers)
-9. Integration test (login → dashboard stub)
+- [x] npm run build (tsc -b + vite build) trece
+- [x] npm run lint — 0 probleme in codul propriu
+- [x] npm run dev porneste, /login se randeaza (verificat prin a11y snapshot)
+- [x] endpoint-ul de auth raspunde; "Invalid login credentials" se traduce
+      in "Email sau parola gresita."
+- [x] RLS: cu cheia anon, restaurants/reservations/customers/staff_invitations
+      returneaza [], iar INSERT in restaurants da 401 / 42501
 
-5.6 Testing Checklist
+5.6 Ramas de verificat cu date reale (Faza 3, cand exista onboarding)
 
-- [ ] npm run dev starts without errors
-- [ ] Login form submits and creates user
-- [ ] Auth token stored in localStorage
-- [ ] Protected routes redirect to login if unauthenticated
-- [ ] Logout clears token and redirects to /auth/login
+- [ ] login complet → profil incarcat → /app afiseaza restaurantul
+- [ ] ospatar vs manager: garda RutaManager blocheaza ospatarul
+- [ ] restaurant suspendat → ecran de blocaj, nu dashboard
 
 ---
 6. FAZA 2: LANDING PAGE + 2D FLOOR PLAN (AFTER 1c)
@@ -244,7 +259,7 @@ supabase migration up        # Apply pending migrations
 # Git
 git add src/                 # Stage changes
 git commit -m "Faza 1c: auth setup + router"
-git push origin master       # Push to main (if using remote)
+git push origin main       # Push to main (if using remote)
 
 # Types from Supabase
 npx supabase gen types typescript > src/types/database.ts
@@ -301,7 +316,7 @@ supabase db reset               # ⚠️ Nukes data — dev only
 # restart-worker.sh — Runs after cooldown
 
 cd /path/to/tablex-v1-claude
-git pull origin master
+git pull origin main
 npm install --prefer-offline
 
 # Read plan.md to determine current faza
@@ -340,7 +355,7 @@ git status
 # 6. Commit when done
 git add -A
 git commit -m "Faza Xc: [description]"
-git push origin master
+git push origin main
 
 ---
 12. NOTES FOR ORACLE INTEGRATION

@@ -1,0 +1,50 @@
+import { createContext } from 'react'
+import type { Session, User } from '@supabase/supabase-js'
+
+import type { Tables } from '@/types/database'
+
+export type Restaurant = Tables<'restaurants'>
+export type ContAdmin = Tables<'admin_users'>
+export type ContSuperAdmin = Tables<'super_admin_users'>
+
+/**
+ * Un cont apartine EXCLUSIV unei singure lumi: ori e admin de restaurant,
+ * ori e membru al echipei TableX. Triggerul verifica_apartenenta_unica din
+ * migratia tenancy garanteaza asta la nivel de baza de date, deci un union
+ * discriminat modeleaza corect realitatea (nu doua campuri optionale).
+ */
+export type Profil =
+  | { tip: 'admin'; cont: ContAdmin; restaurant: Restaurant }
+  | { tip: 'super_admin'; cont: ContSuperAdmin }
+
+export type DateInregistrare = {
+  email: string
+  parola: string
+  numePersoana: string
+  numeRestaurant: string
+  telefon?: string
+}
+
+export type ValoareAuth = {
+  sesiune: Session | null
+  utilizator: User | null
+  /** null cand utilizatorul e autentificat dar nu are inca un cont atasat. */
+  profil: Profil | null
+  /** true cat timp sesiunea sau profilul inca se rezolva. */
+  incarcare: boolean
+  esteAutentificat: boolean
+  esteAdmin: boolean
+  esteManager: boolean
+  esteSuperAdmin: boolean
+
+  autentificare: (email: string, parola: string) => Promise<void>
+  trimiteMagicLink: (email: string) => Promise<void>
+  inregistrare: (date: DateInregistrare) => Promise<void>
+  retrimiteConfirmare: (email: string) => Promise<void>
+  trimiteResetareParola: (email: string) => Promise<void>
+  seteazaParolaNoua: (parola: string) => Promise<void>
+  deconectare: () => Promise<void>
+  reincarcaProfil: () => Promise<void>
+}
+
+export const AuthContext = createContext<ValoareAuth | null>(null)
