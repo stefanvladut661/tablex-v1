@@ -1,9 +1,15 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
+<!-- LAST_COMPLETED: Faza 1b (schema SQL) -->
+<!-- NEXT_TASK: Faza 1c - Supabase client + Auth contexts + Router -->
+<!-- LAST_COMMIT: main branch synced to GitHub -->
+<!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
+
 **Data creării:** 2026-07-29
 **Status:** ~6-7% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
 **Ultima sesiune:** Faza 1a+1b completate (schema SQL + design system)
+**GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
 
 ---
 
