@@ -1,0 +1,346 @@
+# TableX.ro v1 - Plan de Dezvoltare & Checkpoint
+
+**Data creării:** 2026-07-29
+**Status:** ~6-7% MVP implementat
+**Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
+**Ultima sesiune:** Faza 1a+1b completate (schema SQL + design system)
+
+---
+
+## 1. PROJECT OVERVIEW
+
+### Vision
+TableX.ro = SaaS de management al rezervărilor pentru restaurante/baruri.
+- Multi-tenant (organizații pe subdomeniu: org.tablex.local)
+- 2D floor plan interactive cu seating assignment
+- Real-time booking + CRM integrat
+- Calendar cu drag-drop
+- Walk-in check-in workflow
+
+### Tech Stack (CONFIRMATĂ)
+- **Frontend:** Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui (28 componente)
+- **Backend:** Supabase PostgreSQL (enums, real-time subscriptions)
+- **API:** React Query + Zod validation + react-hook-form
+- **Routing:** React Router 8 cu guard-based access control
+- **Auth:** Supabase Auth (Magic Link + email/password)
+
+### Key Files
+src/
+├── index.css              # Design system vars (60-30-10 rule, traffic light)
+├── components/ui/         # 28 shadcn/ui components
+├── pages/                 # Route pages
+├── contexts/              # Auth, Theme, Notifications
+├── hooks/                 # Custom React hooks
+├── services/              # API calls (React Query)
+├── lib/                   # Utils, Supabase client
+├── types/                 # TypeScript types
+
+---
+
+## 2. FAZE ȘI ESTIMĂRI
+
+| Faza | Titlu | Status | Session Estimate | Notes |
+|------|-------|--------|------------------|-------|
+| 1a | Fundație + Design System | ✅ DONE | - | Index.css + shadcn/ui |
+| 1b | Schema SQL | ✅ DONE | - | Migrations: enums, tenancy, floor_plan, rezervari |
+| **1c** | **Supabase Client + Contexts + Router** | 🔴 TODO | ~1 session | Env setup, 3 contexts, 5 guards, login/signup |
+| 2 | Landing + 2D Floor Plan Viewer | 🔴 TODO | ~1.5 sessions | Marketing site + interactive seating demo |
+| 3 | Onboarding Flow | 🔴 TODO | ~1 session | Org creation, user invitation, slug generator |
+| 4 | Dashboard & Calendar | 🔴 TODO | ~3 sessions | HEAVIEST — navbar+sidebar+calendar (D/W/M)+list+walk-in |
+| 5 | Real-time + Remaining Features | 🔴 TODO | ~2 sessions | Subscriptions, notifications, edge cases |
+
+**Total MVP:** ~8-9 sessions (est. 800k-900k tokens @ Haiku + 200k @ Opus)
+
+---
+
+## 3. CHECKPOINT: RELUARE DUPĂ COOLDOWN
+
+### 3.1 Pre-flight Checklist
+```bash
+# 1. Verify repo state
+cd /path/to/tablex-v1-claude
+git status                    # Should be clean
+git log --oneline -5          # Last commit: "Faza 1b: schema SQL..."
+
+# 2. Check .env
+cat .env.local                # Must have VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+# If missing: copy from Supabase dashboard > Project Settings > API
+
+# 3. Check deps
+npm list react react-dom      # Should be 19.x
+npm list tailwindcss          # Should be v4.x
+npm list @supabase/supabase-js # Should be latest
+
+# 4. Test build
+npm run build                 # Must succeed (no errors)
+
+# 5. List pending files (should be empty)
+git ls-files -o --exclude-standard
+
+3.2 Current Session Branch
+
+# You are on: master
+# Do NOT create feature branches — master is primary branch
+git branch -a
+
+3.3 Last Completed Files
+
+- ✅ src/index.css — 60-30-10 design system (see below)
+- ✅ src/components/ui/* — 28 shadcn/ui components
+- ✅ Database migrations (4 SQL files via Supabase)
+  - extensii_enumuri — Enum types for status/payment/reservation types
+  - tenancy — Organizations + users
+  - floor_plan — Venue geometry + seats
+  - rezervari_crm — Bookings + CRM
+
+---
+4. DESIGN SYSTEM REFERENCE
+
+4.1 Color Palette (CSS Variables in index.css)
+
+/* 60% Neutral (background/text) */
+--color-neutral-50: #f9fafb;
+--color-neutral-900: #111827;
+
+/* 30% Accent (interactive) */
+--color-accent-500: #3b82f6;  /* Primary action */
+--color-accent-600: #2563eb;
+
+/* 10% Alert (traffic light) */
+--color-success: #10b981;     /* Green */
+--color-warning: #f59e0b;     /* Amber */
+--color-error: #ef4444;       /* Red */
+
+4.2 Component Guidelines
+
+- Use Tailwind classes, NOT inline styles
+- All forms: react-hook-form + Zod validation
+- All modals: shadcn/ui Dialog
+- All tables: shadcn/ui Table component
+- All dropdowns: shadcn/ui Select/DropdownMenu
+
+---
+5. FAZA 1c: SUPABASE SETUP + CONTEXTS + ROUTER (NEXT TARGET)
+
+Duration: ~1 session (Haiku)
+Complexity: Medium
+Dependencies: None — all prior work complete
+
+5.1 Tasks Checklist
+
+- [ ] Create src/lib/supabase.ts (Supabase client initialization)
+- [ ] Create src/contexts/AuthContext.tsx (Auth state + login/logout)
+- [ ] Create src/contexts/ThemeContext.tsx (Light/dark mode toggle)
+- [ ] Create src/contexts/NotificationContext.tsx (Toast notifications)
+- [ ] Create src/lib/routes.ts (Route guards: isAuthenticated, isAdmin, etc.)
+- [ ] Create src/pages/auth/LoginPage.tsx (Magic link + email/password forms)
+- [ ] Create src/pages/auth/SignupPage.tsx (Registration flow)
+- [ ] Create src/pages/NotFoundPage.tsx (404 catch-all)
+- [ ] Create src/App.tsx (Router + context providers)
+- [ ] Update .env.example (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_SUPABASE_PROJECT_ID)
+
+5.2 ENV Variables (Copy from Supabase Dashboard)
+
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_SUPABASE_PROJECT_ID=xxxxx
+
+5.3 Auth Context Skeleton
+
+interface User {
+  id: string;
+  email: string;
+  organization_id?: string; // Null for non-org users
+}
+
+interface AuthContextValue {
+  user: User | null;
+  loading: boolean;
+  login(email: string, password: string): Promise<void>;
+  logout(): Promise<void>;
+  signUp(email: string, password: string, organizationName: string): Promise<void>;
+}
+
+5.4 Router Skeleton
+
+// 5 Guards:
+- isAuthenticated: User logged in?
+- isAdmin: User is org admin?
+- isOrgMember: User in organization context?
+- isGuest: NOT logged in?
+- isSuperAdmin: Super admin only?
+
+// Routes:
+/                           # Landing (public)
+/auth/login                 # Login (guest only)
+/auth/signup                # Signup (guest only)
+/dashboard                  # Protected (isAuthenticated)
+/org/:slug/...             # Org routes
+/admin                      # Super admin panel
+/404                        # Catch-all
+
+5.5 Implementation Order
+
+1. Supabase client initialization (lib/supabase.ts)
+2. AuthContext + useAuth hook
+3. ThemeContext + useTheme hook
+4. NotificationContext + useToast hook
+5. Route guards (lib/routes.ts)
+6. LoginPage (React Query + form)
+7. SignupPage
+8. App.tsx (Router + providers)
+9. Integration test (login → dashboard stub)
+
+5.6 Testing Checklist
+
+- [ ] npm run dev starts without errors
+- [ ] Login form submits and creates user
+- [ ] Auth token stored in localStorage
+- [ ] Protected routes redirect to login if unauthenticated
+- [ ] Logout clears token and redirects to /auth/login
+
+---
+6. FAZA 2: LANDING PAGE + 2D FLOOR PLAN (AFTER 1c)
+
+Duration: ~1.5 sessions (Opus for canvas/SVG work)
+Complexity: High
+Dependencies: Faza 1c complete
+
+6.1 Landing Page
+
+- Hero section (pitch + CTA)
+- Feature cards (4-5 features)
+- Pricing table (3 tiers)
+- FAQ section
+- Footer
+
+6.2 2D Floor Plan Viewer
+
+- SVG/Canvas renderer for seat positions
+- Interactive seating selection (click to book)
+- Seat status colors (available, reserved, walk-in, occupied)
+- Zoom + pan controls
+- Real-time sync with DB
+
+---
+7. COMMANDS CHEAT SHEET
+
+# Local dev
+npm run dev                  # Start Vite dev server (localhost:5173)
+npm run build                # Build for production
+npm run type-check           # tsc --noEmit
+
+# Database
+supabase status              # Check local Supabase stack
+supabase migration new NAME  # Create migration
+supabase migration up        # Apply pending migrations
+
+# Git
+git add src/                 # Stage changes
+git commit -m "Faza 1c: auth setup + router"
+git push origin master       # Push to main (if using remote)
+
+# Types from Supabase
+npx supabase gen types typescript > src/types/database.ts
+
+---
+8. MODEL ROUTING STRATEGY
+
+Use Haiku 4.5 for:
+- Routing setup
+- Form + CRUD pages
+- Build/type fixes
+- Routine component work
+
+Use Opus 5 for:
+- Calendar drag-drop (complex state)
+- 2D floor plan SVG/Canvas
+- Real-time subscriptions
+- Architecture decisions
+
+Session Context Budget: Keep <100k tokens per session (target ~80k) to fit within Max 2 plan quota.
+
+---
+9. TROUBLESHOOTING
+
+Build fails with "cannot find module"
+
+npm install
+npm run build
+
+Supabase auth fails
+
+- Check .env.local has correct URL + anon key
+- Verify project exists in Supabase dashboard
+- Check email confirm requirement (may block signup)
+
+Tailwind classes not applying
+
+- Verify tailwind.config.ts includes src/**/*.{ts,tsx}
+- Run npm run build (not just npm run dev)
+- Clear .next or dist folder
+
+Database migration errors
+
+supabase migration list
+supabase migration up --dry-run
+supabase db reset               # ⚠️ Nukes data — dev only
+
+---
+10. ORACLE SERVER SETUP (Autonomous Restart Script)
+
+10.1 Recommended Script Structure
+
+#!/bin/bash
+# restart-worker.sh — Runs after cooldown
+
+cd /path/to/tablex-v1-claude
+git pull origin master
+npm install --prefer-offline
+
+# Read plan.md to determine current faza
+CURRENT_FAZA="1c"  # Or read from file marker
+
+# Invoke Claude with context
+claude --model haiku-4-5 \
+  --message "Read plan.md. We are on $CURRENT_FAZA. Execute the tasks checklist and commit."
+
+# On completion
+git log --oneline -3
+echo "Session complete. Commit hash saved."
+
+10.2 Plan Marker (Insert at top after this session)
+
+<!-- LAST_COMPLETED: Faza 1b (schema SQL) -->
+<!-- NEXT_TASK: Faza 1c - Supabase client + Auth contexts + Router -->
+<!-- LAST_COMMIT: ab46811 Faza 1a: fundatie proiect + design system -->
+
+---
+11. QUICK START ON RESUME
+
+# 1. Enter project
+cd /path/to/tablex-v1-claude
+
+# 2. Verify state
+npm run build
+git status
+
+# 3. Read plan.md (you are here)
+
+# 4. Check which faza is TODO (see Section 2)
+
+# 5. Execute that faza's task checklist (e.g., Section 5.1)
+
+# 6. Commit when done
+git add -A
+git commit -m "Faza Xc: [description]"
+git push origin master
+
+---
+12. NOTES FOR ORACLE INTEGRATION
+
+- Script should read this file to determine CURRENT_FAZA
+- Add progress marker after each completed faza (see Section 10.2)
+- Cooldown duration: Suggest 5-6 hours between sessions (refocus + context cache reset)
+- Max tokens per session: ~80k (keeps Max 2 plan sustainable)
+- Commit frequency: After each completed checklist item, not at end
