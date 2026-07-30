@@ -1,12 +1,15 @@
 import { supabase } from '@/lib/supabase'
 import type { Tables, TablesUpdate } from '@/types/database'
+import type { ElementStructura } from '@/types/floor-plan'
 
 export type Zona = Tables<'zones'>
 export type Masa = Tables<'tables'>
+export type Layer = Tables<'floor_plan_layers'>
 
 export const CHEI_EDITOR = {
   zone: (restaurantId: string) => ['editor', 'zone', restaurantId] as const,
   mese: (restaurantId: string) => ['editor', 'mese', restaurantId] as const,
+  layer1: (zoneId: string) => ['editor', 'layer1', zoneId] as const,
 }
 
 /**
@@ -157,4 +160,119 @@ export async function actualizeazaMasa(
 export async function stergeMasa(id: string): Promise<void> {
   const { error } = await supabase.from('tables').delete().eq('id', id)
   if (error) throw error
+}
+
+// ── Layer 1: structura salii (pereti, bar, intrare...) ───────────────────
+//
+// Geometria structurala NU are tabela proprie: sta ca array jsonb in
+// floor_plan_layers.continut, cu UNIQUE (zone_id, tip). Deci o zona are exact
+// un layer1, iar o salvare rescrie tot array-ul.
+//
+// De aici vine nevoia de blocaj optimist: doi membri ai echipei care deseneaza
+// aceeasi sala si-ar suprascrie tacit munca, ultimul castigand tot. Coloana
+// `versiune` exista din migratia floor_plan si nu era folosita nicaieri — e
+// exact instrumentul potrivit: scriem doar daca versiunea din baza e cea pe
+// care am citit-o.
+
+export type Layer1 = {
+  id: string
+  elemente: ElementStructura[]
+  vizibil: boolean
+  publicat: boolean
+  versiune: number
+} | null
+
+export async function getLayer1(zoneId: string): Promise<Layer1> {
+  const { data, error } = await supabase
+    .from('floor_plan_layers')
+    .select('id, continut, vizibil, publicat, versiune')
+    .eq('zone_id', zoneId)
+    .eq('tip', 'layer1')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+
+  return {
+    id: data.id,
+    // continut e jsonb liber; daca cineva a scris altceva decat un array, nu
+    // lasam editorul sa cada — il tratam ca gol.
+    elemente: Array.isArray(data.continut) ? (data.continut as ElementStructura[]) : [],
+    vizibil: data.vizibil,
+    publicat: data.publicat,
+    versiune: data.versiune,
+  }
+}
+
+export type SalvareLayer1 = {
+  restaurantId: string
+  zoneId: string
+  elemente: ElementStructura[]
+  vizibil: boolean
+  publicat: boolean
+  /** Versiunea pe care am citit-o; null cand stratul nu exista inca. */
+  versiuneCitita: number | null
+  layerId: string | null
+}
+
+/**
+ * Intoarce starea NOUA a stratului. Apelantul o pune direct in cache: daca ar
+ * astepta o reimprospatare, o a doua salvare rapida (doua apasari de sageata
+ * una dupa alta) ar pleca cu versiunea veche si s-ar lovi de propriul blocaj
+ * optimist, raportand un conflict inexistent.
+ */
+export async function salveazaLayer1(salvare: SalvareLayer1): Promise<NonNullable<Layer1>> {
+  const continut = salvare.elemente as unknown as Tables<'floor_plan_layers'>['continut']
+
+  if (!salvare.layerId || salvare.versiuneCitita === null) {
+    const { data, error } = await supabase
+      .from('floor_plan_layers')
+      .insert({
+        restaurant_id: salvare.restaurantId,
+        zone_id: salvare.zoneId,
+        tip: 'layer1',
+        continut,
+        vizibil: salvare.vizibil,
+        publicat: salvare.publicat,
+      })
+      .select('id, versiune')
+      .single()
+    if (error) throw error
+    return {
+      id: data.id,
+      elemente: salvare.elemente,
+      vizibil: salvare.vizibil,
+      publicat: salvare.publicat,
+      versiune: data.versiune,
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('floor_plan_layers')
+    .update({
+      continut,
+      vizibil: salvare.vizibil,
+      publicat: salvare.publicat,
+      versiune: salvare.versiuneCitita + 1,
+    })
+    .eq('id', salvare.layerId)
+    .eq('versiune', salvare.versiuneCitita)
+    .select('id, versiune')
+
+  if (error) throw error
+
+  // Zero randuri => ori RLS a filtrat, ori versiunea din baza s-a schimbat
+  // intre timp. In ambele cazuri NU am salvat, si utilizatorul trebuie sa afle.
+  if (!data?.length) {
+    throw new Error(
+      'Planul a fost modificat intre timp de altcineva. Reincarca pagina inainte sa salvezi din nou.',
+    )
+  }
+
+  return {
+    id: data[0].id,
+    elemente: salvare.elemente,
+    vizibil: salvare.vizibil,
+    publicat: salvare.publicat,
+    versiune: data[0].versiune,
+  }
 }

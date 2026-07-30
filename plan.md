@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: editorul de floor plan (Layer 2: zone si mese), cu garda de stergere in baza -->
-<!-- NEXT_TASK: Layer 1 in editor (pereti, bar, intrare); conectarea furnizorului de email; teste automate -->
+<!-- LAST_COMPLETED: editorul de floor plan complet — Layer 2 (mese) si Layer 1 (structura), cu publicare -->
+<!-- NEXT_TASK: conectarea furnizorului de email (o variabila de mediu); teste automate; incadrarea automata a hartii -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -880,6 +880,76 @@ cautam acum in message + details + hint — altfel tiparele existente rateaza.
 - [x] BUCLA INCHISA: planul desenat de echipa apare in vederile publice
       (zone_publice, mese_publice) pentru un vizitator ANONIM, in timp ce
       zones si tables raman [] pentru el
+
+---
+6terdecies. EDITORUL — LAYER 1 (STRUCTURA SALII) — ✅
+
+A doua jumatate a editorului: pereti, usi, bar, DJ, VIP, intrare, bucatarie,
+plante, piscina. Cu asta echipa poate desena o sala intreaga din schita primita,
+nu doar sa presare mese pe un fundal gol.
+
+6terdecies.1 Unde stau datele si ce decurge de aici
+
+Structura NU are tabela proprie: e un array jsonb in floor_plan_layers.continut,
+cu UNIQUE (zone_id, tip). Deci o zona are exact un layer1, iar orice schimbare
+rescrie tot randul. Doua consecinte de proiectare:
+
+- Elementele se identifica prin INDICE in array, nu prin id. La stergere
+  indicii se decaleaza, deci selectia se goleste — altfel panoul ar arata alt
+  element decat cel evidentiat.
+- Doi membri ai echipei care deseneaza aceeasi sala si-ar suprascrie tacit
+  munca, ultimul castigand tot. Coloana `versiune` exista din migratia
+  floor_plan si nu era folosita nicaieri — e exact instrumentul potrivit:
+  scriem cu `.eq('versiune', versiuneCitita)` si tratam zero randuri ca un
+  conflict, nu ca o reusita.
+
+Salvarea intoarce starea NOUA, pe care o punem direct in cache. Daca am astepta
+o reimprospatare, doua modificari rapide (doua apasari de sageata) ar pleca
+amandoua cu versiunea veche, iar a doua ar raporta un conflict inexistent.
+
+6terdecies.2 Un singur strat editabil odata
+
+Mesele se deseneaza PESTE structura, deci un canvas care asculta ambele straturi
+ar avea un test de lovire ambiguu: clicul pe un bar aflat sub o masa ar nimeri
+mereu masa. Comutatorul Mese / Structura face stratul inactiv
+`pointer-events-none` si il estompeaza, deci rămâne reper vizual fara sa fure
+interactiunea.
+
+Sabloanele de dimensiuni sunt per tip (un perete e 400x20, o planta 60x60):
+daca toate ar aparea la aceeasi marime, fiecare asezare ar cere doua
+redimensionari inainte de a fi utila.
+
+Pereti in linie franta (`puncte`): ElementStructura ii deseneaza deja, dar
+editorul nu ii creeaza — un perete dreptunghiular acopera nevoia de a inchide
+o sala. Ramane daca apare cazul real.
+
+6terdecies.3 Publicarea
+
+Vederea structura_publica cere `tip='layer1' AND publicat AND vizibil AND
+restaurant activ`. Cele doua comutatoare sunt separate cu rost: `vizibil` e
+pentru lucrul intern (ascunzi structura ca sa asezi mesele), `publicat` e
+decizia de a o arata clientilor. Mesele NU depind de asta — ele sunt randuri in
+`tables` si se publica prin `activa`.
+
+6terdecies.4 Verificat cap-coada, in browser
+
+- [x] doua elemente asezate prin clic; randul de layer creat, versiune 1 → 2
+- [x] tragere cu POINTER REAL a unui perete: (100,100) → (420,300), exact
+      alinierea prezisa la grid
+- [x] redimensionare din panou: latime 400 → 600
+- [x] publicare → structura ajunge la vizitatorul ANONIM prin structura_publica,
+      in timp ce floor_plan_layers ii ramane []
+- [x] BLOCAJUL OPTIMIST: cu versiunea umflata din SQL (alt editor), salvarea din
+      interfata a fost respinsa, datele au ramas neatinse (latime tot 600), iar
+      utilizatorul a primit „Planul a fost modificat intre timp de altcineva"
+      in loc sa piarda tacit munca celuilalt
+- [x] stergerea unui element (2 → 1) si depublicarea → structura_publica [] 
+
+Nota de testare, utila pentru urmatoarea sesiune: cand simulezi clicuri pe SVG,
+recalculeaza getScreenCTM() la FIECARE eveniment. Prima mea incercare l-a
+memorat o data, iar panoul de proprietati aparut intre clicuri a mutat layoutul
+— al doilea element a cazut cu 100px mai sus decat cerusem. Aplicatia il
+recalculeaza corect; testul era cel gresit.
 
 ---
 7. COMMANDS CHEAT SHEET
