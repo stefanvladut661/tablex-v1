@@ -1,6 +1,7 @@
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from 'react-router'
+import { useMemo } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { Loader2Icon } from 'lucide-react'
 import { z } from 'zod'
 
@@ -14,32 +15,44 @@ import { useNotificari } from '@/hooks/useNotificari'
 import { RUTE } from '@/lib/rute'
 import { emailSchema, numeSchema, parolaSchema, telefonSchema } from '@/lib/validari'
 
-const schema = z
-  .object({
-    numePersoana: numeSchema,
-    numeRestaurant: numeSchema,
-    email: emailSchema,
-    telefon: telefonSchema,
-    parola: parolaSchema,
-    confirmare: z.string(),
-    termeni: z
-      .boolean()
-      .refine((bifat) => bifat, { message: 'Trebuie sa accepti termenii pentru a continua.' }),
-  })
-  .refine((date) => date.parola === date.confirmare, {
-    message: 'Parolele nu coincid.',
-    path: ['confirmare'],
-  })
+/**
+ * Cine ajunge aici dintr-o INVITATIE nu-si creeaza restaurant — intra in
+ * echipa unuia existent. Numele restaurantului nu doar ca e inutil pentru el,
+ * dar l-ar si deruta: ar completa ceva ce nu se foloseste nicaieri.
+ */
+function schemaPentru(dinInvitatie: boolean) {
+  return z
+    .object({
+      numePersoana: numeSchema,
+      numeRestaurant: dinInvitatie ? z.string().optional() : numeSchema,
+      email: emailSchema,
+      telefon: telefonSchema,
+      parola: parolaSchema,
+      confirmare: z.string(),
+      termeni: z
+        .boolean()
+        .refine((bifat) => bifat, { message: 'Trebuie sa accepti termenii pentru a continua.' }),
+    })
+    .refine((date) => date.parola === date.confirmare, {
+      message: 'Parolele nu coincid.',
+      path: ['confirmare'],
+    })
+}
 
-type FormSignup = z.infer<typeof schema>
+type FormSignup = z.infer<ReturnType<typeof schemaPentru>>
 
 export function SignupPage() {
   const { inregistrare } = useAuth()
   const notificari = useNotificari()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Pagina de invitatie trimite aici cu state.de_la, ca sa ne putem intoarce.
+  const deLa = (location.state as { de_la?: string } | null)?.de_la
+  const dinInvitatie = Boolean(deLa?.startsWith(RUTE.invitatie))
 
   const form = useForm<FormSignup>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(useMemo(() => schemaPentru(dinInvitatie), [dinInvitatie])),
     defaultValues: {
       numePersoana: '',
       numeRestaurant: '',
@@ -57,8 +70,12 @@ export function SignupPage() {
         email: valori.email,
         parola: valori.parola,
         numePersoana: valori.numePersoana,
-        numeRestaurant: valori.numeRestaurant,
+        numeRestaurant: valori.numeRestaurant ?? '',
         telefon: valori.telefon,
+        // Linkul din emailul de confirmare se intoarce la invitatie, nu in
+        // /app — altfel cel invitat ajunge in onboarding, unde i se cere sa-si
+        // creeze un restaurant pe care nu-l vrea.
+        dupaConfirmare: deLa,
       })
       navigate(RUTE.verificaEmail, { replace: true, state: { email: valori.email } })
     } catch (eroare) {
@@ -69,7 +86,11 @@ export function SignupPage() {
   return (
     <CadruAuth
       titlu="Creeaza cont"
-      descriere="Restaurantul se configureaza dupa confirmarea adresei de email."
+      descriere={
+        dinInvitatie
+          ? 'Dupa confirmarea emailului te intorci la invitatie si intri in echipa.'
+          : 'Restaurantul se configureaza dupa confirmarea adresei de email.'
+      }
       subsol={
         <>
           Ai deja cont?{' '}
@@ -86,12 +107,14 @@ export function SignupPage() {
           eroare={form.formState.errors.numePersoana?.message}
           {...form.register('numePersoana')}
         />
-        <CampText
-          eticheta="Numele restaurantului"
-          autoComplete="organization"
-          eroare={form.formState.errors.numeRestaurant?.message}
-          {...form.register('numeRestaurant')}
-        />
+        {!dinInvitatie && (
+          <CampText
+            eticheta="Numele restaurantului"
+            autoComplete="organization"
+            eroare={form.formState.errors.numeRestaurant?.message}
+            {...form.register('numeRestaurant')}
+          />
+        )}
         <CampText
           eticheta="Email"
           type="email"

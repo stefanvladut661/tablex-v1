@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: date.email.trim(),
       password: date.parola,
       options: {
-        emailRedirectTo: urlRedirect(RUTE.app),
+        emailRedirectTo: urlRedirect(date.dupaConfirmare ?? RUTE.app),
         // Restaurantul propriu-zis se creeaza in onboarding (Faza 3), dupa
         // confirmarea emailului; pana atunci datele stau in user_metadata.
         data: {

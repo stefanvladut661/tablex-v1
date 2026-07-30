@@ -21,8 +21,15 @@ export type DateInregistrare = {
   email: string
   parola: string
   numePersoana: string
+  /** Gol pentru cine se inregistreaza dintr-o invitatie: nu-si face restaurant. */
   numeRestaurant: string
   telefon?: string
+  /**
+   * Calea la care duce linkul din emailul de confirmare. Implicit /app, dar
+   * cine vine dintr-o invitatie trebuie sa se intoarca la ea — altfel ajunge
+   * in onboarding si i se cere sa-si creeze un restaurant pe care nu-l vrea.
+   */
+  dupaConfirmare?: string
 }
 
 export type ValoareAuth = {

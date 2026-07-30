@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: editorul de floor plan complet — Layer 2 (mese) si Layer 1 (structura), cu publicare -->
-<!-- NEXT_TASK: conectarea furnizorului de email (o variabila de mediu); teste automate; incadrarea automata a hartii -->
+<!-- LAST_COMPLETED: teste (71), CI, incadrare automata harta, walk-in fara telefon, signup din invitatie -->
+<!-- NEXT_TASK: conectarea furnizorului de email (RESEND_API_KEY — cere cont si domeniu verificat); vederea pe mese -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -950,6 +950,77 @@ recalculeaza getScreenCTM() la FIECARE eveniment. Prima mea incercare l-a
 memorat o data, iar panoul de proprietati aparut intre clicuri a mutat layoutul
 — al doilea element a cazut cu 100px mai sus decat cerusem. Aplicatia il
 recalculeaza corect; testul era cel gresit.
+
+---
+6quaterdecies. PLASA DE SIGURANTA SI PUNCTELE RAMASE — ✅
+
+6quaterdecies.1 Teste (71) si CI — cea mai mare gaura de pana acum
+
+Pana aici nu exista niciun test. Tot ce s-a verificat s-a verificat manual, o
+data, iar aplicatia are multe reguli care nu arunca erori cand se strica: dau
+doar rezultatul gresit. `npm test` (vitest), `npm run test:watch`.
+
+Acoperite intai cele in care o greseala e INVIZIBILA:
+- erori.ts — regresia care ascundea toate mesajele bazei. Primul test din
+  fisier exista ca sa nu revina.
+- timp.ts — testele ruleaza cu TZ=UTC iar restaurantul e la Bucuresti, deci o
+  confuzie intre fusul masinii si cel al restaurantului pica imediat.
+- aranjare.ts — invariantul ca doua rezervari suprapuse nu ajung niciodata pe
+  aceeasi banda.
+- slug.ts — invariantul ca generatorul nu produce niciodata ceva ce CHECK-ul din
+  baza refuza; ambele forme Unicode ale lui s/t.
+- geometrie-plan.ts — aritmetica editorului, scoasa din componenta ca sa poata
+  fi testata fara DOM.
+- program.ts, validari.ts.
+
+CI in .github/workflows/verificari.yml: testele si build-ul blocheaza, lint-ul
+e informativ (cele 5 erori din components/ui sunt cod shadcn, §5.1.1).
+
+6quaterdecies.2 Incadrarea automata a hartii
+
+Ultimul punct din §6quater.5. Canvasul e 1200x800 implicit, dar o sala cu
+putine mese le poate avea pe toate intr-un colt. Incadrarea pastreaza raportul
+canvasului — fara asta, o sala lunga si ingusta ar fi intinsa de
+preserveAspectRatio si mesele rotunde ar parea ovale.
+Verificat prin widgetul public: doua mese intr-un colt dau viewBox
+"60 46.67 280 186.67" in loc de "0 0 1200 800"; sala demo (plina) ramane la fel.
+
+6quaterdecies.3 Walk-in fara telefon (§25.6) — decizia luata
+
+Era lasat deschis fiindca cerea o decizie in baza. Am ales: telefonul devine
+optional NUMAI pentru walk-in, impus printr-un CHECK.
+
+Motivul pentru care NU am folosit o valoare sintetica: `customers` e unic pe
+(restaurant_id, telefon), deci un "0000000000" folosit de doua ori ar contopi
+doi oameni fara legatura intr-un singur client, cu nr_vizite umflat. Datele de
+CRM ar fi devenit minciuni, tacut. Un walk-in fara telefon nu primeste deloc
+customer_id: un oaspete anonim nu e o fisa de CRM.
+
+Verificat pe ambele cai (INSERT direct si RPC): walk-in fara numar trece,
+manual si widget refuzate, doi oaspeti anonimi lasa CRM-ul gol iar cel cu numar
+isi primeste fisa.
+
+6quaterdecies.4 Signup din invitatie (amanat in §6bis.4)
+
+Se putea rezolva abia dupa ce au existat emailuri proprii. Acum linkul din
+emailul de confirmare se intoarce la invitatie, nu in /app.
+
+Pe drum am gasit si o problema de formular pe care planul nu o notase: pagina
+de signup cerea NUMELE RESTAURANTULUI si celui invitat, desi el intra in echipa
+unuia existent. Campul e ascuns cand se vine dintr-o invitatie.
+
+Verificat in browser: descrierea se schimba, campul dispare, iar cererea de
+signup pleaca cu redirect_to = /invitatie?token=...
+
+6quaterdecies.5 Ce NU s-a putut face si de ce
+
+- Furnizorul de email ramane neconectat: cere un cont Resend si un domeniu
+  verificat, adica o decizie si niste credentiale care nu sunt in codul asta.
+  Totul e scris si testat; conectarea e `supabase secrets set RESEND_API_KEY=...`
+  Pana atunci functia raspunde 200 cu {simulat: true}.
+- Tragerea cu mouse-ul pe CALENDAR ramane neverificata (§6septies). In editor
+  am verificat-o cu o secventa reala de pointer; la calendar instrumentul emite
+  evenimente HTML5 de drag, care nu trec prin acel handler.
 
 ---
 7. COMMANDS CHEAT SHEET
