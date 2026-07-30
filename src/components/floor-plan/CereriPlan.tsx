@@ -8,7 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useNotificari } from '@/hooks/useNotificari'
-import { CHEI_FP, creeazaCerere, getCereriRestaurant, type StatusCerere } from '@/services/floor-plan'
+import {
+  CHEI_FP,
+  creeazaCerere,
+  getCereriRestaurant,
+  incarcaSchita,
+  type StatusCerere,
+} from '@/services/floor-plan'
 
 const ETICHETE_STATUS: Record<StatusCerere, string> = {
   pending: 'In asteptare',
@@ -34,6 +40,7 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
   const queryClient = useQueryClient()
   const [zoneNume, setZoneNume] = useState('')
   const [descriere, setDescriere] = useState('')
+  const [schita, setSchita] = useState<File | null>(null)
 
   const cereri = useQuery({
     queryKey: CHEI_FP.cereriRestaurant(restaurantId),
@@ -41,13 +48,19 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
   })
 
   const trimite = useMutation({
-    mutationFn: () => creeazaCerere({ restaurantId, zoneNume, descriere }),
+    mutationFn: async () => {
+      // Schita se incarca INAINTE de cerere: daca incarcarea cade, nu rămâne o
+      // cerere fara imaginea pe care utilizatorul credea ca a trimis-o.
+      const schitaCale = schita ? await incarcaSchita(restaurantId, schita) : null
+      return creeazaCerere({ restaurantId, zoneNume, descriere, schitaCale })
+    },
     onSuccess: () => {
       notificari.succes('Cerere trimisa echipei TableX.', {
         descriere: 'Primesti o notificare cand planul e publicat.',
       })
       setZoneNume('')
       setDescriere('')
+      setSchita(null)
       void queryClient.invalidateQueries({ queryKey: CHEI_FP.cereriRestaurant(restaurantId) })
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -62,8 +75,8 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
       <CardHeader>
         <CardTitle className="text-base">Plan 2D al salii</CardTitle>
         <CardDescription>
-          Trimite numele zonei si o descriere (sau o schita pe email). Echipa TableX construieste
-          harta si o publica in contul tau.
+          Trimite numele zonei, o descriere si, daca ai, o schita sau o poza a salii. Echipa TableX
+          construieste harta si o publica in contul tau.
         </CardDescription>
       </CardHeader>
 
@@ -98,6 +111,20 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
             />
           </div>
 
+          <div className="grid gap-1.5">
+            <Label htmlFor="schita-cerere">Schita sau poza salii (optional)</Label>
+            <Input
+              id="schita-cerere"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/heic,application/pdf"
+              className="h-9 py-1.5"
+              onChange={(e) => setSchita(e.target.files?.[0] ?? null)}
+            />
+            <p className="text-xs text-muted-foreground">
+              PNG, JPG, WEBP sau PDF, pana la 5 MB. Limitele sunt impuse pe server.
+            </p>
+          </div>
+
           <Button
             type="submit"
             className="justify-self-start"
@@ -125,6 +152,7 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
                   )}
                   <p className="text-xs text-muted-foreground">
                     trimisa {new Date(cerere.created_at).toLocaleDateString('ro-RO')}
+                    {cerere.schita_image_url ? ' · cu schita' : ''}
                   </p>
                 </div>
                 <span

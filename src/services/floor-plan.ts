@@ -30,6 +30,8 @@ export type CerereNoua = {
   restaurantId: string
   zoneNume: string
   descriere?: string | null
+  /** Calea din bucket-ul privat, nu un URL (vezi incarcaSchita). */
+  schitaCale?: string | null
 }
 
 export async function creeazaCerere(cerere: CerereNoua): Promise<CerereFloorPlan> {
@@ -39,6 +41,7 @@ export async function creeazaCerere(cerere: CerereNoua): Promise<CerereFloorPlan
       restaurant_id: cerere.restaurantId,
       zone_nume: cerere.zoneNume.trim(),
       descriere: cerere.descriere?.trim() || null,
+      schita_image_url: cerere.schitaCale ?? null,
     })
     .select('*')
     .single()
@@ -66,4 +69,39 @@ export async function schimbaStatusCerere(id: string, status: StatusCerere): Pro
   if (!data?.length) {
     throw new Error('Cererea nu a fost modificata: contul tau nu are acest drept.')
   }
+}
+
+/**
+ * Schitele stau intr-un bucket PRIVAT, izolat pe folder: prima parte a caii e
+ * restaurant_id, iar politicile din storage compara acel folder cu
+ * current_restaurant_id(). Deci calea nu e un secret — accesul e verificat pe
+ * server, nu obscurizat.
+ *
+ * In coloana schita_image_url salvam CALEA, nu un URL: URL-urile semnate expira,
+ * deci un URL stocat ar deveni inutil. Se semneaza la afisare.
+ */
+const BUCKET_SCHITE = 'schite'
+
+export async function incarcaSchita(restaurantId: string, fisier: File): Promise<string> {
+  const extensie = fisier.name.split('.').pop()?.toLowerCase() ?? 'png'
+  const cale = `${restaurantId}/${crypto.randomUUID()}.${extensie}`
+
+  const { error } = await supabase.storage.from(BUCKET_SCHITE).upload(cale, fisier, {
+    contentType: fisier.type || undefined,
+    upsert: false,
+  })
+  if (error) throw error
+  return cale
+}
+
+/** URL temporar pentru afisare; valabil o ora. */
+export async function urlSchita(cale: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(BUCKET_SCHITE)
+    .createSignedUrl(cale, 60 * 60)
+  if (error) {
+    console.warn('Nu am putut semna URL-ul schitei:', error)
+    return null
+  }
+  return data.signedUrl
 }

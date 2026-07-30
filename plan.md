@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: coada de cereri floor plan, cap-coada, cu notificari in ambele sensuri -->
-<!-- NEXT_TASK: incarcare schita (Storage), webhook email widget, trial/discount in panou, QA manual (tragere cu mouse-ul) -->
+<!-- LAST_COMPLETED: incarcarea schitei in bucket privat, izolat pe folder -->
+<!-- NEXT_TASK: webhook email widget, trial/discount in panou, afisarea schitei in coada echipei, QA manual (tragere cu mouse-ul) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -684,8 +684,30 @@ Verificat cap-coada, cu manager + membru al echipei:
       descrierea propriei cereri (204)
 - [x] restaurantul primeste ambele notificari, cu urgentele corecte
 
-Ramas: incarcarea schitei ca imagine (cere un bucket de Storage cu politici),
-plus controalele de trial si discount in panou (coloanele si auditul sunt gata).
+6decies. INCARCAREA SCHITEI (Storage) — ✅ IMPLEMENTATA
+
+Bucket privat "schite", cu izolare pe FOLDER: prima parte a caii e
+restaurant_id, iar politicile compara acel folder cu current_restaurant_id().
+Calea nu e un secret — accesul e verificat pe server.
+
+- In coloana schita_image_url se salveaza CALEA, nu un URL: URL-urile semnate
+  expira, deci un URL stocat ar deveni inutil. Se semneaza la afisare (o ora).
+- Schita se incarca INAINTE de a crea cererea: daca incarcarea cade, nu rămâne
+  o cerere fara imaginea pe care utilizatorul credea ca a trimis-o.
+- Limitele (5 MB, PNG/JPG/WEBP/HEIC/PDF) sunt pe bucket, deci pe server;
+  validarea din formular e doar pentru mesaj.
+
+Verificat cu doua restaurante:
+- [x] managerul incarca in folderul lui (200), dar e refuzat in folderul altui
+      restaurant si in radacina bucket-ului
+- [x] managerul citeste doar fisierele lui; echipa TableX citeste orice
+- [x] anon: refuzat atat la incarcare cat si la citire
+- [x] stergerea din folderul propriu functioneaza prin API (Storage interzice
+      stergerea directa din SQL, prin protect_delete — util de stiut pentru
+      scripturile de curatenie)
+
+Ramas: afisarea schitei in coada echipei (URL semnat, ~10 linii) si controalele
+de trial si discount in panou (coloanele si auditul sunt gata).
 
 ---
 7. COMMANDS CHEAT SHEET
