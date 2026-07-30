@@ -1,15 +1,15 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 1c (auth + router + contexte) + Faza 1d (RLS) -->
-<!-- NEXT_TASK: Faza 2 - Landing page completa + 2D floor plan viewer -->
+<!-- LAST_COMPLETED: Faza 2 (landing + viewer 2D + demo) -->
+<!-- NEXT_TASK: Faza 3 - Onboarding (creare restaurant, slug, invitatii staff) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~15% MVP implementat
+**Status:** ~25% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
-**Ultima sesiune:** Faza 1c (client Supabase, 3 contexte, 5 garzi, 9 pagini) + Faza 1d (RLS pe 19 tabele)
+**Ultima sesiune:** Faza 1c (auth + router) + 1d (RLS) + Faza 2 (landing + harta 2D)
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
 **Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote)
 
@@ -53,8 +53,8 @@ src/
 | 1b | Schema SQL | ✅ DONE | - | Migrations: enums, tenancy, floor_plan, rezervari |
 | 1c | Supabase Client + Contexts + Router | ✅ DONE | - | Client tipat, AuthProvider, 5 garzi, 9 pagini |
 | 1d | Row Level Security | ✅ DONE | - | RLS + politici pe 19 tabele, vedere `restaurante_publice` |
-| **2** | **Landing + 2D Floor Plan Viewer** | 🔴 TODO | ~1.5 sessions | Marketing site + interactive seating demo |
-| 3 | Onboarding Flow | 🔴 TODO | ~1 session | Org creation, user invitation, slug generator |
+| 2 | Landing + 2D Floor Plan Viewer | ✅ DONE | - | Landing cu preturi live + HartaZona (SVG, zoom/pan) + /demo |
+| **3** | **Onboarding Flow** | 🔴 TODO | ~1 session | Org creation, user invitation, slug generator |
 | 4 | Dashboard & Calendar | 🔴 TODO | ~3 sessions | HEAVIEST — navbar+sidebar+calendar (D/W/M)+list+walk-in |
 | 5 | Real-time + Remaining Features | 🔴 TODO | ~2 sessions | Subscriptions, notifications, edge cases |
 
@@ -221,27 +221,53 @@ in router — se ataseaza la /app/setari in Faza 4.
 - [ ] restaurant suspendat → ecran de blocaj, nu dashboard
 
 ---
-6. FAZA 2: LANDING PAGE + 2D FLOOR PLAN (AFTER 1c)
+6. FAZA 2: LANDING PAGE + HARTA 2D — ✅ COMPLETATA
 
-Duration: ~1.5 sessions (Opus for canvas/SVG work)
-Complexity: High
-Dependencies: Faza 1c complete
+Duration: 1 sesiune (Opus 5)
 
-6.1 Landing Page
+6.1 Landing page (src/pages/LandingPage.tsx)
 
-- Hero section (pitch + CTA)
-- Feature cards (4-5 features)
-- Pricing table (3 tiers)
-- FAQ section
-- Footer
+- [x] Header sticky cu navigatie pe ancore + comutator de tema
+- [x] Hero (pitch + CTA dublu: cont nou / demonstratie)
+- [x] 5 carduri de functionalitati
+- [x] Secțiune "Harta 2D, la ora 19:30" cu viewer-ul real, nu o imagine
+- [x] Preturi din app_settings prin React Query (5 €, 10 €, setup 100 €) —
+      singura tabela citibila de anon, deci preturile sunt mereu cele reale
+- [x] FAQ (5 intrebari, <details>; nu exista accordion in components/ui)
+- [x] Footer
+- Moneda e o singura constanta (MONEDA) in LandingPage; app_settings tine
+  doar numere.
 
-6.2 2D Floor Plan Viewer
+6.2 Viewer 2D (src/components/floor-plan/)
 
-- SVG/Canvas renderer for seat positions
-- Interactive seating selection (click to book)
-- Seat status colors (available, reserved, walk-in, occupied)
-- Zoom + pan controls
-- Real-time sync with DB
+- [x] HartaZona.tsx — SVG cu viewBox = canvas-ul zonei, grid din pattern,
+      ordine de desenare grid → Layer 1 (sortat pe z) → Layer 2 (mese)
+- [x] useZoomPan.ts — zoom la cursor si pan, calculat in spatiul viewBox prin
+      getScreenCTM().inverse(); scara si translatia intr-o singura bucata de
+      stare, actualizata atomic (altfel zoom-ul cu ancora citeste offset vechi)
+- [x] Masa.tsx — rotunda / patrata / dreptunghiulara, rotatie, semn pentru
+      mesele unite, text contra-rotit ca numarul sa ramana orizontal,
+      focus + Enter/Space pentru navigare de la tastatura
+- [x] ElementStructura.tsx — perete (inclusiv linie franta prin puncte), usa,
+      bar, dj, vip, intrare, bucatarie, planta, piscina; etichetele zonelor
+      mari se scriu sus, ca mesele desenate peste sa nu le acopere
+- [x] LegendaStatus.tsx — Traffic Light System
+- [x] src/types/floor-plan.ts — StatusMasa, ElementStructura, MasaHarta
+      (Pick din Tables<'tables'>, deci nu poate divergea de schema)
+- [x] src/lib/harta-demo.ts + /demo — doua zone, 23 de mese, bara orara
+      10:00–23:30 care recalculeaza statusurile (statusul e functie de timp,
+      exact ca in DB)
+- [x] migratie 20260730120000_slug_demo.sql — 'demo' devine slug rezervat
+
+6.3 Amanat (dependinte reale, nu scapari)
+
+- Sincronizarea realtime a hartii → Faza 5 (subscriptions). Viewer-ul primeste
+  deja statusurile ca prop, deci integrarea e o schimbare de sursa de date.
+- Widget public /r/:slug: anon NU poate citi zones/tables (RLS). Are nevoie de
+  vederi publice (zone_publice, mese_publice) pe modelul restaurante_publice,
+  plus un RPC de inserare a rezervarii. Se face in Faza 3/5, impreuna cu
+  fluxul de rezervare.
+- Editorul de floor plan (Super Admin) → nu e in MVP-ul de restaurant.
 
 ---
 7. COMMANDS CHEAT SHEET

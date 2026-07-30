@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 
 import { RutaAdmin, RutaOaspete, RutaProtejata, RutaSuperAdmin } from '@/components/rute-protejate'
+import { DemoHartaPage } from '@/pages/DemoHartaPage'
 import { LandingPage } from '@/pages/LandingPage'
 import { MentenantaPage } from '@/pages/MentenantaPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
   { path: RUTE.parolaNoua, element: <ParolaNouaPage /> },
   { path: RUTE.verificaEmail, element: <VerificaEmailPage /> },
   { path: RUTE.mentenanta, element: <MentenantaPage /> },
+  { path: RUTE.demoHarta, element: <DemoHartaPage /> },
 
   {
     element: <RutaProtejata />,

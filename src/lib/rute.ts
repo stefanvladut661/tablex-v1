@@ -14,6 +14,8 @@ export const RUTE = {
   verificaEmail: '/verifica-email',
   invitatie: '/invitatie',
   mentenanta: '/mentenanta',
+  /** Demonstratie publica a hartii 2D, cu date fictive. */
+  demoHarta: '/demo',
 
   /** Panoul restaurantului (Manager / Ospatar). */
   app: '/app',
