@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useNotificari } from '@/hooks/useNotificari'
+import { ETICHETE_STATUS_CERERE_FP } from '@/lib/etichete'
 import {
   CHEI_FP,
   creeazaCerere,
@@ -15,13 +16,6 @@ import {
   incarcaSchita,
   type StatusCerere,
 } from '@/services/floor-plan'
-
-const ETICHETE_STATUS: Record<StatusCerere, string> = {
-  pending: 'In asteptare',
-  in_progress: 'In lucru',
-  published: 'Publicat',
-  respins: 'Respins',
-}
 
 const CLASE_STATUS: Record<StatusCerere, string> = {
   pending: 'bg-status-expirare-soft text-foreground',
@@ -158,7 +152,7 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
                 <span
                   className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${CLASE_STATUS[cerere.status]}`}
                 >
-                  {ETICHETE_STATUS[cerere.status]}
+                  {ETICHETE_STATUS_CERERE_FP[cerere.status]}
                 </span>
               </li>
             ))}

@@ -27,6 +27,13 @@ export const ETICHETE_ROL_ADMIN: Record<Enums<'admin_rol'>, string> = {
   ospatar: 'Ospatar',
 }
 
+export const ETICHETE_STATUS_CERERE_FP: Record<Enums<'fp_request_status'>, string> = {
+  pending: 'In asteptare',
+  in_progress: 'In lucru',
+  published: 'Publicat',
+  respins: 'Respins',
+}
+
 export const ETICHETE_STATUS_INVITATIE: Record<Enums<'invitatie_status'>, string> = {
   trimisa: 'In asteptare',
   acceptata: 'Acceptata',

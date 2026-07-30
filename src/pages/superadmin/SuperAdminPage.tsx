@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   BanIcon,
+  FileTextIcon,
   LogOutIcon,
   MoonIcon,
   PlayIcon,
   SearchIcon,
   SunIcon,
+  TagIcon,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
@@ -44,10 +46,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/hooks/useAuth'
 import { useNotificari } from '@/hooks/useNotificari'
 import { useTema } from '@/hooks/useTema'
+import { ETICHETE_STATUS_CERERE_FP } from '@/lib/etichete'
 import {
   CHEI_FP,
   getCoadaCereri,
   schimbaStatusCerere,
+  urlSchita,
   type StatusCerere,
 } from '@/services/floor-plan'
 import {
@@ -93,6 +97,153 @@ function dataOra(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function dataScurta(zi: string): string {
+  return new Date(zi).toLocaleDateString('ro-RO', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+/** Extensiile pe care browserul le poate randa direct ca imagine. */
+const ESTE_IMAGINE = /\.(png|jpe?g|webp|heic|heif)$/i
+
+/**
+ * Bucket-ul "schite" e privat, deci nu exista URL permanent: se semneaza la
+ * afisare, pentru o ora. Reimprospatam la 50 de minute, ca linkul afisat sa nu
+ * expire sub degetul cuiva care tine coada deschisa.
+ */
+function Schita({ cale }: { cale: string }) {
+  const semnat = useQuery({
+    queryKey: CHEI_FP.schita(cale),
+    queryFn: () => urlSchita(cale),
+    staleTime: 50 * 60 * 1000,
+    refetchInterval: 50 * 60 * 1000,
+  })
+
+  if (semnat.isLoading) return <Skeleton className="h-14 w-20" />
+
+  if (!semnat.data) {
+    return <span className="text-xs text-muted-foreground">Schita nu s-a putut deschide.</span>
+  }
+
+  return (
+    <a
+      href={semnat.data}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+    >
+      {ESTE_IMAGINE.test(cale) ? (
+        <img
+          src={semnat.data}
+          alt="Schita trimisa de restaurant"
+          className="h-14 w-20 rounded-md border border-border object-cover"
+        />
+      ) : (
+        <>
+          <FileTextIcon className="size-4" />
+          Deschide fisierul
+        </>
+      )}
+    </a>
+  )
+}
+
+/**
+ * Trialul si discountul sunt coloane privilegiate (migratia 13): trigger-ul le
+ * refuza oricui nu e in echipa, iar auditul se scrie singur. Aici e doar
+ * interfata — de aceea limitele oglindesc exact CHECK-ul din schema (0–100).
+ */
+function DialogComercial({
+  restaurant,
+  onInchide,
+  onSalveaza,
+  inLucru,
+}: {
+  restaurant: Restaurant
+  onInchide: () => void
+  onSalveaza: (valori: { trial: string | null; discount: number | null }) => void
+  inLucru: boolean
+}) {
+  const [trial, setTrial] = useState(restaurant.trial_extins_pana_la ?? '')
+  const [discount, setDiscount] = useState(
+    restaurant.discount_procent === null ? '' : String(restaurant.discount_procent),
+  )
+
+  const discountNumeric = discount.trim() === '' ? null : Number(discount)
+  const discountValid =
+    discountNumeric === null ||
+    (Number.isFinite(discountNumeric) && discountNumeric >= 0 && discountNumeric <= 100)
+
+  const azi = new Date().toISOString().slice(0, 10)
+  const trialInTrecut = trial !== '' && trial < azi
+
+  return (
+    <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Trial si discount: {restaurant.nume}</DialogTitle>
+          <DialogDescription>
+            Ambele intra automat in registrul de audit, cu valorile dinainte si de dupa.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4">
+          <div className="grid gap-1.5">
+            <Label htmlFor="trial">Perioada de proba, prelungita pana la</Label>
+            <Input
+              id="trial"
+              type="date"
+              value={trial}
+              className="h-9 w-48"
+              onChange={(e) => setTrial(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              {trialInTrecut
+                ? 'Data e in trecut: trialul apare ca expirat.'
+                : 'Lasa gol ca sa revii la perioada standard.'}
+            </p>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="discount">Discount permanent (%)</Label>
+            <Input
+              id="discount"
+              type="number"
+              min={0}
+              max={100}
+              step="0.5"
+              value={discount}
+              className="h-9 w-32 tabular-nums"
+              onChange={(e) => setDiscount(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              {discountValid
+                ? 'Intre 0 si 100. Lasa gol ca sa scoti discountul.'
+                : 'Baza accepta doar valori intre 0 si 100.'}
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onInchide}>
+            Renunta
+          </Button>
+          <Button
+            disabled={inLucru || !discountValid}
+            onClick={() =>
+              onSalveaza({ trial: trial === '' ? null : trial, discount: discountNumeric })
+            }
+          >
+            Salveaza
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 /** Suspendarea si banarea cer un motiv — impus si de trigger (§43.5). */
@@ -167,6 +318,7 @@ export function SuperAdminPage() {
     restaurant: Restaurant
     actiune: 'suspendat' | 'banat'
   } | null>(null)
+  const [comercial, setComercial] = useState<Restaurant | null>(null)
 
   const restaurante = useQuery({ queryKey: CHEI_SA.restaurante, queryFn: getRestaurante })
   const audit = useQuery({ queryKey: CHEI_SA.audit, queryFn: () => getAudit() })
@@ -195,6 +347,7 @@ export function SuperAdminPage() {
     onSuccess: () => {
       notificari.succes('Intervenție aplicata.')
       setSuspendare(null)
+      setComercial(null)
       reincarca()
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -302,13 +455,14 @@ export function SuperAdminPage() {
                       <TableHead className="w-32">Plan</TableHead>
                       <TableHead className="w-28">Status</TableHead>
                       <TableHead className="w-24">Floor plan</TableHead>
+                      <TableHead className="w-40">Trial / discount</TableHead>
                       <TableHead className="w-64 text-right">Intervenții</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtrate.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                        <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                           Niciun restaurant pentru acest filtru.
                         </TableCell>
                       </TableRow>
@@ -370,7 +524,28 @@ export function SuperAdminPage() {
                           </TableCell>
 
                           <TableCell>
+                            <div className="text-xs">
+                              {restaurant.trial_extins_pana_la
+                                ? `Trial pana la ${dataScurta(restaurant.trial_extins_pana_la)}`
+                                : 'Trial standard'}
+                            </div>
+                            <div className="text-xs text-muted-foreground tabular-nums">
+                              {restaurant.discount_procent
+                                ? `${restaurant.discount_procent}% discount`
+                                : 'Fara discount'}
+                            </div>
+                          </TableCell>
+
+                          <TableCell>
                             <div className="flex flex-wrap justify-end gap-1">
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                onClick={() => setComercial(restaurant)}
+                              >
+                                <TagIcon />
+                                Comercial
+                              </Button>
                               {restaurant.status === 'activ' ? (
                                 <>
                                   <Button
@@ -436,7 +611,8 @@ export function SuperAdminPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-32">Primita</TableHead>
-                      <TableHead>Zona si descriere</TableHead>
+                      <TableHead>Restaurant, zona si descriere</TableHead>
+                      <TableHead className="w-28">Schita</TableHead>
                       <TableHead className="w-28">Status</TableHead>
                       <TableHead className="w-72 text-right">Acțiuni</TableHead>
                     </TableRow>
@@ -448,7 +624,12 @@ export function SuperAdminPage() {
                           {dataOra(cerere.created_at)}
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium">{cerere.zone_nume}</div>
+                          <div className="font-medium">
+                            {cerere.restaurant?.nume ?? 'Restaurant sters'}
+                            <span className="ml-1.5 font-normal text-muted-foreground">
+                              · {cerere.zone_nume}
+                            </span>
+                          </div>
                           {cerere.descriere && (
                             <div className="max-w-md text-xs text-muted-foreground">
                               {cerere.descriere}
@@ -456,8 +637,15 @@ export function SuperAdminPage() {
                           )}
                         </TableCell>
                         <TableCell>
+                          {cerere.schita_image_url ? (
+                            <Schita cale={cerere.schita_image_url} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <span className="inline-flex rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-                            {cerere.status}
+                            {ETICHETE_STATUS_CERERE_FP[cerere.status]}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -674,6 +862,20 @@ export function SuperAdminPage() {
             interventie.mutate({
               id: suspendare.restaurant.id,
               modificari: { status: suspendare.actiune, motiv_suspendare: motiv },
+            })
+          }
+        />
+      )}
+
+      {comercial && (
+        <DialogComercial
+          restaurant={comercial}
+          inLucru={interventie.isPending}
+          onInchide={() => setComercial(null)}
+          onSalveaza={({ trial, discount }) =>
+            interventie.mutate({
+              id: comercial.id,
+              modificari: { trial_extins_pana_la: trial, discount_procent: discount },
             })
           }
         />

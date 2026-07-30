@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: incarcarea schitei in bucket privat, izolat pe folder -->
-<!-- NEXT_TASK: webhook email widget, trial/discount in panou, afisarea schitei in coada echipei, QA manual (tragere cu mouse-ul) -->
+<!-- LAST_COMPLETED: email de primire din widget (pg_net + Vault), trial/discount in panou, schita in coada echipei -->
+<!-- NEXT_TASK: QA manual (tragere cu mouse-ul pe calendar); apoi editorul de floor plan si incadrarea automata a hartii -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -706,8 +706,80 @@ Verificat cu doua restaurante:
       stergerea directa din SQL, prin protect_delete — util de stiut pentru
       scripturile de curatenie)
 
-Ramas: afisarea schitei in coada echipei (URL semnat, ~10 linii) si controalele
-de trial si discount in panou (coloanele si auditul sunt gata).
+---
+6undecies. EMAIL DE PRIMIRE DIN WIDGET, TRIAL/DISCOUNT, SCHITA IN COADA — ✅
+
+Ultimele trei piese ramase din §6quater.5 si §6octies.4.
+
+6undecies.1 Emailul "am primit cererea ta" (migratiile 16 si 17)
+
+Piesa care lipsea din §6sexies: functia `trimite-email` citeste rezervarea cu
+JWT-ul apelantului, deci prin RLS — corect, altfel ar fi releu de spam. Dar
+clientul widgetului e ANONIM si prin RLS nu-si vede propria rezervare, deci
+apelul nu putea porni din browserul lui. Acum il porneste baza, dupa commit,
+printr-un trigger pg_net pe `reservations`.
+
+Autentificarea apelului — de ce NU service_role in baza (ce face varianta
+"Database Webhooks" din dashboard): acea cheie deschide toata baza, iar aici e
+nevoie de exact o capabilitate. Deci trigger-ul trimite un secret propriu de
+256 de biti, generat in baza, iar functia il valideaza inapoi prin RPC-ul
+`verifica_secret_webhook` (raspunde doar da/nu). Scurgerea lui nu da acces la
+date, iar rotirea e un `vault.update_secret`, fara redesfasurarea functiei.
+Bonus practic: nu depinde de `supabase secrets set` — Edge Function-ul primeste
+SUPABASE_SERVICE_ROLE_KEY automat de la platforma.
+
+Configurarea sta in Vault (trei secrete, vezi .env.example). Daca lipseste
+oricare, trigger-ul iese in tacere: rezervarea merge mai departe fara email,
+exact ca atunci cand nu e conectat niciun furnizor.
+
+In functie, tipul 'rezervare_noua' e rezervat webhook-ului: un apelant obisnuit
+primeste 403, iar webhook-ul nu poate cere alt tip.
+
+Defect prins de advisor, imediat dupa migratia 16 (corectat in 17):
+ACEEASI greseala ca in migratia 05, pe care 07 o corectase deja — "revoke
+execute from public" NU sterge drepturile acordate EXPLICIT rolurilor, iar
+Supabase acorda din default privileges EXECUTE catre anon si authenticated pe
+orice functie noua din public. Rezultat: `verifica_secret_webhook` era apelabila
+cu cheia anon, adica un ORACOL pentru ghicirea secretului. Verificat dupa
+corectie: anon primeste 42501 la nivel de privilegii.
+(Al doilea avertisment, minor: pg_net ajunsese in schema `public`. Nu suporta
+ALTER EXTENSION ... SET SCHEMA, deci recreat in `extensions`; functiile lui
+rămân oricum in schema `net`.)
+
+Verificat cap-coada, pe functia desfasurata (v2):
+- [x] rezervare reala din widget, ca ANON → trigger → 200, cu destinatarul si
+      subiectul corecte, in mod simulat (fara furnizor conectat)
+- [x] rezervare din PANOU (sursa 'manual') → ZERO apeluri
+- [x] rezervare din widget FARA email → ZERO apeluri
+- [x] anon cere 'rezervare_noua' fara secret → 403
+- [x] secret gresit → 401; secret prea scurt → 401
+- [x] tot lantul retestat DUPA corectia de drepturi si mutarea pg_net
+
+6undecies.2 Trial si discount in panou
+
+Coloanele si auditul erau gata din migratia 13; lipseau doar controalele.
+Dialog "Comercial" per restaurant (data de trial + procent), plus o coloana
+care arata valorile curente. Limitele din interfata oglindesc CHECK-ul din
+schema (0–100), ca peste tot.
+
+Verificat in browser, cu date reale: discount 25% si trial pana la 15 oct. 2026
+au ajuns in baza, celula s-a actualizat, iar ambele au aparut in registru cu
+autorul corect (`extend_trial` si `discount`). Verificat si ca managerul
+primeste 42501 pe ambele coloane prin REST, dar poate schimba numele (204).
+
+6undecies.3 Schita in coada echipei
+
+Bucket-ul e privat, deci nu exista URL permanent: se semneaza la afisare, o ora,
+si se reimprospateaza la 50 de minute — altfel linkul expira sub degetul cuiva
+care tine coada deschisa. Imaginile se arata ca miniatura, PDF-urile ca link.
+Coada arata acum si RESTAURANTUL care a trimis cererea: fara el, cererea nu
+inseamna nimic — planul se deseneaza pentru o sala anume. Statusurile se
+traduceau doar in panoul restaurantului; eticheta s-a mutat in lib/etichete.ts
+si acum coada nu mai arata valoarea bruta din enum.
+
+Verificat in browser, cu manager + membru al echipei: schita incarcata de
+manager se randeaza in coada (120×80, exact fisierul incarcat), cererea fara
+schita arata "—", iar incarcarea in folderul altui restaurant e refuzata.
 
 ---
 7. COMMANDS CHEAT SHEET

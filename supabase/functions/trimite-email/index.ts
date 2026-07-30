@@ -11,6 +11,15 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
  * poate nici sa declanseze un email despre ea. Asa endpoint-ul nu poate fi
  * folosit ca releu de spam.
  *
+ * SINGURA EXCEPTIE, si de ce e sigura (migratia 16):
+ * emailul "am primit cererea ta" pleaca spre un client ANONIM, care prin RLS
+ * nu-si poate citi propria rezervare — deci apelul nu poate porni din browser.
+ * Il porneste baza de date, printr-un trigger pg_net, si se legitimeaza cu un
+ * secret generat tot in baza. Secretul se valideaza inapoi in Postgres
+ * (verifica_secret_webhook), nu il tinem aici: asa rotirea lui nu cere
+ * redesfasurarea functiei, iar functia nu are cum sa-l divulge.
+ * In acest mod tipul e limitat la 'rezervare_noua' — nimic altceva.
+ *
  * Furnizorul e opțional: fara RESEND_API_KEY functia ruleaza in mod SIMULAT,
  * raspunde 200 si logheaza ce ar fi trimis. Aplicatia functioneaza complet,
  * iar conectarea unui furnizor real e doar o variabila de mediu:
@@ -26,12 +35,15 @@ type Cerere = { tip: TipEmail; id: string }
 type Mesaj = { catre: string; subiect: string; html: string }
 
 const CHEIE_RESEND = Deno.env.get('RESEND_API_KEY')
+// Injectata automat de platforma — nu cere `supabase secrets set`.
+const CHEIE_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const EXPEDITOR = Deno.env.get('EMAIL_EXPEDITOR') ?? 'TableX <onboarding@resend.dev>'
 const URL_APP = (Deno.env.get('URL_APLICATIE') ?? 'http://localhost:5173').replace(/\/$/, '')
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-tablex-webhook',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
@@ -100,12 +112,45 @@ Deno.serve(async (req) => {
     return raspuns({ eroare: 'Trimite {tip, id}.' }, 400)
   }
 
-  // Clientul moștenește JWT-ul apelantului, deci toate citirile trec prin RLS.
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: autorizare } } },
-  )
+  // ── Apelul vine din baza de date? ──────────────────────────────────────
+  // Secretul se valideaza IN Postgres: functia verifica_secret_webhook
+  // raspunde doar da/nu si e executabila exclusiv de service_role.
+  const secretPrimit = req.headers.get('x-tablex-webhook')
+  let esteWebhook = false
+
+  if (secretPrimit) {
+    if (!CHEIE_SERVICE) {
+      console.error('SUPABASE_SERVICE_ROLE_KEY lipseste; nu pot valida webhook-ul.')
+      return raspuns({ eroare: 'Functia nu e configurata pentru webhook.' }, 500)
+    }
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, CHEIE_SERVICE)
+    const { data, error } = await admin.rpc('verifica_secret_webhook', {
+      p_secret: secretPrimit,
+    })
+    if (error || data !== true) {
+      console.error('Secret de webhook respins:', error)
+      return raspuns({ eroare: 'Secret de webhook invalid.' }, 401)
+    }
+    esteWebhook = true
+  }
+
+  // 'rezervare_noua' merge spre un client anonim, deci NU poate fi cerut de un
+  // apelant obisnuit; si invers, webhook-ul nu are voie sa ceara altceva.
+  if (cerere.tip === 'rezervare_noua' && !esteWebhook) {
+    return raspuns({ eroare: 'Acest tip se trimite doar automat, din baza.' }, 403)
+  }
+  if (esteWebhook && cerere.tip !== 'rezervare_noua') {
+    return raspuns({ eroare: 'Webhook-ul poate trimite doar rezervare_noua.' }, 403)
+  }
+
+  // In mod webhook citim cu service_role: clientul anonim nu are — corect — voie
+  // sa-si vada rezervarea prin RLS. In rest, clientul moștenește JWT-ul
+  // apelantului, deci toate citirile trec prin RLS.
+  const supabase = esteWebhook
+    ? createClient(Deno.env.get('SUPABASE_URL')!, CHEIE_SERVICE!)
+    : createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: autorizare } },
+      })
 
   let mesaj: Mesaj
 

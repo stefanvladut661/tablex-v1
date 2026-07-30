@@ -7,6 +7,7 @@ export type StatusCerere = Enums<'fp_request_status'>
 export const CHEI_FP = {
   cereriRestaurant: (restaurantId: string) => ['floor-plan', 'cereri', restaurantId] as const,
   coada: ['floor-plan', 'coada'] as const,
+  schita: (cale: string) => ['floor-plan', 'schita', cale] as const,
 }
 
 /**
@@ -49,14 +50,23 @@ export async function creeazaCerere(cerere: CerereNoua): Promise<CerereFloorPlan
   return data
 }
 
-/** Coada echipei TableX: toate cererile, cele in asteptare primele. */
-export async function getCoadaCereri(): Promise<CerereFloorPlan[]> {
+/**
+ * In coada echipei cererea nu inseamna nimic fara restaurantul care a trimis-o:
+ * planul se deseneaza pentru o sala anume. De aceea aici imbinam numele, spre
+ * deosebire de lista restaurantului, unde e evident al cui e.
+ */
+export type CerereCoada = CerereFloorPlan & {
+  restaurant: { nume: string; slug: string } | null
+}
+
+/** Coada echipei TableX: toate cererile, cele mai vechi primele. */
+export async function getCoadaCereri(): Promise<CerereCoada[]> {
   const { data, error } = await supabase
     .from('floor_plan_requests')
-    .select('*')
+    .select('*, restaurant:restaurants(nume, slug)')
     .order('created_at', { ascending: true })
   if (error) throw error
-  return data
+  return data as CerereCoada[]
 }
 
 export async function schimbaStatusCerere(id: string, status: StatusCerere): Promise<void> {
