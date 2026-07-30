@@ -103,9 +103,14 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                     Telefon
                   </dt>
                   <dd className="font-medium">
-                    <a href={`tel:${rezervare.telefon}`} className="hover:underline">
-                      {rezervare.telefon}
-                    </a>
+                    {rezervare.telefon ? (
+                      <a href={`tel:${rezervare.telefon}`} className="hover:underline">
+                        {rezervare.telefon}
+                      </a>
+                    ) : (
+                      // Walk-in anonim (§25.6): nu inventam un numar de telefon.
+                      <span className="text-muted-foreground">Fara telefon</span>
+                    )}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-3">

@@ -642,7 +642,7 @@ export type Database = {
           status: Database["public"]["Enums"]["rezervare_status"]
           sursa: Database["public"]["Enums"]["rezervare_sursa"]
           table_id: string | null
-          telefon: string
+          telefon: string | null
           updated_at: string
           zone_id: string | null
         }
@@ -669,7 +669,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["rezervare_status"]
           sursa?: Database["public"]["Enums"]["rezervare_sursa"]
           table_id?: string | null
-          telefon: string
+          telefon?: string | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -696,7 +696,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["rezervare_status"]
           sursa?: Database["public"]["Enums"]["rezervare_sursa"]
           table_id?: string | null
-          telefon?: string
+          telefon?: string | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -1292,7 +1292,7 @@ export type Database = {
           p_status?: Database["public"]["Enums"]["rezervare_status"]
           p_sursa?: Database["public"]["Enums"]["rezervare_sursa"]
           p_table_id?: string
-          p_telefon: string
+          p_telefon: string | null
           p_zone_id?: string
         }
         Returns: string

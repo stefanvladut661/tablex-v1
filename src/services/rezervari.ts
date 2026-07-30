@@ -41,7 +41,8 @@ export async function getRezervari(
 
 export type DateRezervareNoua = {
   clientNume: string
-  telefon: string
+  /** null e permis DOAR pentru walk-in (§25.6) — baza impune regula. */
+  telefon: string | null
   nrPersoane: number
   dataOra: Date
   tableId?: string | null

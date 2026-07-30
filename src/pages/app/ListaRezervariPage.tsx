@@ -49,7 +49,8 @@ export function ListaRezervariPage() {
       if (!termen) return true
       return (
         r.client_nume.toLowerCase().includes(termen) ||
-        r.telefon.includes(termen) ||
+        // Un walk-in poate fi fara telefon (§25.6), deci coloana e nullabila.
+        (r.telefon ?? '').includes(termen) ||
         (r.masa?.numar_masa ?? '').toLowerCase().includes(termen)
       )
     })
@@ -144,7 +145,9 @@ export function ListaRezervariPage() {
                   >
                     <TableCell className="tabular-nums">{ora(rezervare.data_ora, fus)}</TableCell>
                     <TableCell className="font-medium">{rezervare.client_nume}</TableCell>
-                    <TableCell className="tabular-nums">{rezervare.telefon}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {rezervare.telefon ?? <span className="text-muted-foreground">—</span>}
+                    </TableCell>
                     <TableCell className="tabular-nums">{rezervare.nr_persoane}</TableCell>
                     <TableCell>
                       {rezervare.masa?.numar_masa ?? (

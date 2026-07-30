@@ -38,18 +38,34 @@ const DURATE = [
   { valoare: '180', eticheta: '3 h' },
 ]
 
-const schema = z.object({
-  clientNume: numeSchema,
-  telefon: telefonSchema,
-  nrPersoane: z.number().int().min(1, 'Minim 1 persoana.').max(200),
-  oraText: z.string().regex(/^\d{2}:\d{2}$/, 'Format ora: HH:MM'),
-  durata: z.string(),
-  zoneId: z.string(),
-  tableId: z.string(),
-  noteInterne: z.string().max(500).optional(),
-})
+/**
+ * Telefonul e obligatoriu peste tot, MAI PUTIN la walk-in (§25.6): oaspetele e
+ * deja in sala, deci nu e nimic de anuntat. Regula e impusa si de baza, printr-un
+ * CHECK — aici doar nu blocam formularul degeaba.
+ *
+ * Schema se construieste in functie de mod, nu se relaxeaza global: o rezervare
+ * fara telefon ar fi refuzata oricum de baza, dar utilizatorul ar afla-o abia
+ * dupa ce completeaza tot restul.
+ */
+function schemaPentru(walkIn: boolean) {
+  return z.object({
+    clientNume: numeSchema,
+    telefon: walkIn
+      ? z.string().refine(
+          (valoare) => valoare.trim() === '' || telefonSchema.safeParse(valoare).success,
+          'Numarul de telefon nu pare valid (ex: 0722123456).',
+        )
+      : telefonSchema,
+    nrPersoane: z.number().int().min(1, 'Minim 1 persoana.').max(200),
+    oraText: z.string().regex(/^\d{2}:\d{2}$/, 'Format ora: HH:MM'),
+    durata: z.string(),
+    zoneId: z.string(),
+    tableId: z.string(),
+    noteInterne: z.string().max(500).optional(),
+  })
+}
 
-type FormRezervare = z.infer<typeof schema>
+type FormRezervare = z.infer<ReturnType<typeof schemaPentru>>
 
 const FARA_MASA = 'fara-masa'
 
@@ -85,7 +101,9 @@ export function DialogRezervare({
   const { creeaza } = useMutatiiRezervari(restaurantId)
 
   const form = useForm<FormRezervare>({
-    resolver: zodResolver(schema),
+    // walkIn nu se schimba cat timp dialogul e montat (parintele il remonteaza
+    // cu key), deci schema poate fi construita o singura data.
+    resolver: zodResolver(useMemo(() => schemaPentru(walkIn), [walkIn])),
     // Dialogul e montat doar cat e deschis (cu key din parinte), deci
     // defaultValues sunt mereu proaspete — fara efecte de resincronizare.
     defaultValues: {
@@ -121,7 +139,9 @@ export function DialogRezervare({
     try {
       await creeaza.mutateAsync({
         clientNume: valori.clientNume,
-        telefon: valori.telefon,
+        // Sirul gol devine null: altfel am scrie "" in loc de "fara telefon",
+        // iar CHECK-ul din baza l-ar accepta ca valoare prezenta.
+        telefon: valori.telefon.trim() || null,
         nrPersoane: valori.nrPersoane,
         dataOra: instant,
         zoneId: valori.zoneId || null,
@@ -160,10 +180,14 @@ export function DialogRezervare({
               {...form.register('clientNume')}
             />
             <CampText
-              eticheta="Telefon"
+              eticheta={walkIn ? 'Telefon (optional)' : 'Telefon'}
               type="tel"
               placeholder="0722123456"
-              ajutor="Identifica unic clientul in CRM."
+              ajutor={
+                walkIn
+                  ? 'Fara numar, oaspetele nu intra in CRM — nu inventa unul.'
+                  : 'Identifica unic clientul in CRM.'
+              }
               eroare={form.formState.errors.telefon?.message}
               {...form.register('telefon')}
             />
