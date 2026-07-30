@@ -1,13 +1,13 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 5 (realtime, widget public /r/:slug, notificari) -->
-<!-- NEXT_TASK: MVP complet. Ramase: emailuri (Edge Function), setari restaurant, drag-drop calendar, panou super admin -->
+<!-- LAST_COMPLETED: Faza 5 + pagina de setari restaurant -->
+<!-- NEXT_TASK: emailuri (Edge Function + Resend), drag-drop calendar, panou super admin -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~75% MVP implementat
+**Status:** ~80% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
 **Ultima sesiune:** Fazele 1c, 1d, 2, 3, 4 si 5 — de la auth pana la widget public
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
@@ -490,6 +490,33 @@ acum in variabile tipizate.
   de 1200x800 lasa mult spatiu gol. Verificat ca randarea e corecta
   matematic (scara 0.395, mese de 33 px la pozițiile aşteptate), deci e o
   imbunatatire de UX, nu un defect.
+
+---
+6quinquies. PAGINA DE SETARI RESTAURANT — ✅ COMPLETATA
+
+/app/setari, doar pentru manager (RutaManager). Datele existau deja in baza;
+lipsea interfata.
+
+- Identitate si contact + linkul public de rezervare, copiabil. Slug-ul NU e
+  editabil de aici: linkurile deja distribuite ar deveni invalide.
+- Reguli de rezervare: aprobare automata, durata implicita, buffer, scaune
+  maxim pe masa. Limitele din zod oglindesc exact CHECK-urile din schema.
+- Butonul de verificare a buffer-ului foloseste RPC-ul verifica_conflicte_buffer,
+  prevazut in migratia 04 exact pentru asta: arata ce suprapuneri ar apărea cu
+  valoarea noua, precizand ca schimbarea NU e retroactiva.
+- Program de functionare pe sapte zile (jsonb program_standard) — aceeasi sursa
+  pe care o citesc calendarul, harta si widgetul public.
+- Culoare de accent (aplicata in widget) si retentia datelor (GDPR).
+
+Verificat in browser, cu date reale: pagina se incarca cu valorile din baza; am
+schimbat numele, buffer-ul (15 → 25), durata (120 → 150) si ora de deschidere de
+luni (10:00 → 11:30). Toate au ajuns in baza, antetul s-a actualizat imediat
+(reincarcaProfil), iar celelalte zile au rămas neatinse.
+
+Verificat si ca baza respinge singura valorile invalide, daca interfata ar fi
+ocolita: buffer 90, durata 300, 40 de scaune, retentie 20 de ani, culoare
+"verde" si slug rezervat "app" — toate refuzate de CHECK-uri sau de trigger.
+Mesajele lor sunt acum traduse in lib/erori.ts.
 
 ---
 7. COMMANDS CHEAT SHEET

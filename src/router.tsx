@@ -24,6 +24,7 @@ import { EchipaPage } from '@/pages/app/EchipaPage'
 import { HartaPage } from '@/pages/app/HartaPage'
 import { ListaRezervariPage } from '@/pages/app/ListaRezervariPage'
 import { OnboardingPage } from '@/pages/app/OnboardingPage'
+import { SetariPage } from '@/pages/app/SetariPage'
 import { SuperAdminPage } from '@/pages/superadmin/SuperAdminPage'
 import { RUTE } from '@/lib/rute'
 
@@ -69,7 +70,10 @@ export const router = createBrowserRouter([
               { path: RUTE.appHarta, element: <HartaPage /> },
               {
                 element: <RutaManager />,
-                children: [{ path: RUTE.appEchipa, element: <EchipaPage /> }],
+                children: [
+                  { path: RUTE.appEchipa, element: <EchipaPage /> },
+                  { path: RUTE.appSetari, element: <SetariPage /> },
+                ],
               },
             ],
           },

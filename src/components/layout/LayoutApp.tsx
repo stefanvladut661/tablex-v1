@@ -5,6 +5,7 @@ import {
   LayoutGridIcon,
   ListIcon,
   LogOutIcon,
+  SettingsIcon,
   MenuIcon,
   MoonIcon,
   SunIcon,
@@ -33,6 +34,7 @@ const NAVIGATIE: ElementNav[] = [
   { cale: RUTE.appRezervari, eticheta: 'Lista rezervari', icoana: ListIcon },
   { cale: RUTE.appHarta, eticheta: 'Harta salii', icoana: LayoutGridIcon },
   { cale: RUTE.appEchipa, eticheta: 'Echipa', icoana: UsersIcon, doarManager: true },
+  { cale: RUTE.appSetari, eticheta: 'Setari', icoana: SettingsIcon, doarManager: true },
 ]
 
 function Meniu({ laNavigare }: { laNavigare?: () => void }) {

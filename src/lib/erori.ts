@@ -29,6 +29,19 @@ const MESAJE: Array<[RegExp, string]> = [
     'Masa este deja ocupata in intervalul ales (buffer-ul dintre rezervari inclus).'],
   [/customers_restaurant_id_telefon_key/i,
     'Exista deja un client cu acest numar de telefon.'],
+
+  // CHECK-urile din schema. Interfata valideaza deja aceleasi limite, deci
+  // aici ajungem doar daca cele doua s-au desincronizat — mesajul trebuie
+  // totusi sa fie inteligibil.
+  [/restaurants_buffer_minute_check/i, 'Buffer-ul trebuie sa fie intre 0 si 60 de minute.'],
+  [/restaurants_durata_implicita_minute_check/i,
+    'Durata implicita trebuie sa fie intre 90 si 180 de minute.'],
+  [/restaurants_max_scaune_masa_check/i, 'O masa poate avea intre 1 si 24 de scaune.'],
+  [/restaurants_data_retentie_ani_check/i, 'Retentia datelor trebuie sa fie intre 1 si 10 ani.'],
+  [/restaurants_culoare_accent_check/i, 'Culoarea trebuie scrisa in formatul #RRGGBB.'],
+  [/restaurants_slug_check/i,
+    'Adresa publica poate avea 3-50 caractere: litere mici, cifre si cratime.'],
+  [/reservations_nr_persoane_check/i, 'Numarul de persoane trebuie sa fie intre 1 si 200.'],
 ]
 
 export function mesajEroare(eroare: unknown): string {
