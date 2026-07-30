@@ -1,4 +1,5 @@
-import { LogOutIcon, MoonIcon, SunIcon } from 'lucide-react'
+import { Link } from 'react-router'
+import { LogOutIcon, MoonIcon, SunIcon, UsersIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -6,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth'
 import { useNotificari } from '@/hooks/useNotificari'
 import { useTema } from '@/hooks/useTema'
+import { RUTE } from '@/lib/rute'
 
 /**
  * Stub. Navbar-ul, sidebar-ul si calendarul propriu-zis vin in Faza 4;
@@ -30,6 +32,14 @@ export function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {profil.cont.rol === 'manager' && (
+              <Button asChild variant="ghost" size="sm">
+                <Link to={RUTE.appEchipa}>
+                  <UsersIcon />
+                  Echipa
+                </Link>
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={comutaTema} aria-label="Comuta tema">
               {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
             </Button>

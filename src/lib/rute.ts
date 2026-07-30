@@ -19,6 +19,9 @@ export const RUTE = {
 
   /** Panoul restaurantului (Manager / Ospatar). */
   app: '/app',
+  /** Creare restaurant — pentru un cont autentificat fara profil. */
+  appOnboarding: '/app/onboarding',
+  appEchipa: '/app/echipa',
   appRezervari: '/app/rezervari',
   appHarta: '/app/harta',
   appClienti: '/app/clienti',
@@ -31,9 +34,13 @@ export const RUTE = {
   widget: (slug: string) => `/r/${slug}`,
 } as const
 
-/** Unde ajunge un utilizator autentificat, in functie de tipul contului. */
+/**
+ * Unde ajunge un utilizator AUTENTIFICAT, in functie de tipul contului.
+ * tip === null inseamna cont valid fara profil: nu si-a creat inca
+ * restaurantul, deci merge in onboarding, nu pe landing.
+ */
 export function ruteDupaLogin(tip: 'admin' | 'super_admin' | null): string {
   if (tip === 'super_admin') return RUTE.superadmin
   if (tip === 'admin') return RUTE.app
-  return RUTE.acasa
+  return RUTE.appOnboarding
 }

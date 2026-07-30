@@ -1,15 +1,15 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 2 (landing + viewer 2D + demo) -->
-<!-- NEXT_TASK: Faza 3 - Onboarding (creare restaurant, slug, invitatii staff) -->
+<!-- LAST_COMPLETED: Faza 3 (onboarding + invitatii + RPC-uri) -->
+<!-- NEXT_TASK: Faza 4 - Dashboard & Calendar (navbar, sidebar, calendar D/W/M, lista, walk-in) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~25% MVP implementat
+**Status:** ~35% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
-**Ultima sesiune:** Faza 1c (auth + router) + 1d (RLS) + Faza 2 (landing + harta 2D)
+**Ultima sesiune:** Fazele 1c, 1d (RLS), 2 (landing + harta 2D), 3 (onboarding + invitatii)
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
 **Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote)
 
@@ -54,8 +54,8 @@ src/
 | 1c | Supabase Client + Contexts + Router | ✅ DONE | - | Client tipat, AuthProvider, 5 garzi, 9 pagini |
 | 1d | Row Level Security | ✅ DONE | - | RLS + politici pe 19 tabele, vedere `restaurante_publice` |
 | 2 | Landing + 2D Floor Plan Viewer | ✅ DONE | - | Landing cu preturi live + HartaZona (SVG, zoom/pan) + /demo |
-| **3** | **Onboarding Flow** | 🔴 TODO | ~1 session | Org creation, user invitation, slug generator |
-| 4 | Dashboard & Calendar | 🔴 TODO | ~3 sessions | HEAVIEST — navbar+sidebar+calendar (D/W/M)+list+walk-in |
+| 3 | Onboarding Flow | ✅ DONE | - | RPC creeaza_restaurant, generator slug, invitatii + pagina Echipa |
+| **4** | **Dashboard & Calendar** | 🔴 TODO | ~3 sessions | HEAVIEST — navbar+sidebar+calendar (D/W/M)+list+walk-in |
 | 5 | Real-time + Remaining Features | 🔴 TODO | ~2 sessions | Subscriptions, notifications, edge cases |
 
 **Total MVP:** ~8-9 sessions (est. 800k-900k tokens @ Haiku + 200k @ Opus)
@@ -268,6 +268,81 @@ Duration: 1 sesiune (Opus 5)
   plus un RPC de inserare a rezervarii. Se face in Faza 3/5, impreuna cu
   fluxul de rezervare.
 - Editorul de floor plan (Super Admin) → nu e in MVP-ul de restaurant.
+
+---
+6bis. FAZA 3: ONBOARDING + INVITATII — ✅ COMPLETATA
+
+Duration: 1 sesiune (Opus 5)
+
+6bis.1 De ce RPC-uri, nu insert-uri din client
+
+Politicile RLS permit scrierea in restaurants doar celui care e DEJA admin al
+restaurantului respectiv. Un cont proaspat nu trece — si nu vrem sa slabim
+politica, fiindca ar deschide crearea de restaurante oricui. Deci: functii
+SECURITY DEFINER care valideaza singure preconditiile.
+
+- migratia 06 (onboarding):
+  - slug_disponibil(text) → boolean, apelabila si de anon (verificare live in
+    formular), dar nu scurge lista de restaurante
+  - creeaza_restaurant(...) → creeaza restaurantul, randul de manager in
+    admin_users, o zona "Salon" si cele 4 campuri de sistem ale formularului;
+    refuza al doilea restaurant pe acelasi cont (§20.1)
+  - detalii_invitatie(token) → doar {restaurant, email, rol, expira_la}, doar
+    pentru invitatii active; tabela cu token-uri rămâne inaccesibila anon
+  - accepta_invitatie(token) → verifica potrivirea emailului, expirarea si
+    unicitatea contului, apoi insereaza in admin_users si marcheaza invitatia
+- migratia 07 (drepturi): "revoke ... from anon" din migratiile 05-06 NU avea
+  efect — Postgres acorda EXECUTE catre PUBLIC. Corectat cu revoke from public
+  + grant explicit. Verificat: anon primeste acum "permission denied for
+  function creeaza_restaurant" la nivel de privilegii, nu doar din verificarea
+  interna.
+- migratia 08 (corectie): stergerea unui restaurant era IMPOSIBILA. Cascada
+  ajungea in formular_campuri, iar trigger-ul protejeaza_camp_telefon refuza
+  randul 'telefon' indiferent de context. Ar fi blocat stergerea datelor la
+  cerere (§22.1) si scoaterea unui cont (§43). Acum protectia se aplica doar
+  cat timp restaurantul exista.
+
+6bis.2 Frontend
+
+- src/lib/slug.ts — generator + validator identic cu CHECK-ul din DB;
+  transliterare de diacritice (inclusiv formele cu sedila). Testat separat.
+- src/services/onboarding.ts, echipa.ts + src/hooks/useEchipa.ts, useDebounce.ts
+- /app/onboarding — un pas: identitate + slug verificat live, plan, facturare.
+  Sta INTENTIONAT in afara RutaAdmin: aici ajunge contul pe care RutaAdmin il
+  respinge. RutaAdmin nu mai arata "cont fara restaurant", ci redirectioneaza.
+- /invitatie?token=... — vizibila si neautentificat (trimite la login/signup si
+  revine); acoperă cazurile: token lipsa, invalid/expirat, email nepotrivit,
+  cont care are deja restaurant
+- /app/echipa — manager only (prima folosire reala a RutaManager): invitare cu
+  link copiabil, schimbare rol, activare/dezactivare acces
+- ruteDupaLogin(null) duce acum in onboarding, nu pe landing
+
+6bis.3 Verificat cap-coada, cu doi utilizatori reali (stersi apoi)
+
+- [x] manager creeaza restaurantul → vede exact 1 restaurant, 1 rand admin,
+      zona "Salon", cele 4 campuri de formular
+- [x] al doilea restaurant pe acelasi cont → refuzat
+- [x] anon nu poate citi staff_invitations (token-urile)
+- [x] invitatia nu poate fi acceptata de alt email si nu poate fi refolosita
+- [x] dupa acceptare, ospatarul vede restaurantul, echipa si zonele
+- [x] ospatarul poate insera clienti, dar NU zone si NU poate modifica
+      restaurantul; nu vede invitatiile
+- [x] managerul poate ce ospatarul nu poate
+
+Descoperire importanta pentru codul viitor: un UPDATE respins de RLS NU
+intoarce eroare — clauza USING filtreaza randul si PostgREST raspunde 200 cu
+zero randuri. Serviciile de echipa verifica acum numarul de randuri returnate
+si arunca eroare explicita, altfel interfata ar raporta "salvat" degeaba.
+
+6bis.4 Amanat
+
+- Trimiterea automata a emailului de invitatie: nevoie de Edge Function +
+  furnizor de email (Resend/Postmark). Pana atunci managerul copiaza linkul.
+- Signup pornit din pagina de invitatie nu revine automat la ea dupa
+  confirmarea emailului (linkul din email duce in /app → onboarding). Se
+  rezolva cand exista emailuri proprii de invitatie.
+- Invitatiile de Super Admin (super_admin_invitations) — flux intern, nefolosit
+  in MVP.
 
 ---
 7. COMMANDS CHEAT SHEET

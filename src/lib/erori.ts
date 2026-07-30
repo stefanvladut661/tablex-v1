@@ -16,6 +16,13 @@ const MESAJE: Array<[RegExp, string]> = [
     'Linkul a expirat sau a fost deja folosit. Cere unul nou.'],
   [/signups not allowed|signup is disabled/i, 'Inregistrarile sunt momentan dezactivate.'],
   [/failed to fetch|network/i, 'Nu am putut contacta serverul. Verifica-ti conexiunea.'],
+
+  // PostgREST / Postgres
+  [/staff_invitations_activa_idx/i, 'Exista deja o invitatie activa pentru acest email.'],
+  [/restaurants_slug_key|duplicate key.*slug/i, 'Adresa publica este deja folosita.'],
+  [/violates row-level security policy/i,
+    'Nu ai dreptul sa faci aceasta modificare cu rolul tau.'],
+  [/permission denied for function/i, 'Operatia nu este permisa pentru contul tau.'],
 ]
 
 export function mesajEroare(eroare: unknown): string {

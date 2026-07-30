@@ -53,6 +53,7 @@ export function RutaOaspete() {
   const { incarcare, esteAutentificat, profil } = useAuth()
 
   if (incarcare) return <EcranIncarcare />
+  // ruteDupaLogin duce in onboarding cand contul nu are inca un restaurant.
   if (esteAutentificat) return <Navigate to={ruteDupaLogin(profil?.tip ?? null)} replace />
 
   return <Outlet />
@@ -76,14 +77,9 @@ export function RutaAdmin() {
 
   if (incarcare) return <EcranIncarcare />
 
-  if (!profil) {
-    return (
-      <Blocaj
-        titlu="Cont fara restaurant"
-        descriere="Contul exista, dar nu e asociat niciunui restaurant. Daca ai primit o invitatie, deschide linkul din email."
-      />
-    )
-  }
+  // Cont valid, fara restaurant: onboarding, nu un ecran de eroare.
+  if (!profil) return <Navigate to={RUTE.appOnboarding} replace />
+
 
   if (profil.tip !== 'admin') return <Navigate to={RUTE.superadmin} replace />
 

@@ -1112,6 +1112,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accepta_invitatie: {
+        Args: { p_token: string }
+        Returns: string
+      }
+      creeaza_restaurant: {
+        Args: {
+          p_adresa?: string
+          p_cui?: string
+          p_nume: string
+          p_nume_firma?: string
+          p_nume_persoana?: string
+          p_oras?: string
+          p_plan?: Database["public"]["Enums"]["plan_tip"]
+          p_slug: string
+          p_telefon?: string
+          p_tip_locatie?: string
+        }
+        Returns: string
+      }
+      current_restaurant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      detalii_invitatie: {
+        Args: { p_token: string }
+        Returns: {
+          email: string
+          expira_la: string
+          restaurant_nume: string
+          rol: Database["public"]["Enums"]["admin_rol"]
+        }[]
+      }
       disponibilitate_mese: {
         Args: {
           p_durata_minute?: number
@@ -1125,6 +1157,22 @@ export type Database = {
           numar_masa: string
           table_id: string
         }[]
+      }
+      is_manager: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_super_admin_deplin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      slug_disponibil: {
+        Args: { p_slug: string }
+        Returns: boolean
       }
       verifica_conflicte_buffer: {
         Args: { p_buffer_nou: number; p_restaurant_id: string }
