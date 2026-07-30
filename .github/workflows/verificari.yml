@@ -1,0 +1,36 @@
+name: Verificari
+
+# O suita de teste pe care nimeni nu o ruleaza nu e o plasa de siguranta.
+# Ruleaza pe main si pe fiecare pull request.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificari:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Ordinea e intentionata: testele intai, fiindca esueaza cel mai repede
+      # si spun cel mai clar CE s-a stricat.
+      - name: Teste
+        run: npm test
+
+      - name: Tipuri si build
+        run: npm run build
+
+      # Lint-ul e ultimul si NU blocheaza: cele 5 erori din src/components/ui/*
+      # sunt cod generat de shadcn si sunt cunoscute (vezi plan.md §5.1.1).
+      # Codul propriu trece curat; le lasam vizibile fara sa opreasca pipeline-ul.
+      - name: Lint (informativ)
+        run: npm run lint
+        continue-on-error: true

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { aliniazaLaGrid, inCanvas, pozitieFinala } from '@/lib/geometrie-plan'
+import { aliniazaLaGrid, inCanvas, incadrareContinut, pozitieFinala } from '@/lib/geometrie-plan'
 
 const CANVAS = { latime: 1200, inaltime: 800 }
 const MASA = { latime: 80, inaltime: 80 }
@@ -92,6 +92,102 @@ describe('pozitieFinala', () => {
         expect(y, `grid ${grid}, y din ${intrare.y}`).toBeGreaterThanOrEqual(0)
         expect(x).toBeLessThanOrEqual(CANVAS.latime - MASA.latime)
         expect(y).toBeLessThanOrEqual(CANVAS.inaltime - MASA.inaltime)
+      }
+    }
+  })
+})
+
+describe('incadrareContinut', () => {
+  const CANVAS_MARE = { latime: 1200, inaltime: 800 }
+
+  it('fara continut arata tot canvasul', () => {
+    expect(incadrareContinut([], CANVAS_MARE)).toEqual({
+      x: 0, y: 0, latime: 1200, inaltime: 800,
+    })
+  })
+
+  it('strange incadrarea pe cateva mese dintr-un colt', () => {
+    const mese = [
+      { x: 100, y: 100, latime: 80, inaltime: 80 },
+      { x: 220, y: 100, latime: 80, inaltime: 80 },
+      { x: 100, y: 220, latime: 80, inaltime: 80 },
+    ]
+    const incadrare = incadrareContinut(mese, CANVAS_MARE)
+
+    // Mai stransa decat tot canvasul — asta e tot rostul.
+    expect(incadrare.latime).toBeLessThan(CANVAS_MARE.latime)
+    // Tot continutul trebuie sa incapa inauntru.
+    for (const masa of mese) {
+      expect(masa.x).toBeGreaterThanOrEqual(incadrare.x)
+      expect(masa.y).toBeGreaterThanOrEqual(incadrare.y)
+      expect(masa.x + masa.latime).toBeLessThanOrEqual(incadrare.x + incadrare.latime)
+      expect(masa.y + masa.inaltime).toBeLessThanOrEqual(incadrare.y + incadrare.inaltime)
+    }
+  })
+
+  it('pastreaza raportul canvasului, ca mesele rotunde sa nu para ovale', () => {
+    // Continut lung si ingust: fara corectie, raportul ar fi complet diferit.
+    const incadrare = incadrareContinut(
+      [{ x: 100, y: 380, latime: 900, inaltime: 40 }],
+      CANVAS_MARE,
+    )
+    const raportCanvas = CANVAS_MARE.latime / CANVAS_MARE.inaltime
+    expect(incadrare.latime / incadrare.inaltime).toBeCloseTo(raportCanvas, 5)
+  })
+
+  it('nu iese niciodata din canvas, nici pentru continut lipit de margine', () => {
+    const incadrare = incadrareContinut(
+      [{ x: 0, y: 0, latime: 80, inaltime: 80 }],
+      CANVAS_MARE,
+    )
+    expect(incadrare.x).toBeGreaterThanOrEqual(0)
+    expect(incadrare.y).toBeGreaterThanOrEqual(0)
+    expect(incadrare.x + incadrare.latime).toBeLessThanOrEqual(CANVAS_MARE.latime + 0.001)
+    expect(incadrare.y + incadrare.inaltime).toBeLessThanOrEqual(CANVAS_MARE.inaltime + 0.001)
+  })
+
+  it('cade inapoi pe tot canvasul cand continutul il umple oricum', () => {
+    const incadrare = incadrareContinut(
+      [{ x: 10, y: 10, latime: 1180, inaltime: 780 }],
+      CANVAS_MARE,
+    )
+    expect(incadrare).toEqual({ x: 0, y: 0, latime: 1200, inaltime: 800 })
+  })
+
+  it('ignora valorile corupte in loc sa produca NaN', () => {
+    const incadrare = incadrareContinut(
+      [
+        { x: 100, y: 100, latime: 80, inaltime: 80 },
+        { x: Number.NaN, y: 0, latime: 80, inaltime: 80 },
+      ],
+      CANVAS_MARE,
+    )
+    expect(Number.isFinite(incadrare.x)).toBe(true)
+    expect(Number.isFinite(incadrare.latime)).toBe(true)
+  })
+
+  it('INVARIANT: incadrarea contine tot continutul si sta in canvas', () => {
+    const cazuri = [
+      [{ x: 0, y: 0, latime: 40, inaltime: 40 }],
+      [{ x: 1100, y: 700, latime: 80, inaltime: 80 }],
+      [
+        { x: 60, y: 60, latime: 80, inaltime: 80 },
+        { x: 1000, y: 640, latime: 80, inaltime: 80 },
+      ],
+      [{ x: 500, y: 400, latime: 10, inaltime: 10 }],
+    ]
+
+    for (const continut of cazuri) {
+      const i = incadrareContinut(continut, CANVAS_MARE)
+      expect(i.x).toBeGreaterThanOrEqual(-0.001)
+      expect(i.y).toBeGreaterThanOrEqual(-0.001)
+      expect(i.x + i.latime).toBeLessThanOrEqual(CANVAS_MARE.latime + 0.001)
+      expect(i.y + i.inaltime).toBeLessThanOrEqual(CANVAS_MARE.inaltime + 0.001)
+      for (const d of continut) {
+        expect(d.x).toBeGreaterThanOrEqual(i.x - 0.001)
+        expect(d.x + d.latime).toBeLessThanOrEqual(i.x + i.latime + 0.001)
+        expect(d.y).toBeGreaterThanOrEqual(i.y - 0.001)
+        expect(d.y + d.inaltime).toBeLessThanOrEqual(i.y + i.inaltime + 0.001)
       }
     }
   })
