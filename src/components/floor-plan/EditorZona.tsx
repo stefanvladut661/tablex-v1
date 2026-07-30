@@ -2,6 +2,7 @@ import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from '
 
 import { ElementStructura } from '@/components/floor-plan/ElementStructura'
 import { Masa } from '@/components/floor-plan/Masa'
+import { aliniazaLaGrid, inCanvas as limiteazaInCanvas, pozitieFinala } from '@/lib/geometrie-plan'
 import { cn } from '@/lib/utils'
 import type { ElementStructura as Element, MasaHarta, ZonaHarta } from '@/types/floor-plan'
 
@@ -85,15 +86,16 @@ export function EditorZona({
     return { x, y }
   }
 
+  // Aritmetica de aliniere si limitare sta in lib/geometrie-plan.ts, ca sa fie
+  // testabila fara DOM — vezi comentariul de acolo.
+  const canvas = { latime: zona.canvas_latime, inaltime: zona.canvas_inaltime }
+
   function aliniaza(valoare: number): number {
-    return Math.round(valoare / zona.grid_marime) * zona.grid_marime
+    return aliniazaLaGrid(valoare, zona.grid_marime)
   }
 
   function inCanvas(latime: number, inaltime: number, x: number, y: number) {
-    return {
-      x: Math.min(Math.max(0, x), zona.canvas_latime - latime),
-      y: Math.min(Math.max(0, y), zona.canvas_inaltime - inaltime),
-    }
+    return limiteazaInCanvas({ latime, inaltime }, canvas, { x, y })
   }
 
   /** Dimensiunile obiectului tras, indiferent de stratul din care vine. */
@@ -187,13 +189,12 @@ export function EditorZona({
     const punct = laCanvas(eveniment)
     if (!masura || !punct) return
 
-    const brut = inCanvas(
-      masura.latime,
-      masura.inaltime,
-      punct.x - gest.decalajX,
-      punct.y - gest.decalajY,
+    const final = pozitieFinala(
+      { latime: masura.latime, inaltime: masura.inaltime },
+      canvas,
+      zona.grid_marime,
+      { x: punct.x - gest.decalajX, y: punct.y - gest.decalajY },
     )
-    const final = inCanvas(masura.latime, masura.inaltime, aliniaza(brut.x), aliniaza(brut.y))
 
     // Un clic simplu (fara deplasare) nu trebuie sa produca o scriere inutila.
     if (final.x === masura.x && final.y === masura.y) return
