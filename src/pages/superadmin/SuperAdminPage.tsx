@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   BanIcon,
   FileTextIcon,
+  LayoutGridIcon,
   LogOutIcon,
   MoonIcon,
   PlayIcon,
@@ -47,6 +49,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useNotificari } from '@/hooks/useNotificari'
 import { useTema } from '@/hooks/useTema'
 import { ETICHETE_STATUS_CERERE_FP } from '@/lib/etichete'
+import { RUTE } from '@/lib/rute'
 import {
   CHEI_FP,
   getCoadaCereri,
@@ -538,6 +541,12 @@ export function SuperAdminPage() {
 
                           <TableCell>
                             <div className="flex flex-wrap justify-end gap-1">
+                              <Button variant="outline" size="xs" asChild>
+                                <Link to={RUTE.superadminEditor(restaurant.id)}>
+                                  <LayoutGridIcon />
+                                  Plan
+                                </Link>
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="xs"
@@ -650,6 +659,12 @@ export function SuperAdminPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap justify-end gap-1">
+                            <Button variant="outline" size="xs" asChild>
+                              <Link to={RUTE.superadminEditor(cerere.restaurant_id)}>
+                                <LayoutGridIcon />
+                                Deseneaza
+                              </Link>
+                            </Button>
                             {cerere.status === 'pending' && (
                               <Button
                                 variant="outline"

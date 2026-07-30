@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: email de primire din widget (pg_net + Vault), trial/discount in panou, schita in coada echipei -->
-<!-- NEXT_TASK: QA manual (tragere cu mouse-ul pe calendar); apoi editorul de floor plan si incadrarea automata a hartii -->
+<!-- LAST_COMPLETED: editorul de floor plan (Layer 2: zone si mese), cu garda de stergere in baza -->
+<!-- NEXT_TASK: Layer 1 in editor (pereti, bar, intrare); conectarea furnizorului de email; teste automate -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -780,6 +780,106 @@ si acum coada nu mai arata valoarea bruta din enum.
 Verificat in browser, cu manager + membru al echipei: schita incarcata de
 manager se randeaza in coada (120×80, exact fisierul incarcat), cererea fara
 schita arata "—", iar incarcarea in folderul altui restaurant e refuzata.
+
+---
+6duodecies. EDITORUL DE FLOOR PLAN (§8.4) — ✅ LAYER 2
+
+Piesa care tinea bucla deschisa: coada de cereri permitea marcarea unei cereri
+ca "publicat", dar NU exista nicio unealta care sa deseneze planul. Singura cale
+de a crea geometria unei sali era SQL direct in baza — iar harta, calendarul si
+widgetul public depind toate de ea.
+
+/superadmin/editor/:restaurantId, doar pentru echipa TableX. RLS-ul era deja
+pregatit (ALL pe zones/tables/floor_plan_layers pentru is_super_admin), deci
+editorul e pur frontend — nicio politica noua.
+
+6duodecies.1 Ce acopera si ce nu
+
+Aceasta versiune acopera Layer 2 — zone si mese — adica exact ce au nevoie
+rezervarile, harta si widgetul ca sa functioneze pentru un restaurant nou.
+Layer 1 (pereti, bar, intrare, DJ) se tine in floor_plan_layers.continut si
+URMEAZA separat: e decor, nu functionalitate. Editorul il deseneaza deja daca
+exista, dar nu il editeaza.
+
+- EditorZona.tsx — canvas SVG propriu, nu HartaZona: viewer-ul rămâne curat,
+  fiindca e folosit si in widgetul public. Reutilizeaza Masa si
+  ElementStructura pentru desen.
+- Tragere cu mouse-ul, aliniere la grid, limitare in canvas. De la tastatura:
+  sageti = un pas de grid, Shift + sageti = un pixel.
+- Panou de proprietati: numar, locuri, forma, latime/inaltime, rotatie, activa.
+- Zona: nume, dimensiuni canvas, pas grid, activa, stergere.
+
+Aici clientX/clientY sunt CORECTE, spre deosebire de calendar (unde a trebuit
+pageY): getScreenCTM() lucreaza tot in spatiul clientului, deci derularea
+paginii se anuleaza de ambele parti ale transformarii.
+
+6duodecies.2 Patru defecte reale, toate gasite la testare
+
+1. NUMEROTAREA MESELOR se calcula din starea React si pe ZONA. Doua greseli
+   intr-o bucata de cod: constrangerea e UNIQUE (restaurant_id, numar_masa) —
+   pe restaurant, nu pe zona — iar cinci asezari rapide una dupa alta calculau
+   toate acelasi numar dintr-un cache nereimprospatat. Verificat: din 3 mese
+   asezate rapid se crea UNA. Acum numarul se calculeaza in serviciu, din baza,
+   cu reincercare la 23505. Reverificat: 5 asezari rapide → 5 mese, numere 1-6.
+
+2. releasePointerCapture ARUNCA daca pointerul nu mai e capturat, iar apelul era
+   INAINTEA comiterii mutarii — deci exceptia abandona mutarea si lasa masa
+   blocata in pozitia de previzualizare. Se manifesta la pointercancel, unde
+   browserul a eliberat deja captura. Acum: curatam starea, apoi eliberam
+   captura in try/catch, apoi comitem.
+
+3. STERGEREA RUPEA REZERVARI. Cheile straine sunt permisive cu buna stiinta
+   (table_allocations CASCADE, reservations.table_id SET NULL, tables.zone_id
+   CASCADE), deci un DELETE pe o masa desprindea tacit rezervarile viitoare:
+   raman in baza, fara masa, fara niciun mesaj. Pana acum nu conta — nimic din
+   interfata nu stergea geometrie. Migratia 18 pune garda in BAZA, nu in
+   interfata, din acelasi motiv ca la coloanele privilegiate: API-ul e public.
+
+4. ...IAR GARDA A BLOCAT STERGEREA RESTAURANTULUI — aceeasi clasa de defect ca
+   in migratia 08, reintrodusa de mine. Cascada restaurant → zone → tables
+   aprindea garda in mijlocul ei si anula toata tranzactia, adica exact
+   stergerea datelor la cerere (§22.1) si scoaterea unui cont (§43). Migratia 19
+   aplica solutia din 08: garda se aplica doar cat timp PARINTELE exista;
+   absenta lui e semnalul ca decizia a fost luata mai sus.
+   A doua corectie in 19: garda pe zona numara doar reservations.zone_id, dar o
+   rezervare poate avea table_id completat si zone_id gol — acum numaram si
+   rezervarile legate de mesele zonei.
+
+6duodecies.3 DEFECT DE APLICATIE gasit pe drum: erorile din baza nu ajungeau
+la utilizator
+
+Cel mai valoros lucru gasit in aceasta sesiune, si nu are legatura cu editorul.
+
+`mesajEroare` incepea cu `eroare instanceof Error`. Dar erorile PostgREST NU
+sunt instante de Error — supabase-js le intoarce ca obiecte simple
+{message, details, hint, code}. Deci `brut` rămânea gol si ORICE eroare venita
+din baza ajungea la utilizator ca „A aparut o eroare neasteptata":
+  - mesajele CHECK-urilor (buffer, durata, scaune, retentie, culoare, slug)
+  - conflictul EXCLUDE de la double-booking
+  - refuzurile RLS si cele scrise anume in triggere
+Toate erau scrise cu grija si niciunul nu se vedea vreodata.
+
+Verificat direct: obiectul are `constructor: "Object"`, `esteError: false`, dar
+`message` corect completat. Dupa corectie, acelasi flux arata mesajul real al
+bazei. Numele constrangerilor apar adesea in `details`, nu in `message`, deci
+cautam acum in message + details + hint — altfel tiparele existente rateaza.
+
+6duodecies.4 Verificat cap-coada, in browser, cu date reale
+
+- [x] zona creata din dialog; 6 mese asezate prin clic pe canvas, la pozitiile
+      exacte cerute
+- [x] tragere cu POINTER REAL: (200,160) → colt brut (477,353) → aliniat
+      (480,360), exact cat prezicea aritmetica. Prima tragere verificata cu o
+      secventa de pointer completa in acest proiect.
+- [x] tastatura: 480 → 500 (pas de grid), 360 → 361 (Shift)
+- [x] capacitate 4 → 6 salvata din panou
+- [x] numar duplicat → mesaj romanesc, nu eroare bruta din Postgres
+- [x] stergerea mesei cu rezervare viitoare → refuzata, cu mesajul bazei afisat
+      in interfata
+- [x] stergerea zonei → refuzata; stergerea restaurantului → REUSITA
+- [x] BUCLA INCHISA: planul desenat de echipa apare in vederile publice
+      (zone_publice, mese_publice) pentru un vizitator ANONIM, in timp ce
+      zones si tables raman [] pentru el
 
 ---
 7. COMMANDS CHEAT SHEET

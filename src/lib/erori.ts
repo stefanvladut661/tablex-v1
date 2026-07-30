@@ -29,6 +29,11 @@ const MESAJE: Array<[RegExp, string]> = [
     'Masa este deja ocupata in intervalul ales (buffer-ul dintre rezervari inclus).'],
   [/customers_restaurant_id_telefon_key/i,
     'Exista deja un client cu acest numar de telefon.'],
+  // Numerotarea meselor e unica pe RESTAURANT, nu pe zona — devine vizibila
+  // in editor, unde numerele se scriu de mana.
+  [/tables_restaurant_id_numar_masa_key/i,
+    'Exista deja o masa cu acest numar in restaurant. Alege alt numar.'],
+  [/zones_restaurant_id_nume_key/i, 'Exista deja o zona cu acest nume.'],
 
   // CHECK-urile din schema. Interfata valideaza deja aceleasi limite, deci
   // aici ajungem doar daca cele doua s-au desincronizat — mesajul trebuie
@@ -44,17 +49,42 @@ const MESAJE: Array<[RegExp, string]> = [
   [/reservations_nr_persoane_check/i, 'Numarul de persoane trebuie sa fie intre 1 si 200.'],
 ]
 
+/**
+ * Aduna textul pe care merita sa-l cautam intr-o eroare.
+ *
+ * DEFECT GASIT LA TESTAREA EDITORULUI, cu efect pe toata aplicatia:
+ * erorile PostgREST NU sunt instante de Error — supabase-js le intoarce ca
+ * obiecte simple {message, details, hint, code}. Verificarea de dinainte
+ * (`eroare instanceof Error`) le respingea, deci `brut` ramanea gol si ORICE
+ * eroare venita din baza ajungea la utilizator ca "A aparut o eroare
+ * neasteptata": mesajele CHECK-urilor, conflictul EXCLUDE, refuzurile RLS si
+ * mesajele scrise anume in triggere nu se vedeau niciodata.
+ *
+ * Numele constrangerilor apar adesea in `details`, nu in `message`, deci
+ * cautam in ambele (plus `hint`), altfel tiparele de mai sus rateaza.
+ */
+function textEroare(eroare: unknown): string {
+  if (typeof eroare === 'string') return eroare
+  if (!eroare || typeof eroare !== 'object') return ''
+
+  const sursa = eroare as { message?: unknown; details?: unknown; hint?: unknown }
+  return [sursa.message, sursa.details, sursa.hint]
+    .filter((parte): parte is string => typeof parte === 'string' && parte.length > 0)
+    .join(' · ')
+}
+
 export function mesajEroare(eroare: unknown): string {
-  const brut =
-    eroare instanceof Error
-      ? eroare.message
-      : typeof eroare === 'string'
-        ? eroare
-        : ''
+  const brut = textEroare(eroare)
 
   for (const [tipar, mesaj] of MESAJE) {
     if (tipar.test(brut)) return mesaj
   }
 
-  return brut || 'A aparut o eroare neasteptata. Incearca din nou.'
+  // Fara tipar potrivit ramane mesajul brut. Pentru erorile scrise de noi in
+  // triggere e chiar textul in romana pe care vrem sa-l vada utilizatorul.
+  const doarMesaj = typeof (eroare as { message?: unknown })?.message === 'string'
+    ? ((eroare as { message: string }).message)
+    : brut
+
+  return doarMesaj || 'A aparut o eroare neasteptata. Incearca din nou.'
 }

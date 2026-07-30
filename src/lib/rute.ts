@@ -29,6 +29,8 @@ export const RUTE = {
 
   /** Panoul echipei TableX. */
   superadmin: '/superadmin',
+  /** Editorul de floor plan (§8.4) — se deseneaza de echipa, nu de restaurant. */
+  superadminEditor: (restaurantId: string) => `/superadmin/editor/${restaurantId}`,
 
   /** Widget public de rezervare, pe slug-ul restaurantului. */
   widget: (slug: string) => `/r/${slug}`,

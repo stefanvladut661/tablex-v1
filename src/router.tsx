@@ -25,6 +25,7 @@ import { HartaPage } from '@/pages/app/HartaPage'
 import { ListaRezervariPage } from '@/pages/app/ListaRezervariPage'
 import { OnboardingPage } from '@/pages/app/OnboardingPage'
 import { SetariPage } from '@/pages/app/SetariPage'
+import { EditorPlanPage } from '@/pages/superadmin/EditorPlanPage'
 import { SuperAdminPage } from '@/pages/superadmin/SuperAdminPage'
 import { RUTE } from '@/lib/rute'
 
@@ -81,7 +82,12 @@ export const router = createBrowserRouter([
       },
       {
         element: <RutaSuperAdmin />,
-        children: [{ path: RUTE.superadmin, element: <SuperAdminPage /> }],
+        children: [
+          { path: RUTE.superadmin, element: <SuperAdminPage /> },
+          // Parametrizata, deci scrisa aici direct: RUTE.superadminEditor e o
+          // functie (constructorul de cale), nu un sablon de ruta.
+          { path: '/superadmin/editor/:restaurantId', element: <EditorPlanPage /> },
+        ],
       },
     ],
   },
