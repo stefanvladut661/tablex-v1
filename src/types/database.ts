@@ -1131,6 +1131,24 @@ export type Database = {
         }
         Returns: string
       }
+      creeaza_rezervare: {
+        Args: {
+          p_client_nume: string
+          p_data_ora: string
+          p_durata_minute?: number
+          p_email?: string
+          p_gdpr?: boolean
+          p_note_client?: string
+          p_note_interne?: string
+          p_nr_persoane: number
+          p_status?: Database["public"]["Enums"]["rezervare_status"]
+          p_sursa?: Database["public"]["Enums"]["rezervare_sursa"]
+          p_table_id?: string
+          p_telefon: string
+          p_zone_id?: string
+        }
+        Returns: string
+      }
       current_restaurant_id: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -1,8 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller } from 'react-hook-form'
-import { Link } from 'react-router'
-import { ArrowLeftIcon, CopyIcon, Loader2Icon, UserPlusIcon } from 'lucide-react'
+import { CopyIcon, Loader2Icon, UserPlusIcon } from 'lucide-react'
 import { z } from 'zod'
 
 import { CampText } from '@/components/formular/CampText'
@@ -30,21 +29,10 @@ import {
 import { useAuth } from '@/hooks/useAuth'
 import { useInvitatii, useMembriEchipa, useMutatiiEchipa } from '@/hooks/useEchipa'
 import { useNotificari } from '@/hooks/useNotificari'
+import { ETICHETE_ROL_ADMIN, ETICHETE_STATUS_INVITATIE } from '@/lib/etichete'
 import { RUTE } from '@/lib/rute'
 import { emailSchema } from '@/lib/validari'
 import type { Enums } from '@/types/database'
-
-const ETICHETE_ROL: Record<Enums<'admin_rol'>, string> = {
-  manager: 'Manager',
-  ospatar: 'Ospatar',
-}
-
-const ETICHETE_STATUS_INVITATIE: Record<Enums<'invitatie_status'>, string> = {
-  trimisa: 'In asteptare',
-  acceptata: 'Acceptata',
-  expirata: 'Expirata',
-  anulata: 'Anulata',
-}
 
 const schemaInvitatie = z.object({
   email: emailSchema,
@@ -118,22 +106,9 @@ export function EchipaPage() {
   }
 
   return (
-    <div className="min-h-svh bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-4xl items-center gap-3 px-6 py-4">
-          <Button asChild variant="ghost" size="icon-sm" aria-label="Inapoi la panou">
-            <Link to={RUTE.app}>
-              <ArrowLeftIcon />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="font-semibold tracking-tight">Echipa</h1>
-            <p className="text-xs text-muted-foreground">{profil.restaurant.nume}</p>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto grid max-w-4xl gap-4 px-6 py-6">
+    <div className="p-4 sm:p-6">
+      <div className="mx-auto grid max-w-4xl gap-4">
+        <h1 className="text-lg font-semibold tracking-tight">Echipa</h1>
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Invita o persoana</CardTitle>
@@ -226,7 +201,7 @@ export function EchipaPage() {
                               care se retrogradeaza singur ar lasa restaurantul
                               fara nimeni care sa gestioneze echipa. */}
                           {esteEu ? (
-                            <Badge variant="secondary">{ETICHETE_ROL[membru.rol]}</Badge>
+                            <Badge variant="secondary">{ETICHETE_ROL_ADMIN[membru.rol]}</Badge>
                           ) : (
                             <Select
                               value={membru.rol}
@@ -296,7 +271,7 @@ export function EchipaPage() {
                   {(invitatii.data ?? []).map((invitatie) => (
                     <TableRow key={invitatie.id}>
                       <TableCell className="font-medium">{invitatie.email}</TableCell>
-                      <TableCell>{ETICHETE_ROL[invitatie.rol]}</TableCell>
+                      <TableCell>{ETICHETE_ROL_ADMIN[invitatie.rol]}</TableCell>
                       <TableCell>
                         <Badge variant={invitatie.status === 'trimisa' ? 'default' : 'secondary'}>
                           {ETICHETE_STATUS_INVITATIE[invitatie.status]}
@@ -335,7 +310,7 @@ export function EchipaPage() {
             )}
           </CardContent>
         </Card>
-      </main>
+      </div>
     </div>
   )
 }

@@ -1,15 +1,15 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 3 (onboarding + invitatii + RPC-uri) -->
-<!-- NEXT_TASK: Faza 4 - Dashboard & Calendar (navbar, sidebar, calendar D/W/M, lista, walk-in) -->
+<!-- LAST_COMPLETED: Faza 4 (shell, calendar zi/saptamana/luna, lista, harta live, walk-in) -->
+<!-- NEXT_TASK: Faza 5 - Realtime + widget public /r/:slug + notificari -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~35% MVP implementat
+**Status:** ~60% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
-**Ultima sesiune:** Fazele 1c, 1d (RLS), 2 (landing + harta 2D), 3 (onboarding + invitatii)
+**Ultima sesiune:** Fazele 1c, 1d (RLS), 2 (landing + harta 2D), 3 (onboarding), 4 (calendar + operatii)
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
 **Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote)
 
@@ -55,8 +55,8 @@ src/
 | 1d | Row Level Security | ✅ DONE | - | RLS + politici pe 19 tabele, vedere `restaurante_publice` |
 | 2 | Landing + 2D Floor Plan Viewer | ✅ DONE | - | Landing cu preturi live + HartaZona (SVG, zoom/pan) + /demo |
 | 3 | Onboarding Flow | ✅ DONE | - | RPC creeaza_restaurant, generator slug, invitatii + pagina Echipa |
-| **4** | **Dashboard & Calendar** | 🔴 TODO | ~3 sessions | HEAVIEST — navbar+sidebar+calendar (D/W/M)+list+walk-in |
-| 5 | Real-time + Remaining Features | 🔴 TODO | ~2 sessions | Subscriptions, notifications, edge cases |
+| 4 | Dashboard & Calendar | ✅ DONE | - | Shell, calendar zi/saptamana/luna, lista, harta live, walk-in |
+| **5** | **Real-time + widget public** | 🔴 TODO | ~2 sessions | Subscriptions, notificari, /r/:slug, emailuri |
 
 **Total MVP:** ~8-9 sessions (est. 800k-900k tokens @ Haiku + 200k @ Opus)
 
@@ -343,6 +343,78 @@ si arunca eroare explicita, altfel interfata ar raporta "salvat" degeaba.
   rezolva cand exista emailuri proprii de invitatie.
 - Invitatiile de Super Admin (super_admin_invitations) — flux intern, nefolosit
   in MVP.
+
+---
+6ter. FAZA 4: PANOU, CALENDAR, LISTA, HARTA LIVE — ✅ COMPLETATA
+
+Duration: 1 sesiune (Opus 5)
+
+6ter.1 Baza de date (migratia 09)
+
+- creeaza_rezervare(...) — SECURITY INVOKER, nu definer: apelantul e deja admin,
+  deci politicile RLS rămân active. Nu primeste restaurant_id, il ia din
+  current_restaurant_id(), deci nu poate scrie in alt restaurant. Rostul ei e
+  sa tina intr-un loc regulile de business: upsert de client pe telefon (§16.1),
+  legarea customer_id, iar intervalele rămân treaba trigger-ului existent.
+- actualizeaza_crm_client() — nr_vizite / nr_no_show / data_ultima_vizita se
+  intretin in baza, la tranzitia de status, nu in client: orice cale (panou,
+  widget, job) actualizeaza aceleasi contoare. Un UPDATE care nu schimba
+  statusul nu mai numara o vizita.
+
+6ter.2 Frontend
+
+- src/lib/timp.ts — TOATE gruparile pe zi trec prin fusul restaurantului
+  (date-fns-tz). Datele sunt instante absolute; "ziua de lucru" e locala, deci
+  un restaurant deschis pana la 01:00 nu-si pierde rezervarile.
+- src/lib/program.ts — grila de ore vine din restaurants.program_standard
+- src/lib/etichete.ts — traducerile enum-urilor, intr-un singur loc
+- src/services/rezervari.ts, mese.ts + hooks useRezervari, useMese
+- LayoutApp — sidebar (purtatorul celor 30%) + bara de sus + drawer pe mobil
+- CalendarPage cu trei vederi:
+  - Zi: grila orara, blocuri poziționate pe timp, impachetate in benzi cand se
+    suprapun (components/calendar/aranjare.ts). Grupurile de suprapunere se
+    inchid separat, altfel o aglomerare la 20:00 ar subtia toata ziua.
+  - Saptamana: sapte coloane cu liste compacte — pe coloane inguste blocurile
+    proportionale devin ilizibile; personalul vrea "cat de plin e".
+  - Luna: grila cu numar de rezervari, acoperiri si cate sunt in asteptare.
+- ListaRezervariPage — filtre pe status + caut pe nume/telefon/masa
+- HartaPage — harta din Faza 2, alimentata cu date reale: statusul fiecarei
+  mese e RECALCULAT pentru ora afisata, cu bara orara din programul zilei.
+  Click pe masa libera → walk-in pe ea; pe masa ocupata → rezervarea.
+- DialogRezervare — folosit si pentru rezervare si pentru walk-in; mesele libere
+  vin din RPC-ul disponibilitate_mese, deci regula de buffer nu se reimplementeaza
+- SheetRezervare — confirma / respinge / sosit / neprezentat / anuleaza
+
+Pe calendar apar doar statusurile care ocupa efectiv masa (pending, confirmata,
+sosita) — aceleasi pe care le tine table_allocations. Anulatele si respinsele
+sunt in lista, cu filtre.
+
+6ter.3 Verificat cu un restaurant real (seed + stergere la final)
+
+- [x] 12 mese, 2 zone, 9 rezervari: calendarul le aseaza corect, 6 suprapuneri
+      la 18:45–21:00 in benzi paralele
+- [x] harta la 11:46 → 0 mese ocupate; la 20:00 → 4 (2 confirmate, 1 sosita,
+      1 pending pe amber), exact cat prezicea intervalul fiecarei rezervari
+- [x] lista: toate cele 8 de azi, inclusiv anulata (care NU apare pe calendar)
+- [x] creeaza_rezervare pe masa libera → OK; a doua pe aceeasi masa si ora →
+      23P01 din constrangerea EXCLUDE, tradus in mesaj romanesc
+- [x] clientul se creeaza automat din RPC; sosita → nr_vizite 1; acelasi update
+      repetat → tot 1; no_show → nr_no_show 1; alocarea dispare cand rezervarea
+      nu mai e activa
+
+Defect prins la verificare: pe fundalurile "-soft" foloseam
+text-status-*-foreground, care e proiectat pentru varianta SOLIDA — in dark mode
+ieseau texte inchise pe fundal inchis. Regula acum: fundal -soft → text-foreground
+(se inverseaza cu tema); fundal solid → text-status-*-foreground.
+
+6ter.4 Amanat
+
+- Drag & drop pe calendar: serviciul mutaRezervare(id, masa/ora) exista si e
+  testat prin RLS, dar interactiunea de tragere nu e implementata.
+- Walk-in fara telefon: reservations.telefon e NOT NULL (§16.1). Daca spec §25.6
+  chiar vrea walk-in anonim, e nevoie de o decizie in baza de date (coloana
+  nullabila sau valoare sintetica) — nu inventam date in interfata.
+- Vederea pe mese (timeline per masa) si prelungirea rezervarii direct din harta.
 
 ---
 7. COMMANDS CHEAT SHEET

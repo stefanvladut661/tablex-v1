@@ -23,6 +23,12 @@ const MESAJE: Array<[RegExp, string]> = [
   [/violates row-level security policy/i,
     'Nu ai dreptul sa faci aceasta modificare cu rolul tau.'],
   [/permission denied for function/i, 'Operatia nu este permisa pentru contul tau.'],
+  // Constrangerea EXCLUDE din §15.3 — singurul loc unde se aplica regula
+  // anti-double-booking, deci si singurul mesaj de conflict de care avem nevoie.
+  [/table_allocations_fara_suprapunere|exclusion constraint/i,
+    'Masa este deja ocupata in intervalul ales (buffer-ul dintre rezervari inclus).'],
+  [/customers_restaurant_id_telefon_key/i,
+    'Exista deja un client cu acest numar de telefon.'],
 ]
 
 export function mesajEroare(eroare: unknown): string {

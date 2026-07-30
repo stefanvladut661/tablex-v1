@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router'
 
+import { LayoutApp } from '@/components/layout/LayoutApp'
 import {
   RutaAdmin,
   RutaManager,
@@ -17,8 +18,10 @@ import { ParolaNouaPage } from '@/pages/auth/ParolaNouaPage'
 import { ResetareParolaPage } from '@/pages/auth/ResetareParolaPage'
 import { SignupPage } from '@/pages/auth/SignupPage'
 import { VerificaEmailPage } from '@/pages/auth/VerificaEmailPage'
-import { DashboardPage } from '@/pages/app/DashboardPage'
+import { CalendarPage } from '@/pages/app/CalendarPage'
 import { EchipaPage } from '@/pages/app/EchipaPage'
+import { HartaPage } from '@/pages/app/HartaPage'
+import { ListaRezervariPage } from '@/pages/app/ListaRezervariPage'
 import { OnboardingPage } from '@/pages/app/OnboardingPage'
 import { SuperAdminPage } from '@/pages/superadmin/SuperAdminPage'
 import { RUTE } from '@/lib/rute'
@@ -36,12 +39,11 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Fara garda: /parola-noua ruleaza tocmai pe sesiunea de recovery, iar
-  // /verifica-email e vizibil si inainte de confirmarea contului.
+  // Fara garda: /parola-noua ruleaza tocmai pe sesiunea de recovery,
+  // /verifica-email e vizibil inainte de confirmarea contului, iar pagina de
+  // invitatie trebuie sa poata trimite invitatul la login sau la signup.
   { path: RUTE.parolaNoua, element: <ParolaNouaPage /> },
   { path: RUTE.verificaEmail, element: <VerificaEmailPage /> },
-  // Pagina de invitatie trebuie sa fie vizibila si neautentificat: de acolo
-  // trimite invitatul la login sau la crearea contului.
   { path: RUTE.invitatie, element: <InvitatiePage /> },
   { path: RUTE.mentenanta, element: <MentenantaPage /> },
   { path: RUTE.demoHarta, element: <DemoHartaPage /> },
@@ -55,10 +57,18 @@ export const router = createBrowserRouter([
       {
         element: <RutaAdmin />,
         children: [
-          { path: RUTE.app, element: <DashboardPage /> },
           {
-            element: <RutaManager />,
-            children: [{ path: RUTE.appEchipa, element: <EchipaPage /> }],
+            // Shell-ul comun (sidebar + bara de sus) pentru tot panoul.
+            element: <LayoutApp />,
+            children: [
+              { path: RUTE.app, element: <CalendarPage /> },
+              { path: RUTE.appRezervari, element: <ListaRezervariPage /> },
+              { path: RUTE.appHarta, element: <HartaPage /> },
+              {
+                element: <RutaManager />,
+                children: [{ path: RUTE.appEchipa, element: <EchipaPage /> }],
+              },
+            ],
           },
         ],
       },
