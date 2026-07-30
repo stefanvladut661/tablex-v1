@@ -482,6 +482,60 @@ export type Database = {
           },
         ]
       }
+      notificari: {
+        Row: {
+          citita_la: string | null
+          created_at: string
+          destinatie: Database["public"]["Enums"]["notificare_destinatie"]
+          id: string
+          mesaj: string | null
+          reservation_id: string | null
+          restaurant_id: string | null
+          tip: Database["public"]["Enums"]["notificare_tip"]
+          titlu: string
+          urgenta: Database["public"]["Enums"]["notificare_urgenta"]
+        }
+        Insert: {
+          citita_la?: string | null
+          created_at?: string
+          destinatie?: Database["public"]["Enums"]["notificare_destinatie"]
+          id?: string
+          mesaj?: string | null
+          reservation_id?: string | null
+          restaurant_id?: string | null
+          tip: Database["public"]["Enums"]["notificare_tip"]
+          titlu: string
+          urgenta?: Database["public"]["Enums"]["notificare_urgenta"]
+        }
+        Update: {
+          citita_la?: string | null
+          created_at?: string
+          destinatie?: Database["public"]["Enums"]["notificare_destinatie"]
+          id?: string
+          mesaj?: string | null
+          reservation_id?: string | null
+          restaurant_id?: string | null
+          tip?: Database["public"]["Enums"]["notificare_tip"]
+          titlu?: string
+          urgenta?: Database["public"]["Enums"]["notificare_urgenta"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificari_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificari_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       program_exceptii: {
         Row: {
           created_at: string
@@ -1109,7 +1163,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      mese_publice: {
+        Row: {
+          capacitate: number | null
+          forma: Database["public"]["Enums"]["masa_forma"] | null
+          grup_unire_id: string | null
+          id: string | null
+          inaltime: number | null
+          latime: number | null
+          numar_masa: string | null
+          pozitie_x: number | null
+          pozitie_y: number | null
+          restaurant_id: string | null
+          rotatie: number | null
+          zone_id: string | null
+        }
+        Relationships: []
+      }
+      restaurante_publice: {
+        Row: {
+          aprobare_automata: boolean | null
+          culoare_accent: string | null
+          durata_implicita_minute: number | null
+          fus_orar: string | null
+          id: string | null
+          logo_url: string | null
+          max_scaune_masa: number | null
+          nume: string | null
+          oras: string | null
+          program_standard: Json | null
+          slug: string | null
+          tip_locatie: string | null
+        }
+        Relationships: []
+      }
+      structura_publica: {
+        Row: {
+          continut: Json | null
+          restaurant_id: string | null
+          zone_id: string | null
+        }
+        Relationships: []
+      }
+      zone_publice: {
+        Row: {
+          canvas_inaltime: number | null
+          canvas_latime: number | null
+          grid_marime: number | null
+          id: string | null
+          nume: string | null
+          ordine_afisare: number | null
+          restaurant_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accepta_invitatie: {
@@ -1176,6 +1283,10 @@ export type Database = {
           table_id: string
         }[]
       }
+      este_deschis: {
+        Args: { p_instant: string; p_restaurant_id: string }
+        Returns: boolean
+      }
       is_manager: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1187,6 +1298,20 @@ export type Database = {
       is_super_admin_deplin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      rezerva_public: {
+        Args: {
+          p_client_nume: string
+          p_data_ora: string
+          p_email?: string
+          p_gdpr?: boolean
+          p_note_client?: string
+          p_nr_persoane: number
+          p_slug: string
+          p_telefon: string
+          p_zone_id?: string
+        }
+        Returns: Json
       }
       slug_disponibil: {
         Args: { p_slug: string }

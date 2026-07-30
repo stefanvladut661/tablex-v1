@@ -13,6 +13,7 @@ import { InvitatiePage } from '@/pages/InvitatiePage'
 import { LandingPage } from '@/pages/LandingPage'
 import { MentenantaPage } from '@/pages/MentenantaPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { WidgetRezervarePage } from '@/pages/WidgetRezervarePage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ParolaNouaPage } from '@/pages/auth/ParolaNouaPage'
 import { ResetareParolaPage } from '@/pages/auth/ResetareParolaPage'
@@ -47,6 +48,8 @@ export const router = createBrowserRouter([
   { path: RUTE.invitatie, element: <InvitatiePage /> },
   { path: RUTE.mentenanta, element: <MentenantaPage /> },
   { path: RUTE.demoHarta, element: <DemoHartaPage /> },
+  // Widgetul public de rezervare, pe slug-ul restaurantului.
+  { path: '/r/:slug', element: <WidgetRezervarePage /> },
 
   {
     element: <RutaProtejata />,

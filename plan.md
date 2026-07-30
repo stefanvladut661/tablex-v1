@@ -1,15 +1,15 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 4 (shell, calendar zi/saptamana/luna, lista, harta live, walk-in) -->
-<!-- NEXT_TASK: Faza 5 - Realtime + widget public /r/:slug + notificari -->
+<!-- LAST_COMPLETED: Faza 5 (realtime, widget public /r/:slug, notificari) -->
+<!-- NEXT_TASK: MVP complet. Ramase: emailuri (Edge Function), setari restaurant, drag-drop calendar, panou super admin -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~60% MVP implementat
+**Status:** ~75% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
-**Ultima sesiune:** Fazele 1c, 1d (RLS), 2 (landing + harta 2D), 3 (onboarding), 4 (calendar + operatii)
+**Ultima sesiune:** Fazele 1c, 1d, 2, 3, 4 si 5 — de la auth pana la widget public
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
 **Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote)
 
@@ -56,7 +56,7 @@ src/
 | 2 | Landing + 2D Floor Plan Viewer | ✅ DONE | - | Landing cu preturi live + HartaZona (SVG, zoom/pan) + /demo |
 | 3 | Onboarding Flow | ✅ DONE | - | RPC creeaza_restaurant, generator slug, invitatii + pagina Echipa |
 | 4 | Dashboard & Calendar | ✅ DONE | - | Shell, calendar zi/saptamana/luna, lista, harta live, walk-in |
-| **5** | **Real-time + widget public** | 🔴 TODO | ~2 sessions | Subscriptions, notificari, /r/:slug, emailuri |
+| 5 | Real-time + widget public | ✅ DONE | - | Subscriptions, notificari, /r/:slug (emailurile rămân) |
 
 **Total MVP:** ~8-9 sessions (est. 800k-900k tokens @ Haiku + 200k @ Opus)
 
@@ -417,6 +417,81 @@ ieseau texte inchise pe fundal inchis. Regula acum: fundal -soft → text-foregr
 - Vederea pe mese (timeline per masa) si prelungirea rezervarii direct din harta.
 
 ---
+6quater. FAZA 5: REALTIME, WIDGET PUBLIC, NOTIFICARI — ✅ COMPLETATA
+
+Duration: 1 sesiune (Opus 5)
+
+6quater.1 Widget public (migratia 10)
+
+RLS interzice — corect — unui vizitator anonim sa citeasca zones, tables sau
+floor_plan_layers. Widgetul are nevoie de trei lucruri, deci am adaugat trei
+vederi cu coloane alese explicit, pe modelul restaurante_publice:
+  - zone_publice      — doar zonele active ale restaurantelor active
+  - mese_publice      — fara mesele inactive/indisponibile: ce nu se poate
+                        rezerva nu se arata deloc
+  - structura_publica — Layer 1 doar daca e publicat si vizibil
+Niciun tabel de baza nu a primit politica noua.
+
+- este_deschis(restaurant, instant) — programul standard + excepțiile (§30.2),
+  evaluat in BAZA. Fara asta, un apel direct la API putea aseza o rezervare
+  la 04:00.
+- rezerva_public(...) — SECURITY DEFINER cu suprafata minima: primeste slug, nu
+  restaurant_id, si NU accepta table_id, status sau note interne (alocarea mesei
+  rămâne decizia personalului). Valideaza: GDPR obligatoriu (§22.1), interval
+  viitor, maximum 6 luni inainte, 1–50 persoane, program deschis si o limita de
+  5 cereri / 24h de la acelasi telefon. Statusul rezultat respecta
+  restaurants.aprobare_automata (§7.1).
+
+6quater.2 Notificari (migratiile 11 si 12)
+
+Enum-urile existau din migratia 01, tabela nu. Doua decizii:
+  - Nu exista politica de INSERT: notificarile se creeaza EXCLUSIV din trigger.
+    Altfel oricine cu cheia anon ar putea umple clopotelul unui restaurant.
+  - Se genereaza doar pentru sursa 'widget'. Un ospatar care introduce o
+    rezervare nu are nevoie sa fie anuntat de propria acțiune.
+Galben = cere o decizie umana (cerere in asteptare), albastru = informativ.
+
+6quater.3 Realtime
+
+reservations avea deja "replica identity full" din migratia 04; lipsea doar
+publicatia. Postgres Changes respecta RLS, deci fiecare restaurant primeste
+numai evenimentele lui. useRealtimeRestaurant invalideaza cache-ul in loc sa
+aplice randul primit peste el: o rezervare mutata atinge doua intervale, iar
+reconstrucția locala ar putea divergea de baza.
+
+6quater.4 Verificat cap-coada
+
+- [x] anon citeste cele patru vederi publice, dar primeste [] pe restaurants,
+      zones, tables, floor_plan_layers, reservations si notificari
+- [x] masa indisponibila si layer-ul nepublicat NU apar in vederile publice
+- [x] rezerva_public respinge: fara GDPR, in trecut, la 04:00, 60 de persoane,
+      slug inexistent; a 6-a cerere de la acelasi numar in 24h
+- [x] cerere valida → status 'pending' (restaurantul avea aprobare manuala),
+      client creat in CRM cu consimtamant, notificare galbena necitita,
+      ZERO alocari de masa (widgetul nu blocheaza mese)
+- [x] managerul isi vede notificarile si le poate marca citite (5 → 4)
+- [x] widgetul preia culoarea de accent a restaurantului prin --primary
+
+Defect prins la primul apel real (migratia 12): trigger-ul de notificare
+folosea un CASE care producea text, iar Postgres NU converteste implicit text
+in enum intr-un INSERT ... VALUES. Rezultatul: eroare 42804 care anula toata
+tranzacția, adica ORICE rezervare din widget. Valorile de enum se calculeaza
+acum in variabile tipizate.
+
+6quater.5 Ce mai lipseste pentru MVP complet
+
+- Emailuri (confirmare rezervare, invitatie personal): Edge Function + furnizor
+  (Resend/Postmark). Singura piesa care cere infrastructura noua.
+- Pagina de setari restaurant (program, buffer, durata, formular, branding) —
+  datele exista deja in baza, lipseste interfata.
+- Drag & drop pe calendar (serviciul mutaRezervare e gata si testat).
+- Panoul Super Admin (§43) si editorul de floor plan.
+- Incadrare automata a hartii pe conținut: intr-o sala cu putine mese, canvasul
+  de 1200x800 lasa mult spatiu gol. Verificat ca randarea e corecta
+  matematic (scara 0.395, mese de 33 px la pozițiile aşteptate), deci e o
+  imbunatatire de UX, nu un defect.
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev
@@ -503,11 +578,16 @@ claude --model haiku-4-5 \
 git log --oneline -3
 echo "Session complete. Commit hash saved."
 
-10.2 Plan Marker (Insert at top after this session)
+10.2 Plan Marker
 
-<!-- LAST_COMPLETED: Faza 1b (schema SQL) -->
-<!-- NEXT_TASK: Faza 1c - Supabase client + Auth contexts + Router -->
-<!-- LAST_COMMIT: ab46811 Faza 1a: fundatie proiect + design system -->
+Markerele reale sunt in capul fisierului (liniile 3-7) si se actualizeaza dupa
+fiecare faza. ATENTIE pentru scripturile automate: cauta prima apariție a
+"LAST_COMPLETED" in fisier — exemplul de mai jos e doar ilustrativ si a fost
+scos intenționat din forma de comentariu HTML, ca sa nu fie confundat cu el.
+
+  LAST_COMPLETED: <faza terminata>
+  NEXT_TASK: <ce urmeaza>
+  LAST_COMMIT: <hash + mesaj scurt>
 
 ---
 11. QUICK START ON RESUME

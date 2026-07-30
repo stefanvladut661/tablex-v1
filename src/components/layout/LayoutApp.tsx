@@ -11,11 +11,13 @@ import {
   UsersIcon,
 } from 'lucide-react'
 
+import { ClopotelNotificari } from '@/components/ClopotelNotificari'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useAuth } from '@/hooks/useAuth'
 import { useNotificari } from '@/hooks/useNotificari'
+import { useRealtimeRestaurant } from '@/hooks/useRealtime'
 import { useTema } from '@/hooks/useTema'
 import { RUTE } from '@/lib/rute'
 
@@ -72,6 +74,9 @@ export function LayoutApp() {
   const { temaEfectiva, comutaTema } = useTema()
   const notificari = useNotificari()
   const [meniuDeschis, setMeniuDeschis] = useState(false)
+
+  // Trebuie apelat necondiționat: hook-urile nu au voie sa depinda de un return.
+  useRealtimeRestaurant(profil?.tip === 'admin' ? profil.restaurant.id : undefined)
 
   if (profil?.tip !== 'admin') return null
 
@@ -136,9 +141,12 @@ export function LayoutApp() {
             </Badge>
           </div>
 
-          <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comuta tema">
-            {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <ClopotelNotificari restaurantId={profil.restaurant.id} />
+            <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comuta tema">
+              {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </Button>
+          </div>
         </header>
 
         <main className="min-w-0 flex-1">
