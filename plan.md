@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 5 + setari restaurant + emailuri (Edge Function) -->
-<!-- NEXT_TASK: drag-drop calendar, panou super admin, webhook pentru emailul din widget -->
+<!-- LAST_COMPLETED: emailuri + mutarea rezervarilor pe calendar (drag / tastatura) -->
+<!-- NEXT_TASK: panou super admin, webhook pentru emailul din widget, verificare manuala a tragerii cu mouse-ul -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -559,6 +559,42 @@ Ce NU acopera, cu motivul:
   webhook de baza de date sau de un apel cu service_role dintr-un trigger.
   Sablonul exista deja in functie ('rezervare_noua'), gata de conectat.
   Pana atunci, clientul e anuntat la confirmare — momentul care conteaza.
+
+---
+6septies. MUTAREA REZERVARILOR PE CALENDAR — ✅ IMPLEMENTATA
+
+In vederea pe zi, un bloc se trage vertical ca sa schimbe ora (pas de 15
+minute), sau se muta de la tastatura cu Shift + sus/jos. Mutarea trece prin
+acelasi UPDATE ca restul aplicatiei: trigger-ul recalculeaza intervalul, iar
+constrangerea EXCLUDE respinge suprapunerile.
+
+Trei defecte reale, toate gasite prin testare, nu prin citirea codului:
+
+1. Delta se calcula din clientY (relativ la fereastra). Daca pagina deruleaza
+   in timpul tragerii — si un calendar inalt deruleaza des, mai ales pe touch —
+   clientY se schimba fara ca degetul sa se miste, iar rezervarea ajungea in
+   alta parte decat unde fusese trasa. Acum se foloseste pageY.
+2. Handler-ul de pointermove citea starea React ca sa afle daca un gest e in
+   curs. La o tragere scurta, cu un singur pointermove, setState-ul nu era inca
+   vizibil, deci gestul era interpretat ca un simplu click. Sursa de adevar e
+   acum ref-ul; starea a rămas doar pentru previzualizare.
+3. Un pointerup din alta secventa confirma o mutare. S-a intamplat concret:
+   dupa un hot-reload cu butonul mouse-ului inca apasat, doua rezervari s-au
+   mutat singure. Gestul e acum legat de pointerId-ul care l-a inceput.
+
+Verificat:
+- [x] calea de tastatura, cap-coada in browser: 16:00 → 16:15, cu mesajul
+      „Rezervare mutata la 16:15." si valoarea persistata
+- [x] prima tragere reusita a persistat 14:00 → 16:00, cu se_termina_la si
+      blocat_pana_la recalculate de trigger si alocarea de masa sincronizata
+- [x] acelasi UPDATE pe un interval ocupat → 23P01 din constrangerea EXCLUDE
+      (mesajul e tradus in lib/erori.ts); pe un interval liber → 204
+
+RAMAS DE VERIFICAT MANUAL: tragerea cu mouse-ul, de la un cap la altul.
+Instrumentul de drag din CDP emite evenimente HTML5 de drag, nu o secventa de
+pointer, deci nu exercita acest handler; iar browserul din harness derivă intre
+apeluri, ceea ce face imposibila o secventa sintetica lunga. Aritmetica e simpla
+si acum protejata, dar nu am o dovada directa pentru gestul cu mouse-ul.
 
 ---
 7. COMMANDS CHEAT SHEET

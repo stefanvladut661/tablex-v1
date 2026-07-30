@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
+import { useNotificari } from '@/hooks/useNotificari'
 import { useZone } from '@/hooks/useMese'
-import { useRezervari } from '@/hooks/useRezervari'
+import { useMutatiiRezervari, useRezervari } from '@/hooks/useRezervari'
 import { programZilei } from '@/lib/program'
 import {
   addDays,
@@ -23,6 +24,7 @@ import {
   inceputLuna,
   inceputSaptamana,
   inceputZi,
+  instantDinZiSiOra,
   sfarsitLuna,
   sfarsitSaptamana,
   sfarsitZi,
@@ -49,6 +51,7 @@ function oraImplicita(fus: string): string {
 
 export function CalendarPage() {
   const { profil } = useAuth()
+  const notificari = useNotificari()
   const restaurant = profil?.tip === 'admin' ? profil.restaurant : null
   const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
 
@@ -58,6 +61,7 @@ export function CalendarPage() {
   const [dialog, setDialog] = useState<CerereDialog | null>(null)
 
   const zone = useZone(restaurant?.id)
+  const { muta } = useMutatiiRezervari(restaurant?.id)
 
   // Intervalul interogat depinde de vedere: o zi, o saptamana sau o luna.
   const [deLa, panaLa] = useMemo(() => {
@@ -94,6 +98,26 @@ export function CalendarPage() {
     (r) => r.status === 'pending' || r.status === 'confirmata' || r.status === 'sosita',
   )
   const persoane = total.reduce((suma, r) => suma + r.nr_persoane, 0)
+
+  /**
+   * Mutarea trece prin acelasi UPDATE ca restul: trigger-ul recalculeaza
+   * intervalul, iar constrangerea EXCLUDE respinge suprapunerile. Daca masa e
+   * ocupata la ora noua, primim 23P01 si mesajul tradus — blocul revine singur
+   * la loc, fiindca lista se reinterogheaza din baza.
+   */
+  function mutaLaOra(rezervare: Rezervare, oraNoua: number) {
+    const ore = Math.floor(oraNoua)
+    const minute = Math.round((oraNoua - ore) * 60)
+    const oraText = `${String(ore % 24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+
+    muta.mutate(
+      { id: rezervare.id, dataOra: instantDinZiSiOra(zi, oraText, fus) },
+      {
+        onSuccess: () => notificari.succes(`Rezervare mutata la ${oraText}.`),
+        onError: (eroare) => notificari.eroare(eroare),
+      },
+    )
+  }
 
   function deschideDialog(oraText: string, ziDialog: Date = zi, walkIn = false) {
     setDialog({ zi: ziDialog, ora: oraText, walkIn })
@@ -161,6 +185,7 @@ export function CalendarPage() {
           onCreeazaLaOra={(oraGrila) =>
             deschideDialog(`${String(Math.floor(oraGrila) % 24).padStart(2, '0')}:00`)
           }
+          onMutaLaOra={mutaLaOra}
         />
       ) : vedere === 'saptamana' ? (
         <VedereSaptamana
