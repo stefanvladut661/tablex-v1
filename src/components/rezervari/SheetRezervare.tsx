@@ -22,6 +22,7 @@ import { useNotificari } from '@/hooks/useNotificari'
 import { useMutatiiRezervari } from '@/hooks/useRezervari'
 import { ETICHETE_SURSA_REZERVARE } from '@/lib/etichete'
 import { formatFus, ora } from '@/lib/timp'
+import { trimiteEmail, type TipEmail } from '@/services/email'
 import type { Rezervare, StatusRezervare } from '@/services/rezervari'
 
 type Props = {
@@ -35,14 +36,23 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
   const { schimbaStatus } = useMutatiiRezervari(restaurantId)
   const notificari = useNotificari()
 
-  function schimba(status: StatusRezervare, mesaj: string) {
+  /**
+   * emailTip declanseaza si un email catre client, DUPA ce schimbarea de status
+   * a reusit. Trimiterea nu poate anula schimbarea: rezervarea e deja
+   * confirmata sau respinsa in baza.
+   */
+  function schimba(status: StatusRezervare, mesaj: string, emailTip?: TipEmail) {
     if (!rezervare) return
+    const id = rezervare.id
+    const areEmail = Boolean(rezervare.email)
+
     schimbaStatus.mutate(
-      { id: rezervare.id, status },
+      { id, status },
       {
         onSuccess: () => {
           notificari.succes(mesaj)
           onInchide()
+          if (emailTip && areEmail) void trimiteEmail(emailTip, id)
         },
         onError: (eroare) => notificari.eroare(eroare),
       },
@@ -146,7 +156,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       disabled={inLucru}
-                      onClick={() => schimba('confirmata', 'Rezervare confirmata.')}
+                      onClick={() => schimba('confirmata', 'Rezervare confirmata.', 'rezervare_confirmata')}
                     >
                       <CheckIcon />
                       Confirma
@@ -154,7 +164,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                     <Button
                       variant="outline"
                       disabled={inLucru}
-                      onClick={() => schimba('respinsa', 'Rezervare respinsa.')}
+                      onClick={() => schimba('respinsa', 'Rezervare respinsa.', 'rezervare_respinsa')}
                     >
                       <BanIcon />
                       Respinge

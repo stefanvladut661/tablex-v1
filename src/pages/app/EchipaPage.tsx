@@ -30,6 +30,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useInvitatii, useMembriEchipa, useMutatiiEchipa } from '@/hooks/useEchipa'
 import { useNotificari } from '@/hooks/useNotificari'
 import { ETICHETE_ROL_ADMIN, ETICHETE_STATUS_INVITATIE } from '@/lib/etichete'
+import { trimiteEmail } from '@/services/email'
 import { RUTE } from '@/lib/rute'
 import { emailSchema } from '@/lib/validari'
 import type { Enums } from '@/types/database'
@@ -88,7 +89,21 @@ export function EchipaPage() {
         invitatDe: utilizator!.id,
       })
       form.reset({ email: '', rol: valori.rol })
-      await copiazaLink(invitatie.token, 'Invitatie creata. Linkul e in clipboard.')
+
+      // Emailul e best-effort: daca nu e configurat niciun furnizor (sau
+      // trimiterea eșueaza), managerul primeste linkul in clipboard si il
+      // trimite el. Invitatia exista in ambele cazuri.
+      const rezultatEmail = await trimiteEmail('invitatie', invitatie.id)
+      if (rezultatEmail.trimis) {
+        notificari.succes('Invitatie trimisa pe email.', { descriere: invitatie.email })
+      } else {
+        await copiazaLink(
+          invitatie.token,
+          rezultatEmail.simulat
+            ? 'Invitatie creata. Emailul automat nu e configurat, deci linkul e in clipboard.'
+            : 'Invitatie creata. Linkul e in clipboard.',
+        )
+      }
     } catch (eroare) {
       notificari.eroare(eroare)
     }

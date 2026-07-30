@@ -1,13 +1,13 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Faza 5 + pagina de setari restaurant -->
-<!-- NEXT_TASK: emailuri (Edge Function + Resend), drag-drop calendar, panou super admin -->
+<!-- LAST_COMPLETED: Faza 5 + setari restaurant + emailuri (Edge Function) -->
+<!-- NEXT_TASK: drag-drop calendar, panou super admin, webhook pentru emailul din widget -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~80% MVP implementat
+**Status:** ~85% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
 **Ultima sesiune:** Fazele 1c, 1d, 2, 3, 4 si 5 — de la auth pana la widget public
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
@@ -517,6 +517,48 @@ Verificat si ca baza respinge singura valorile invalide, daca interfata ar fi
 ocolita: buffer 90, durata 300, 40 de scaune, retentie 20 de ani, culoare
 "verde" si slug rezervat "app" — toate refuzate de CHECK-uri sau de trigger.
 Mesajele lor sunt acum traduse in lib/erori.ts.
+
+---
+6sexies. EMAILURI TRANZACTIONALE — ✅ IMPLEMENTATE (furnizor opțional)
+
+Edge Function `trimite-email`, desfasurata pe proiect (v1, ACTIVE).
+
+Decizia care da forma functiei: clientul NU trimite niciodata destinatarul sau
+conținutul, doar {tip, id}. Functia citeste randul cu JWT-ul apelantului, deci
+prin RLS — cine nu are dreptul sa vada invitatia sau rezervarea nu poate nici
+declansa un email despre ea. Endpoint-ul nu poate fi folosit ca releu de spam.
+
+Furnizorul e opțional. Fara RESEND_API_KEY functia raspunde 200 cu
+{simulat: true} si logheaza ce ar fi trimis; interfata cade elegant pe
+"copiaza linkul" la invitatii. Conectarea unui furnizor real e doar:
+  supabase secrets set RESEND_API_KEY=...
+  supabase secrets set EMAIL_EXPEDITOR="TableX <rezervari@domeniu.ro>"
+  supabase secrets set URL_APLICATIE=https://app.tablex.ro
+(vezi si .env.example, care le documenteaza)
+
+Declansatoare implementate:
+- invitatie de personal — la crearea invitatiei din /app/echipa
+- rezervare confirmata / respinsa — la schimbarea statusului din panou, doar
+  daca rezervarea are adresa de email
+
+Trimiterea e best-effort prin design: un email care nu pleaca nu anuleza
+acțiunea care l-a declansat (invitatia exista deja, rezervarea e deja
+confirmata). Serviciul din client nu arunca niciodata.
+
+Verificat pe functia desfasurata, cu doua restaurante separate:
+- [x] managerul declanseaza cele trei tipuri pentru datele LUI → 200, simulat,
+      cu destinatarul si subiectul corecte
+- [x] acelasi manager, cu id-ul unei rezervari din ALT restaurant → 404
+- [x] doar cu cheia anon (fara sesiune) → 404 pe tot
+- [x] cerere fara id → 400; id inexistent → 404 (acelasi mesaj ca la refuz, ca
+      functia sa nu devina un oracol pentru id-uri valide)
+
+Ce NU acopera, cu motivul:
+- Emailul "am primit cererea ta" trimis clientului direct din widget: apelantul
+  ar fi anonim, iar RLS (corect) nu-i da acces la rezervare. Are nevoie de un
+  webhook de baza de date sau de un apel cu service_role dintr-un trigger.
+  Sablonul exista deja in functie ('rezervare_noua'), gata de conectat.
+  Pana atunci, clientul e anuntat la confirmare — momentul care conteaza.
 
 ---
 7. COMMANDS CHEAT SHEET
