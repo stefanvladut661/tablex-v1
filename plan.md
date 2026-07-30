@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: panou Super Admin + protejarea coloanelor privilegiate + audit -->
-<!-- NEXT_TASK: webhook pentru emailul din widget, coada de cereri floor plan, QA manual (tragere cu mouse-ul) -->
+<!-- LAST_COMPLETED: coada de cereri floor plan, cap-coada, cu notificari in ambele sensuri -->
+<!-- NEXT_TASK: incarcare schita (Storage), webhook email widget, trial/discount in panou, QA manual (tragere cu mouse-ul) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -646,6 +646,46 @@ Verificat cu doi utilizatori reali (manager + echipa):
 - Coada de cereri floor plan (§41): tabela si RLS exista, lipseste ecranul.
 - Prelungirea trialului si discountul: coloanele si auditul sunt gata, in panou
   lipsesc controalele (sunt doua campuri, nu o functionalitate noua).
+
+---
+6nonies. COADA DE CERERI FLOOR PLAN (§41) — ✅ IMPLEMENTATA
+
+Bucla completa: restaurantul cere un plan 2D → echipa vede cererea in coada →
+schimba statusul → restaurantul afla. Tabela si RLS existau din migratia 03;
+lipseau fluxul, ecranele si notificarile.
+
+- Restaurant (in Harta salii): formular cu numele zonei si descriere, plus lista
+  cererilor proprii cu status. Planul NU se deseneaza de restaurant (§8.4).
+- Echipa (/superadmin, tab "Cereri plan", cu contor de cereri in asteptare):
+  preia in lucru → marcheaza publicat, sau respinge.
+- Migratia 14: notificari in ambele sensuri, scrise din trigger. Cererea noua
+  merge la destinatie 'super_admin' (deci cu restaurant_id NULL — notificarea
+  aparține echipei); schimbarea de status merge la restaurant, galben pentru
+  „in lucru" si albastru pentru „publicat".
+- Serviciul nu selecteaza niciodata ai_rezultat: e instrument intern (§14) si nu
+  trebuie sa ajunga nici accidental in bundle-ul restaurantului.
+
+Doua defecte, ambele prinse la testare (migratia 15):
+
+1. Acelasi CASE-care-produce-text intr-o coloana enum ca in migratia 12 —
+   REINTRODUS de mine in 14, desi regula era scrisa in comentariul din 12.
+   Rezultat: 42804 la orice schimbare de status, adica toata coada echipei era
+   blocata. Acum valorile de enum stau in variabile tipizate.
+2. Politica operationala a tabelei permitea restaurantului sa modifice ORICE
+   coloana a cererii lui, deci managerul isi putea trece singur cererea pe
+   „published". Verificat inainte de corectie: 1 rand modificat. Acum statusul,
+   ai_rezultat, procesat_de si assigned_to sunt rezervate echipei.
+
+Verificat cap-coada, cu manager + membru al echipei:
+- [x] cererea creata de manager genereaza notificarea echipei; managerul NU o
+      vede in clopotelul lui (destinatie diferita)
+- [x] echipa muta cererea in_progress → published (204)
+- [x] managerul primeste 403 pe status si pe ai_rezultat, dar poate corecta
+      descrierea propriei cereri (204)
+- [x] restaurantul primeste ambele notificari, cu urgentele corecte
+
+Ramas: incarcarea schitei ca imagine (cere un bucket de Storage cu politici),
+plus controalele de trial si discount in panou (coloanele si auditul sunt gata).
 
 ---
 7. COMMANDS CHEAT SHEET

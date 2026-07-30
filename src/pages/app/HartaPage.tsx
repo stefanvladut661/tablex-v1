@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ClockIcon } from 'lucide-react'
 
+import { CereriPlan } from '@/components/floor-plan/CereriPlan'
 import { HartaZona } from '@/components/floor-plan/HartaZona'
 import { LegendaStatus } from '@/components/floor-plan/LegendaStatus'
 import { DialogRezervare } from '@/components/rezervari/DialogRezervare'
@@ -167,6 +168,8 @@ export function HartaPage() {
             )}
           </>
         )}
+
+        <CereriPlan restaurantId={restaurant.id} />
       </div>
 
       <aside className="grid content-start gap-4">

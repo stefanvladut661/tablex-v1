@@ -45,6 +45,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { useNotificari } from '@/hooks/useNotificari'
 import { useTema } from '@/hooks/useTema'
 import {
+  CHEI_FP,
+  getCoadaCereri,
+  schimbaStatusCerere,
+  type StatusCerere,
+} from '@/services/floor-plan'
+import {
   CHEI_SA,
   actualizeazaSetariGlobale,
   getAudit,
@@ -165,6 +171,17 @@ export function SuperAdminPage() {
   const restaurante = useQuery({ queryKey: CHEI_SA.restaurante, queryFn: getRestaurante })
   const audit = useQuery({ queryKey: CHEI_SA.audit, queryFn: () => getAudit() })
   const setari = useQuery({ queryKey: CHEI_SA.setari, queryFn: getSetariGlobale })
+  const cereri = useQuery({ queryKey: CHEI_FP.coada, queryFn: getCoadaCereri })
+
+  const statusCerere = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: StatusCerere }) =>
+      schimbaStatusCerere(id, status),
+    onSuccess: () => {
+      notificari.succes('Status actualizat. Restaurantul a fost notificat.')
+      void queryClient.invalidateQueries({ queryKey: CHEI_FP.coada })
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
 
   const reincarca = () => {
     void queryClient.invalidateQueries({ queryKey: CHEI_SA.restaurante })
@@ -244,6 +261,14 @@ export function SuperAdminPage() {
         <Tabs defaultValue="restaurante">
           <TabsList>
             <TabsTrigger value="restaurante">Restaurante</TabsTrigger>
+            <TabsTrigger value="cereri">
+              Cereri plan
+              {(cereri.data ?? []).some((c) => c.status === 'pending') && (
+                <span className="ml-1.5 rounded-full bg-status-expirare px-1.5 text-[10px] font-semibold text-status-expirare-foreground tabular-nums">
+                  {(cereri.data ?? []).filter((c) => c.status === 'pending').length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="setari">Setari globale</TabsTrigger>
             <TabsTrigger value="audit">Registru</TabsTrigger>
           </TabsList>
@@ -393,6 +418,93 @@ export function SuperAdminPage() {
             <p className="text-xs text-muted-foreground">
               Fiecare intervenție intra automat in registru, cu autor si valori inainte/dupa.
               Suspendarea si banarea cer un motiv, impus si de baza de date.
+            </p>
+          </TabsContent>
+
+          {/* ── Coada de cereri floor plan (§41) ── */}
+          <TabsContent value="cereri" className="mt-4">
+            {cereri.isLoading ? (
+              <Skeleton className="h-48 w-full" />
+            ) : (cereri.data ?? []).length === 0 ? (
+              <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
+                Nicio cerere de plan 2D. Cererile trimise din panoul restaurantelor apar aici, cele
+                mai vechi primele.
+              </p>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border bg-card">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-32">Primita</TableHead>
+                      <TableHead>Zona si descriere</TableHead>
+                      <TableHead className="w-28">Status</TableHead>
+                      <TableHead className="w-72 text-right">Acțiuni</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(cereri.data ?? []).map((cerere) => (
+                      <TableRow key={cerere.id}>
+                        <TableCell className="text-xs text-muted-foreground tabular-nums">
+                          {dataOra(cerere.created_at)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{cerere.zone_nume}</div>
+                          {cerere.descriere && (
+                            <div className="max-w-md text-xs text-muted-foreground">
+                              {cerere.descriere}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <span className="inline-flex rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                            {cerere.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap justify-end gap-1">
+                            {cerere.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                onClick={() =>
+                                  statusCerere.mutate({ id: cerere.id, status: 'in_progress' })
+                                }
+                              >
+                                Preia in lucru
+                              </Button>
+                            )}
+                            {cerere.status === 'in_progress' && (
+                              <Button
+                                size="xs"
+                                onClick={() =>
+                                  statusCerere.mutate({ id: cerere.id, status: 'published' })
+                                }
+                              >
+                                Marcheaza publicat
+                              </Button>
+                            )}
+                            {cerere.status !== 'published' && cerere.status !== 'respins' && (
+                              <Button
+                                variant="destructive"
+                                size="xs"
+                                onClick={() =>
+                                  statusCerere.mutate({ id: cerere.id, status: 'respins' })
+                                }
+                              >
+                                Respinge
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Fiecare schimbare de status notifica automat restaurantul. Publicarea propriu-zisa a
+              geometriei (zone si mese) se face in editorul de floor plan, separat.
             </p>
           </TabsContent>
 
