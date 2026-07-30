@@ -1,13 +1,13 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: emailuri + mutarea rezervarilor pe calendar (drag / tastatura) -->
-<!-- NEXT_TASK: panou super admin, webhook pentru emailul din widget, verificare manuala a tragerii cu mouse-ul -->
+<!-- LAST_COMPLETED: panou Super Admin + protejarea coloanelor privilegiate + audit -->
+<!-- NEXT_TASK: webhook pentru emailul din widget, coada de cereri floor plan, QA manual (tragere cu mouse-ul) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~85% MVP implementat
+**Status:** ~90% MVP implementat
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
 **Ultima sesiune:** Fazele 1c, 1d, 2, 3, 4 si 5 — de la auth pana la widget public
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
@@ -595,6 +595,57 @@ Instrumentul de drag din CDP emite evenimente HTML5 de drag, nu o secventa de
 pointer, deci nu exercita acest handler; iar browserul din harness derivă intre
 apeluri, ceea ce face imposibila o secventa sintetica lunga. Aritmetica e simpla
 si acum protejata, dar nu am o dovada directa pentru gestul cu mouse-ul.
+
+---
+6octies. PANOU SUPER ADMIN (§43) — ✅ IMPLEMENTAT
+
+6octies.1 O gaura de securitate gasita la construirea panoului
+
+Politica "restaurants_actualizare_manager" (migratia 05) permite managerului sa
+modifice ORICE coloana a restaurantului sau — o politica RLS nu poate restrange
+coloane. Deci, cu un simplu apel REST, un manager putea:
+  - sa treaca singur pe planul pro_floor
+  - sa-si acorde discount sau sa-si prelungeasca perioada de proba
+  - sa-si deblocheze floor plan-ul
+  - sa-si scoata restaurantul din suspendare si sa stearga motivul
+  - sa schimbe slug-ul, invalidand linkurile deja distribuite clientilor
+Interfata nu oferea niciuna dintre acestea, dar API-ul e public.
+
+Migratia 13 rezolva prin trigger (un CHECK nu vede cine face modificarea, iar
+politici pe coloane nu exista in Postgres): coloanele privilegiate sunt refuzate
+cu 42501 pentru oricine nu e in echipa TableX. Verificat pe toate cele sase
+cazuri, inclusiv auto-desuspendarea cu restaurantul chiar suspendat.
+
+6octies.2 Audit care nu poate fi ocolit
+
+Enum-ul audit_actiune exista din migratia 01, tabela nu. Acum exista, iar
+scrierea se face din trigger, nu din client: orice cale de modificare (panou,
+REST, job viitor) lasa urma, cu autor, email si valori inainte/dupa. Nicio
+politica de INSERT — la fel ca pentru notificari.
+
+6octies.3 Panoul
+
+/superadmin, cu trei tab-uri:
+- Restaurante: cautare, schimbare plan, deblocare floor plan, suspendare /
+  banare (dialog cu motiv obligatoriu, impus si de trigger) si reactivare
+- Setari globale: preturi, mod mentenanta cu mesaj, retentie implicita. Doar
+  rolul super_admin propriu-zis poate scrie; support si designer_architect
+  vad datele dezactivate (§9.2.7).
+- Registru: ultimele intervenții, cu autor si detalii
+
+Verificat cu doi utilizatori reali (manager + echipa):
+- [x] auditul e citibil de echipa, dar intoarce [] pentru manager si anon
+- [x] echipa suspenda doar cu motiv; fara motiv → refuz din baza
+- [x] fiecare intervenție a aparut in registru cu autorul corect
+- [x] scrierea in app_settings de catre manager afecteaza ZERO randuri
+      (RLS filtreaza; PostgREST raspunde 204/200 cu lista goala, iar serviciul
+      verifica numarul de randuri si arata eroare explicita)
+
+6octies.4 Ramas
+
+- Coada de cereri floor plan (§41): tabela si RLS exista, lipseste ecranul.
+- Prelungirea trialului si discountul: coloanele si auditul sunt gata, in panou
+  lipsesc controalele (sunt doua campuri, nu o functionalitate noua).
 
 ---
 7. COMMANDS CHEAT SHEET

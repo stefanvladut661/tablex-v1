@@ -112,6 +112,47 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_super_admin: {
+        Row: {
+          actiune: Database["public"]["Enums"]["audit_actiune"]
+          created_at: string
+          detalii: Json
+          efectuat_de: string | null
+          email_autor: string | null
+          id: string
+          restaurant_id: string | null
+          restaurant_nume: string | null
+        }
+        Insert: {
+          actiune: Database["public"]["Enums"]["audit_actiune"]
+          created_at?: string
+          detalii?: Json
+          efectuat_de?: string | null
+          email_autor?: string | null
+          id?: string
+          restaurant_id?: string | null
+          restaurant_nume?: string | null
+        }
+        Update: {
+          actiune?: Database["public"]["Enums"]["audit_actiune"]
+          created_at?: string
+          detalii?: Json
+          efectuat_de?: string | null
+          email_autor?: string | null
+          id?: string
+          restaurant_id?: string | null
+          restaurant_nume?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_super_admin_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_merge_audit: {
         Row: {
           created_at: string
