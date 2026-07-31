@@ -83,6 +83,10 @@ type Props = {
   /** Preselectie venita din harta 2D: masa pe care a dat click personalul. */
   zoneIdImplicit?: string
   tableIdImplicit?: string
+  /** Precompletare venita din lista de asteptare: oaspetele s-a prezentat deja. */
+  clientImplicit?: { nume: string; telefon: string | null; nrPersoane: number }
+  /** Se apeleaza DUPA ce rezervarea a fost creata cu succes. */
+  onCreat?: (id: string) => void
 }
 
 export function DialogRezervare({
@@ -96,6 +100,8 @@ export function DialogRezervare({
   walkIn = false,
   zoneIdImplicit,
   tableIdImplicit,
+  clientImplicit,
+  onCreat,
 }: Props) {
   const notificari = useNotificari()
   const { creeaza } = useMutatiiRezervari(restaurantId)
@@ -107,9 +113,9 @@ export function DialogRezervare({
     // Dialogul e montat doar cat e deschis (cu key din parinte), deci
     // defaultValues sunt mereu proaspete — fara efecte de resincronizare.
     defaultValues: {
-      clientNume: '',
-      telefon: '',
-      nrPersoane: 2,
+      clientNume: clientImplicit?.nume ?? '',
+      telefon: clientImplicit?.telefon ?? '',
+      nrPersoane: clientImplicit?.nrPersoane ?? 2,
       oraText: oraImplicita,
       durata: '0',
       zoneId: zoneIdImplicit ?? zone[0]?.id ?? '',
@@ -137,7 +143,7 @@ export function DialogRezervare({
   async function trimite(valori: FormRezervare) {
     if (!instant) return
     try {
-      await creeaza.mutateAsync({
+      const idCreat = await creeaza.mutateAsync({
         clientNume: valori.clientNume,
         // Sirul gol devine null: altfel am scrie "" in loc de "fara telefon",
         // iar CHECK-ul din baza l-ar accepta ca valoare prezenta.
@@ -154,6 +160,9 @@ export function DialogRezervare({
       notificari.succes(walkIn ? 'Walk-in inregistrat.' : 'Rezervare creata.')
       form.reset()
       onDeschisChange(false)
+      // Dupa inchidere, ca apelantul sa poata declansa propriile lui efecte
+      // (ex: scoaterea oaspetelui din lista de asteptare).
+      onCreat?.(idCreat)
     } catch (eroare) {
       notificari.eroare(eroare)
     }

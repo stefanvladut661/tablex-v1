@@ -21,6 +21,7 @@ import { SignupPage } from '@/pages/auth/SignupPage'
 import { VerificaEmailPage } from '@/pages/auth/VerificaEmailPage'
 import { CalendarPage } from '@/pages/app/CalendarPage'
 import { ClientiPage } from '@/pages/app/ClientiPage'
+import { ListaAsteptarePage } from '@/pages/app/ListaAsteptarePage'
 import { EchipaPage } from '@/pages/app/EchipaPage'
 import { HartaPage } from '@/pages/app/HartaPage'
 import { ListaRezervariPage } from '@/pages/app/ListaRezervariPage'
@@ -73,6 +74,7 @@ export const router = createBrowserRouter([
               // CRM-ul e vizibil si ospatarului: el are nevoie sa stie ca
               // oaspetele care intra pe usa are 12 vizite sau 3 neprezentari.
               { path: RUTE.appClienti, element: <ClientiPage /> },
+              { path: RUTE.appAsteptare, element: <ListaAsteptarePage /> },
               {
                 element: <RutaManager />,
                 children: [

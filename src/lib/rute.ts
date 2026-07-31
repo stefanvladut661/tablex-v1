@@ -25,6 +25,7 @@ export const RUTE = {
   appRezervari: '/app/rezervari',
   appHarta: '/app/harta',
   appClienti: '/app/clienti',
+  appAsteptare: '/app/asteptare',
   appSetari: '/app/setari',
 
   /** Panoul echipei TableX. */

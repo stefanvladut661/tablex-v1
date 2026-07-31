@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: zile speciale (program_exceptii) in Setari — ultima tabela cu RLS gata si zero interfata -->
-<!-- NEXT_TASK: furnizor email (RESEND_API_KEY); lista de asteptare (waitlist); campuri formular widget (formular_campuri) -->
+<!-- LAST_COMPLETED: lista de asteptare (waitlist), legata de walk-in -->
+<!-- NEXT_TASK: furnizor email (RESEND_API_KEY); campuri formular widget (formular_campuri) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -1121,6 +1121,45 @@ Tabele cu RLS gata si fara interfata, in ordinea valorii:
   formular fix. Configurarea lor ar trebui sa stea tot in Setari.
 - `floor_plan_projects`, `customer_merge_audit`, `super_admin_invitations` —
   flux intern / instrumente de echipa, fara nevoie clara in MVP.
+
+---
+6septdecies. LISTA DE ASTEPTARE (§25) — ✅
+
+A doua tabela cu RLS gata si zero interfata, gasita prin aceeasi comparatie
+intre schema si frontend. /app/asteptare, vizibila si ospatarului: e instrument
+de INTRARE, nu de planificare — aici ajung oaspetii veniti fara rezervare cand
+nu e masa libera.
+
+Decizia care leaga functionalitatea de restul aplicatiei: "Asaza" NU marcheaza
+doar intrarea ca rezolvata. Deschide dialogul de walk-in PRECOMPLETAT (nume,
+telefon, numar de persoane), iar oaspetele iese din coada abia DUPA ce
+rezervarea chiar exista. Altfel masa lui ar aparea libera pe harta si ar putea
+fi data altcuiva — coada si sala ar spune lucruri diferite.
+
+A cerut doua adaugiri mici in DialogRezervare: precompletarea clientului si un
+callback dupa succes. Callback-ul se apeleaza dupa inchiderea dialogului, ca
+apelantul sa-si poata declansa propriile efecte.
+
+Telefonul e optional, ca la walk-in (§25.6): oaspetele e in fata ta. Cine il
+lasa poate fi anuntat cand se elibereaza masa.
+
+Alte decizii:
+- Lista arata implicit doar cine ASTEAPTA; cei asezati sau plecati raman in
+  baza pentru statistici, dar nu incarca ecranul de la intrare.
+- Coloana de pozitie nu are unicitate, deci doua adaugari simultane pot ajunge
+  pe acelasi numar — se departajeaza dupa created_at, ca la o coada reala.
+- Momentul asezarii se scrie doar la asezare: e singura masura care spune daca
+  estimarile date la intrare sunt realiste.
+- Reimprospatare la 60s, ca minutele de asteptare sa nu ramana inghetate.
+
+Verificat cap-coada, cu un cont de OSPATAR (nu manager):
+- [x] trei intrari adaugate, numerotate 1-3; cea fara numar arata "fara telefon"
+- [x] mutarea in sus schimba ordinea si persista
+- [x] "Asaza" deschide walk-in-ul precompletat cu numele, telefonul si numarul
+      de persoane din coada
+- [x] dupa trimitere: rezervare reala (sursa walk_in, status sosita, marcata
+      sosit), intrarea trece pe 'asezat' cu momentul completat, iar ceilalti doi
+      raman in coada
 
 ---
 7. COMMANDS CHEAT SHEET
