@@ -276,3 +276,44 @@ export async function salveazaLayer1(salvare: SalvareLayer1): Promise<NonNullabl
     versiune: data[0].versiune,
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Istoricul versiunilor publicate (§40)
+//
+// Instantaneele NU se scriu de aici: le face un trigger la fiecare publicare a
+// structurii. Serviciul doar le citeste si cere revenirea. Daca le-ar scrie
+// frontend-ul, orice alta cale de scriere ar lasa o gaura in istoric — exact
+// acolo unde te bazezi pe el.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type VersiunePlan = Pick<
+  Tables<'floor_plan_projects'>,
+  'id' | 'nume' | 'status' | 'versiune' | 'publicat_la' | 'publicat_de'
+>
+
+export const CHEIE_ISTORIC = (zoneId: string) => ['editor', 'istoric', zoneId] as const
+
+export async function getIstoricVersiuni(zoneId: string): Promise<VersiunePlan[]> {
+  const { data, error } = await supabase
+    .from('floor_plan_projects')
+    .select('id, nume, status, versiune, publicat_la, publicat_de')
+    .eq('zone_id', zoneId)
+    .eq('tip', 'fisier')
+    .order('publicat_la', { ascending: false })
+    .limit(30)
+  if (error) throw error
+  return data
+}
+
+/**
+ * Revenirea scrie continutul vechi ca versiune NOUA — nu sterge istoricul si
+ * nu „intoarce timpul", deci si o revenire gresita se poate reveni. Intoarce
+ * numarul versiunii rezultate.
+ */
+export async function restaureazaVersiune(projectId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('restaureaza_versiune_plan', {
+    p_project_id: projectId,
+  })
+  if (error) throw error
+  return data ?? 0
+}

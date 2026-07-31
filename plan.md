@@ -1346,6 +1346,41 @@ Verificat in baza, cu roluri reale:
       singura si contul real a ramas activ
 
 ---
+6unvicies. ISTORICUL VERSIUNILOR DE PLAN (§40) — ✅
+
+Ultima tabela nefolosita. `floor_plan_projects` fusese gandita ca arbore de
+proiecte in stil Google Drive (foldere, fisiere, draft/published/arhivat), dar
+editorul a iesit altfel: se lucreaza direct pe `floor_plan_layers`, cu blocaj
+optimist pe `versiune`. Tabela a ramas goala.
+
+Intrebarea corecta nu era „construim arborele?", ci „ce lipseste din cauza ca
+tabela e goala?". Raspuns: azi o publicare gresita e DEFINITIVA. Echipa
+deseneaza planul unui client, publica, iar daca sterge din greseala jumatate de
+sala si salveaza, versiunea buna nu mai exista nicaieri. Blocajul optimist
+apara de suprascrierea intre doi oameni — nu de propria greseala.
+
+Deci am pastrat tabela in forma de care e nevoie: un fisier per versiune
+publicata, fara foldere. Coloanele pentru arbore raman; nu inventez ierarhia
+inainte sa aiba cine s-o foloseasca.
+
+Doua decizii:
+- Instantaneul se ia intr-un TRIGGER, nu in serviciu. Un istoric cu goluri e
+  mai rau decat lipsa lui: te bazezi pe el exact cand nu e acolo.
+- Salvarile care nu schimba structura (doar vizibilitatea) NU lasa versiune.
+  Altfel versiunea buna s-ar pierde intre zeci de randuri identice.
+- Revenirea nu sterge nimic si nu „intoarce timpul": scrie continutul vechi ca
+  versiune NOUA. Istoricul ramane adaugare-numai, deci si o revenire gresita se
+  poate reveni. (Scrierea trece prin acelasi trigger, deci se auto-inregistreaza.)
+
+Verificat in baza, cu un cont de designer din echipa:
+- [x] trei publicari succesive → trei versiuni, doar ultima 'published'
+- [x] o salvare care nu schimba structura NU lasa versiune noua
+- [x] revenirea la versiunea 2 → continutul ei se intoarce in strat, scris ca
+      versiunea 4, iar istoricul are acum patru intrari
+- [x] un cont din afara echipei → „Doar echipa TableX poate reveni la o
+      versiune de plan"
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

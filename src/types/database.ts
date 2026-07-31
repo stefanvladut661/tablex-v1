@@ -1365,6 +1365,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      restaureaza_versiune_plan: {
+        Args: { p_project_id: string }
+        Returns: number
+      }
       rezerva_public: {
         Args: {
           p_campuri_custom?: Json

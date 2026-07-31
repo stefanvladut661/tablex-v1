@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeftIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 
 import { EditorZona, type Strat } from '@/components/floor-plan/EditorZona'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -28,14 +29,17 @@ import { Switch } from '@/components/ui/switch'
 import { useNotificari } from '@/hooks/useNotificari'
 import { RUTE } from '@/lib/rute'
 import {
+  CHEIE_ISTORIC,
   CHEI_EDITOR,
   actualizeazaMasa,
   actualizeazaZona,
   creeazaMasa,
   creeazaZona,
+  getIstoricVersiuni,
   getLayer1,
   getMeseEditor,
   getZoneEditor,
+  restaureazaVersiune,
   salveazaLayer1,
   stergeMasa,
   stergeZona,
@@ -305,6 +309,27 @@ export function EditorPlanPage() {
       }),
     onSuccess: (stratNou) => {
       queryClient.setQueryData<Layer1>(CHEI_EDITOR.layer1(zonaCurenta!.id), stratNou)
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
+
+  /**
+   * Istoricul (§40). Instantaneele le scrie un trigger la fiecare publicare,
+   * deci lista se reimprospateaza dupa orice salvare a structurii publicate.
+   */
+  const istoric = useQuery({
+    queryKey: CHEIE_ISTORIC(zonaCurenta?.id ?? ''),
+    queryFn: () => getIstoricVersiuni(zonaCurenta!.id),
+    enabled: Boolean(zonaCurenta?.id),
+  })
+
+  const revino = useMutation({
+    mutationFn: restaureazaVersiune,
+    onSuccess: (versiuneNoua) => {
+      notificari.succes(`Planul a revenit la versiunea aleasa (acum versiunea ${versiuneNoua}).`)
+      // Continutul stratului s-a schimbat in baza, nu in cache: il recitim.
+      void queryClient.invalidateQueries({ queryKey: CHEI_EDITOR.layer1(zonaCurenta!.id) })
+      void queryClient.invalidateQueries({ queryKey: CHEIE_ISTORIC(zonaCurenta!.id) })
     },
     onError: (eroare) => notificari.eroare(eroare),
   })
@@ -646,6 +671,54 @@ export function EditorPlanPage() {
                   Structura ajunge in widgetul public doar daca e si vizibila, si publicata —
                   vederea structura_publica cere ambele. Mesele nu depind de asta.
                 </p>
+
+                {/* ── Istoricul versiunilor publicate (§40) ── */}
+                <div className="grid gap-1.5 border-t border-border pt-3">
+                  <p className="text-sm font-medium">Versiuni publicate</p>
+                  {(istoric.data ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Inca nicio versiune. Fiecare publicare a structurii lasa un instantaneu
+                      aici, ca o greseala sa nu fie definitiva.
+                    </p>
+                  ) : (
+                    <ul className="grid max-h-56 gap-1 overflow-y-auto">
+                      {(istoric.data ?? []).map((versiune) => (
+                        <li
+                          key={versiune.id}
+                          className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5 text-xs"
+                        >
+                          <span className="min-w-0">
+                            <span className="block font-medium">{versiune.nume}</span>
+                            <span className="block text-muted-foreground tabular-nums">
+                              {versiune.publicat_la
+                                ? new Date(versiune.publicat_la).toLocaleString('ro-RO', {
+                                    dateStyle: 'short',
+                                    timeStyle: 'short',
+                                  })
+                                : '—'}
+                            </span>
+                          </span>
+                          {versiune.status === 'published' ? (
+                            <Badge variant="secondary">Acum</Badge>
+                          ) : (
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              disabled={revino.isPending}
+                              onClick={() => revino.mutate(versiune.id)}
+                            >
+                              Revino
+                            </Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Revenirea nu sterge nimic: scrie versiunea aleasa ca versiune noua, deci se
+                    poate reveni si din ea.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}
