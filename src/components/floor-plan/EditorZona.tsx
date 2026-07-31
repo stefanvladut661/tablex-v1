@@ -4,7 +4,12 @@ import { ElementStructura } from '@/components/floor-plan/ElementStructura'
 import { Masa } from '@/components/floor-plan/Masa'
 import { aliniazaLaGrid, inCanvas as limiteazaInCanvas, pozitieFinala } from '@/lib/geometrie-plan'
 import { cn } from '@/lib/utils'
-import type { ElementStructura as Element, MasaHarta, ZonaHarta } from '@/types/floor-plan'
+import type {
+  ElementStructura as Element,
+  MasaHarta,
+  StatusuriMese,
+  ZonaHarta,
+} from '@/types/floor-plan'
 
 /** Se editeaza un singur strat odata — altfel testul de lovire e ambiguu:
  *  mesele se deseneaza PESTE structura si i-ar fura mereu clicul. */
@@ -17,7 +22,23 @@ type Props = {
   structura: Element[]
   /** Layer 2 — randurile din tables. */
   mese: MasaHarta[]
+  /**
+   * Statusurile pentru momentul afisat (§28.12). Lipsa lor pastreaza
+   * comportamentul editorului echipei: verde daca masa e activa, gri daca nu —
+   * acolo nu conteaza cine sta la masa, ci unde e asezata.
+   *
+   * In panoul restaurantului, dimpotriva: aceeasi harta trebuie sa arate si
+   * ocuparea live, altfel ospatarul ar avea nevoie de doua ecrane.
+   */
+  statusuri?: StatusuriMese
   masaSelectata: string | null
+  /**
+   * Apasare FARA deplasare pe o masa. Editorul echipei nu o foloseste (acolo un
+   * clic doar selecteaza), dar in panou clicul deschide rezervarea, iar
+   * tragerea muta masa — cele doua gesturi trebuie sa ramana distincte
+   * (§28.2, §28.3, §28.6).
+   */
+  onDeschideMasa?: (id: string) => void
   onSelecteazaMasa: (id: string | null) => void
   onMutaMasa: (id: string, x: number, y: number) => void
   /** Elementele de structura se identifica prin indice in array-ul jsonb. */
@@ -44,7 +65,9 @@ export function EditorZona({
   stratActiv,
   structura,
   mese,
+  statusuri,
   masaSelectata,
+  onDeschideMasa,
   onSelecteazaMasa,
   onMutaMasa,
   structuraSelectata,
@@ -96,6 +119,16 @@ export function EditorZona({
 
   function inCanvas(latime: number, inaltime: number, x: number, y: number) {
     return limiteazaInCanvas({ latime, inaltime }, canvas, { x, y })
+  }
+
+  /**
+   * O masa scoasa din uz ramane gri indiferent de ce spun rezervarile: e
+   * informatia care conteaza pentru cine se uita la sala. Restul vine din
+   * statusurile momentului, iar in lipsa lor (editorul echipei) e verde.
+   */
+  function statusMasa(masa: MasaHarta) {
+    if (!masa.activa || masa.indisponibila) return 'inactiv' as const
+    return statusuri?.[masa.id] ?? ('liber' as const)
   }
 
   /** Dimensiunile obiectului tras, indiferent de stratul din care vine. */
@@ -197,7 +230,12 @@ export function EditorZona({
     )
 
     // Un clic simplu (fara deplasare) nu trebuie sa produca o scriere inutila.
-    if (final.x === masura.x && final.y === masura.y) return
+    // In panoul restaurantului insa, el are alt inteles: deschide rezervarea de
+    // pe masa, sau walk-in-ul daca e libera.
+    if (final.x === masura.x && final.y === masura.y) {
+      if (gest.strat === 'mese') onDeschideMasa?.(gest.cheie as string)
+      return
+    }
 
     if (gest.strat === 'mese') onMutaMasa(gest.cheie as string, final.x, final.y)
     else onMutaStructura(gest.cheie as number, final.x, final.y)
@@ -334,7 +372,7 @@ export function EditorZona({
                 <Masa
                   key={masa.id}
                   masa={afisata}
-                  status={masa.activa && !masa.indisponibila ? 'liber' : 'inactiv'}
+                  status={statusMasa(masa)}
                 />
               )
             }
@@ -367,7 +405,7 @@ export function EditorZona({
               >
                 <Masa
                   masa={afisata}
-                  status={masa.activa && !masa.indisponibila ? 'liber' : 'inactiv'}
+                  status={statusMasa(masa)}
                   selectata={masaSelectata === masa.id}
                 />
               </g>

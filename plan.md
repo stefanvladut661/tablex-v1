@@ -1688,6 +1688,68 @@ mesajul ramane despre o cheie straina.
 - [x] token pentru un cont sters → mesajul nou, nu eroarea de cheie straina
 
 ---
+6septvicies. RESTAURANTUL ISI ARANJEAZA SINGUR MESELE (§28.6) — ✅
+
+6septvicies.1 Ce era rupt
+
+Mesele se puteau crea DOAR din editorul echipei TableX. Un restaurant care se
+inscria singur ramanea cu o sala goala si fara nimic de facut in ea: nu putea
+adauga o masa, nu putea muta una, nu putea marca una scoasa din uz. Astepta.
+Adica produsul nu era self-serve, desi §28.6 ii da Adminului exact Layer 2 —
+mese si scaune — iar echipei doar structura.
+
+Serviciul exista deja (`creeazaMasa`, `actualizeazaMasa`, `stergeMasa`, cu retry
+pe 23505 la numarul de masa). Lipsea drumul pana la el din panou.
+
+6septvicies.2 Capcana: doua intelesuri pentru acelasi gest
+
+Pe aceeasi harta, un pointer poate insemna doua lucruri: „mut mobila" sau
+„deschid rezervarea". Daca nu se despart, ospatarul rearanjeaza sala cand voia
+sa aseze un client.
+
+Regula aleasa, si scrisa in cod:
+  TRAGERE pe masa = mut masa (doar managerul)
+  CLIC pe masa    = deschid rezervarea, sau walk-in-ul daca e libera
+
+`EditorZona` stia deja sa deosebeasca cele doua (la pointerup compara pozitia
+finala cu cea initiala, ca sa nu scrie degeaba). Am folosit exact acel punct:
+acolo unde inainte iesea tacut, acum cheama `onDeschideMasa`.
+
+Al doilea lucru pe care canvasul echipei nu-l stia: STATUSURILE. Acolo o masa e
+verde daca e activa, fiindca nu conteaza cine sta la ea. In panou conteaza — e
+tot rostul hartii. Prop-ul `statusuri` e optional, deci editorul echipei ramane
+neschimbat.
+
+Ospatarul primeste in continuare harta de citit. Nu din lipsa de incredere: RLS
+ii refuza oricum scrierea in `tables`, iar butoane care esueaza tacit sunt mai
+rele decat butoane care lipsesc.
+
+6septvicies.3 Plafonul de scaune sta in baza, nu in formular
+
+Panoul NU verifica maximul de scaune pe masa. Il verifica triggerul
+`verifica_capacitate_masa`, pe `restaurants.max_scaune_masa` (§17.4). Daca l-as
+fi duplicat in interfata, ar fi existat doua adevaruri despre acelasi numar, iar
+schimbarea plafonului din Setari ar fi lasat formularul in urma.
+
+Verificat: cerand 25 de locuri, mesajul care ajunge la om vine din baza — „O
+masa poate avea maximum 12 scaune (masa 1, cerut 25)."
+
+6septvicies.4 Verificat in browser, cu cont de manager
+
+- [x] „Adauga" creeaza masa (numar generat automat) si o selecteaza
+- [x] tragere pe canvas: masa trece din (40,40) in (240,160), aliniata la grid,
+      salvata in baza
+- [x] apasare si ridicare in acelasi loc → NU muta nimic, deschide walk-in-ul
+- [x] 25 de locuri → refuzat de trigger, cu mesajul lui afisat
+
+6septvicies.5 Ce ramane din Faza 3
+
+Nu e terminata. Mai lipsesc: re-alocarea prin tragerea rezervarii de pe o masa
+pe alta (§28.4), waitlist ca panou lateral langa harta (§28.7), bara de sloturi
+orare cu „Previzualizare pentru ora X" (§28.12) si unirea meselor pentru grupuri
+(§28.6, §15.4).
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react'
 import { ClockIcon } from 'lucide-react'
 
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
 import { BlocajPlan } from '@/components/BlocajPlan'
 import { CereriPlan } from '@/components/floor-plan/CereriPlan'
+import { EditorZona } from '@/components/floor-plan/EditorZona'
+import { PanouMeseAdmin } from '@/components/floor-plan/PanouMeseAdmin'
 import { HartaZona } from '@/components/floor-plan/HartaZona'
 import { LegendaStatus } from '@/components/floor-plan/LegendaStatus'
 import { DialogRezervare } from '@/components/rezervari/DialogRezervare'
@@ -12,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
 import { useMese, useZone } from '@/hooks/useMese'
+import { useNotificari } from '@/hooks/useNotificari'
 import { useRezervari } from '@/hooks/useRezervari'
 import { MESE_DEMO, STRUCTURA_DEMO, ZONE_DEMO, statusuriLaOra } from '@/lib/harta-demo'
 import { programZilei } from '@/lib/program'
@@ -21,6 +26,8 @@ import {
   sfarsitZi,
   toZonedTime,
 } from '@/lib/timp'
+import { actualizeazaMasa } from '@/services/editor-plan'
+import { CHEI_MESE } from '@/services/mese'
 import type { Rezervare } from '@/services/rezervari'
 import type { MasaHarta, StatusuriMese } from '@/types/floor-plan'
 
@@ -72,7 +79,26 @@ function statusuriLaMoment(
 }
 
 export function HartaPage() {
-  const { profil, areFloorPlan } = useAuth()
+  const { profil, areFloorPlan, esteManager } = useAuth()
+  const notificari = useNotificari()
+  const queryClient = useQueryClient()
+  const [masaDeEditat, setMasaDeEditat] = useState<string | null>(null)
+
+  /**
+   * Mutarea unei mese e o scriere ca oricare alta: verificam numarul de randuri
+   * (un UPDATE respins de RLS raspunde 200 cu zero randuri) si reincarcam, ca
+   * doua tablete din sala sa nu ajunga sa arate planuri diferite.
+   */
+  const mutaMasa = useMutation({
+    mutationFn: ({ id, x, y }: { id: string; x: number; y: number }) =>
+      actualizeazaMasa(id, { pozitie_x: x, pozitie_y: y }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: CHEI_MESE.mese(profil?.tip === 'admin' ? profil.restaurant.id : ''),
+      })
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
   const restaurant = profil?.tip === 'admin' ? profil.restaurant : null
   const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
 
@@ -175,13 +201,43 @@ export function HartaPage() {
               </Tabs>
             )}
 
-            {zonaCurenta && meseZona.length === 0 ? (
+            {zonaCurenta && meseZona.length === 0 && !esteManager ? (
               <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-                Zona „{zonaCurenta.nume}" nu are inca mese. Planul 2D se configureaza de echipa
-                TableX, din schita trimisa de tine.
+                Zona „{zonaCurenta.nume}" nu are inca mese. Managerul le poate adauga, sau planul
+                2D se configureaza de echipa TableX, din schita trimisa de tine.
               </p>
             ) : (
-              zonaCurenta && (
+              zonaCurenta &&
+              /**
+               * Managerul primeste canvasul editabil (§28.6): trage mesele
+               * direct pe plan. Ospatarul primeste harta de citit — RLS ii
+               * refuza oricum scrierea in `tables`, iar butoane care esueaza
+               * tacut sunt mai rele decat butoane care lipsesc.
+               *
+               * Clicul pastreaza intelesul operational in ambele cazuri:
+               * deschide rezervarea, sau walk-in-ul pe o masa libera. Doar
+               * TRAGEREA muta mobila.
+               */
+              (esteManager ? (
+                <EditorZona
+                  zona={zonaCurenta}
+                  stratActiv="mese"
+                  // Layer 1 nu se incarca inca in panou: harta restaurantului
+                  // a aratat dintotdeauna doar mesele. Cand structura publicata
+                  // va fi adusa aici, se pune direct — canvasul o deseneaza deja.
+                  structura={[]}
+                  mese={meseZona}
+                  statusuri={statusuri}
+                  masaSelectata={masaDeEditat}
+                  onSelecteazaMasa={setMasaDeEditat}
+                  onDeschideMasa={laClickMasa}
+                  onMutaMasa={(id, x, y) => mutaMasa.mutate({ id, x, y })}
+                  structuraSelectata={null}
+                  onSelecteazaStructura={() => {}}
+                  onMutaStructura={() => {}}
+                  className="aspect-[3/2] w-full"
+                />
+              ) : (
                 <HartaZona
                   zona={zonaCurenta}
                   mese={meseZona}
@@ -189,7 +245,7 @@ export function HartaPage() {
                   onSelecteazaMasa={laClickMasa}
                   className="aspect-[3/2] w-full"
                 />
-              )
+              ))
             )}
           </>
         )}
@@ -198,6 +254,16 @@ export function HartaPage() {
       </div>
 
       <aside className="grid content-start gap-4">
+        {esteManager && zonaCurenta && (
+          <PanouMeseAdmin
+            restaurantId={restaurant.id}
+            zona={zonaCurenta}
+            masa={meseZona.find((m) => m.id === masaDeEditat) ?? null}
+            meseInZona={meseZona.length}
+            onSelecteaza={setMasaDeEditat}
+          />
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
