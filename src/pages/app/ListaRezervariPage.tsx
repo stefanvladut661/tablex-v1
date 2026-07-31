@@ -1,10 +1,26 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+  EyeIcon,
+  SearchIcon,
+  SettingsIcon,
+} from 'lucide-react'
 
-import { BadgeStatus } from '@/components/rezervari/BadgeStatus'
-import { SheetRezervare } from '@/components/rezervari/SheetRezervare'
+import { CardRezervare } from '@/components/rezervari/CardRezervare'
+import { DialogEditareRezervare } from '@/components/rezervari/DialogEditareRezervare'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -13,50 +29,139 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
-import { useRezervari } from '@/hooks/useRezervari'
+import { useNotificari } from '@/hooks/useNotificari'
+import { useMutatiiRezervari, useRezervari } from '@/hooks/useRezervari'
+import { construiesteCsv, descarcaCsv } from '@/lib/csv'
 import { ETICHETE_STATUS_REZERVARE, ETICHETE_SURSA_REZERVARE } from '@/lib/etichete'
-import { addDays, etichetaZi, inceputZi, ora, sfarsitZi, toZonedTime } from '@/lib/timp'
+import { addDays, etichetaZi, formatFus, inceputZi, ora, sfarsitZi, toZonedTime } from '@/lib/timp'
+import {
+  CAMPURI_CARD,
+  campuriAscunse,
+  salveazaCampuriAscunse,
+  type CampCard,
+} from '@/services/preferinte'
 import type { Rezervare, StatusRezervare } from '@/services/rezervari'
 
-const TOATE = 'toate'
+/** Tab-urile din §26.7. „Toate" e in plus: la o zi plina, filtrul e util. */
+type TabLista = { cheie: string; eticheta: string; statusuri: StatusRezervare[] | null }
+
+const TABURI: TabLista[] = [
+  { cheie: 'toate', eticheta: 'Toate', statusuri: null },
+  { cheie: 'pending', eticheta: 'In asteptare', statusuri: ['pending'] },
+  { cheie: 'confirmate', eticheta: 'Confirmate', statusuri: ['confirmata'] },
+  { cheie: 'sosite', eticheta: 'Sosite', statusuri: ['sosita'] },
+  { cheie: 'incheiate', eticheta: 'Anulate / No-show', statusuri: ['anulata', 'no_show', 'respinsa'] },
+]
+
+type Sortare = 'ora' | 'nume'
 
 export function ListaRezervariPage() {
   const { profil } = useAuth()
+  const queryClient = useQueryClient()
+  const notificari = useNotificari()
+
   const restaurant = profil?.tip === 'admin' ? profil.restaurant : null
+  const cont = profil?.tip === 'admin' ? profil.cont : null
   const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
 
   const [zi, setZi] = useState(() => toZonedTime(new Date(), fus))
-  const [status, setStatus] = useState<string>(TOATE)
+  const [tab, setTab] = useState<string>('toate')
+  const [sortare, setSortare] = useState<Sortare>('ora')
   const [caut, setCaut] = useState('')
-  const [selectata, setSelectata] = useState<Rezervare | null>(null)
+  const [deEditat, setDeEditat] = useState<Rezervare | null>(null)
+  const [ascunseLocal, setAscunseLocal] = useState<Set<CampCard> | null>(null)
 
   const [deLa, panaLa] = useMemo(() => [inceputZi(zi, fus), sfarsitZi(zi, fus)], [zi, fus])
   const rezervari = useRezervari(restaurant?.id, deLa, panaLa)
+  const { schimbaStatus, muta } = useMutatiiRezervari(restaurant?.id)
+
+  /**
+   * Read-only pe orice zi care nu e azi (§8.2, §25.4). Nu e o restrictie de
+   * drepturi, ci de context: ziua de ieri e raportare, iar o confirmare data
+   * din greseala pe ea nu mai ajuta pe nimeni.
+   */
+  const azi = formatFus(new Date(), 'yyyy-MM-dd', fus)
+  const readOnly = formatFus(zi, 'yyyy-MM-dd', fus) !== azi
+
+  const ascunse = ascunseLocal ?? campuriAscunse(cont?.list_view_columns_config)
+
+  const salveazaPreferinta = useMutation({
+    mutationFn: (noi: CampCard[]) => salveazaCampuriAscunse(cont!.id, noi),
+    onError: (eroare) => notificari.eroare(eroare),
+  })
+
+  function comutaCamp(camp: CampCard) {
+    const noi = new Set(ascunse)
+    if (noi.has(camp)) noi.delete(camp)
+    else noi.add(camp)
+    // Optimist: preferinta e personala si fara consecinte asupra datelor, deci
+    // interfata raspunde imediat, iar salvarea merge in urma.
+    setAscunseLocal(noi)
+    salveazaPreferinta.mutate([...noi])
+  }
 
   const filtrate = useMemo(() => {
     const termen = caut.trim().toLowerCase()
-    return (rezervari.data ?? []).filter((r) => {
-      if (status !== TOATE && r.status !== status) return false
+    const statusuriTab = TABURI.find((t) => t.cheie === tab)?.statusuri
+    const lista = (rezervari.data ?? []).filter((r) => {
+      if (statusuriTab && !statusuriTab.includes(r.status)) return false
       if (!termen) return true
       return (
         r.client_nume.toLowerCase().includes(termen) ||
-        // Un walk-in poate fi fara telefon (§25.6), deci coloana e nullabila.
         (r.telefon ?? '').includes(termen) ||
         (r.masa?.numar_masa ?? '').toLowerCase().includes(termen)
       )
     })
-  }, [rezervari.data, status, caut])
 
-  if (!restaurant) return null
+    return [...lista].sort((a, b) =>
+      sortare === 'nume'
+        ? a.client_nume.localeCompare(b.client_nume, 'ro')
+        : a.data_ora.localeCompare(b.data_ora),
+    )
+  }, [rezervari.data, tab, caut, sortare])
+
+  function exporta() {
+    const csv = construiesteCsv(filtrate, [
+      { titlu: 'Ora', valoare: (r) => ora(r.data_ora, fus) },
+      { titlu: 'Client', valoare: (r) => r.client_nume },
+      { titlu: 'Telefon', valoare: (r) => r.telefon },
+      { titlu: 'Persoane', valoare: (r) => r.nr_persoane },
+      { titlu: 'Masa', valoare: (r) => r.masa?.numar_masa },
+      { titlu: 'Zona', valoare: (r) => r.zona?.nume },
+      { titlu: 'Status', valoare: (r) => ETICHETE_STATUS_REZERVARE[r.status] },
+      { titlu: 'Sursa', valoare: (r) => ETICHETE_SURSA_REZERVARE[r.sursa] },
+      { titlu: 'Note interne', valoare: (r) => r.note_interne },
+    ])
+    // Numele fisierului poarta filtrele: doua exporturi din aceeasi zi nu
+    // trebuie sa se suprascrie in folderul Downloads.
+    descarcaCsv(`rezervari-${formatFus(zi, 'yyyy-MM-dd', fus)}-${tab}.csv`, csv)
+  }
+
+  function schimba(rezervare: Rezervare, status: StatusRezervare, mesaj: string) {
+    schimbaStatus.mutate(
+      { id: rezervare.id, status },
+      {
+        onSuccess: () => notificari.succes(mesaj),
+        onError: (eroare) => notificari.eroare(eroare),
+      },
+    )
+  }
+
+  function salveazaNote(rezervare: Rezervare, note: string | null) {
+    muta.mutate(
+      { id: rezervare.id, noteInterne: note },
+      {
+        onSuccess: () => notificari.succes('Nota interna a fost salvata.'),
+        onError: (eroare) => notificari.eroare(eroare),
+      },
+    )
+  }
+
+  if (!restaurant || !cont) return null
+
+  const inLucru = schimbaStatus.isPending || muta.isPending
 
   return (
     <div className="grid gap-4 p-4 sm:p-6">
@@ -84,6 +189,12 @@ export function ListaRezervariPage() {
           <h1 className="ml-1 text-lg font-semibold tracking-tight capitalize">
             {etichetaZi(zi, fus)}
           </h1>
+          {readOnly && (
+            <span className="flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              <EyeIcon className="size-3" />
+              doar citire
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -97,83 +208,128 @@ export function ListaRezervariPage() {
               aria-label="Caut in rezervari"
             />
           </div>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="h-8 w-40">
+
+          <Select value={sortare} onValueChange={(v) => setSortare(v as Sortare)}>
+            <SelectTrigger className="h-8 w-32" aria-label="Sortare">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={TOATE}>Toate statusurile</SelectItem>
-              {(Object.keys(ETICHETE_STATUS_REZERVARE) as StatusRezervare[]).map((cheie) => (
-                <SelectItem key={cheie} value={cheie}>
-                  {ETICHETE_STATUS_REZERVARE[cheie]}
-                </SelectItem>
-              ))}
+              <SelectItem value="ora">Dupa ora</SelectItem>
+              <SelectItem value="nume">Dupa nume</SelectItem>
             </SelectContent>
           </Select>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon-sm" aria-label="Ce apare pe card">
+                <SettingsIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Ce apare pe card</DropdownMenuLabel>
+              <div className="grid gap-1.5 p-2">
+                {CAMPURI_CARD.map((camp) => (
+                  <Label
+                    key={camp.cheie}
+                    className="flex items-center gap-2 text-sm font-normal"
+                    // Bifele nu inchid meniul: de obicei se schimba doua-trei
+                    // deodata.
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <Checkbox
+                      checked={!ascunse.has(camp.cheie)}
+                      onCheckedChange={() => comutaCamp(camp.cheie)}
+                    />
+                    {camp.eticheta}
+                  </Label>
+                ))}
+              </div>
+              <p className="px-2 pb-2 text-xs text-muted-foreground">
+                Preferinta ta, nu a restaurantului.
+              </p>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exporta}
+            disabled={filtrate.length === 0}
+            title="Exporta ce e afisat acum, cu filtrele aplicate"
+          >
+            <DownloadIcon />
+            Export CSV
+          </Button>
         </div>
       </div>
 
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          {TABURI.map((t) => {
+            const cate = (rezervari.data ?? []).filter(
+              (r) => !t.statusuri || t.statusuri.includes(r.status),
+            ).length
+            return (
+              <TabsTrigger key={t.cheie} value={t.cheie}>
+                {t.eticheta}
+                {cate > 0 && <span className="ml-1.5 text-xs tabular-nums opacity-70">{cate}</span>}
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
+      </Tabs>
+
       {rezervari.isLoading ? (
         <Skeleton className="h-64 w-full" />
-      ) : (
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-20">Ora</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead className="w-32">Telefon</TableHead>
-                <TableHead className="w-16">Pers.</TableHead>
-                <TableHead className="w-28">Masa</TableHead>
-                <TableHead className="w-24">Sursa</TableHead>
-                <TableHead className="w-32">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtrate.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
-                    Nicio rezervare pentru filtrele alese.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtrate.map((rezervare) => (
-                  <TableRow
-                    key={rezervare.id}
-                    onClick={() => setSelectata(rezervare)}
-                    className="cursor-pointer"
-                  >
-                    <TableCell className="tabular-nums">{ora(rezervare.data_ora, fus)}</TableCell>
-                    <TableCell className="font-medium">{rezervare.client_nume}</TableCell>
-                    <TableCell className="tabular-nums">
-                      {rezervare.telefon ?? <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="tabular-nums">{rezervare.nr_persoane}</TableCell>
-                    <TableCell>
-                      {rezervare.masa?.numar_masa ?? (
-                        <span className="text-muted-foreground italic">nealocata</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {ETICHETE_SURSA_REZERVARE[rezervare.sursa]}
-                    </TableCell>
-                    <TableCell>
-                      <BadgeStatus status={rezervare.status} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+      ) : rezervari.isError ? (
+        // Fara ramura asta, o cadere de retea arata identic cu o zi goala —
+        // adica dezastru operational citit ca zi linistita.
+        <div className="grid justify-items-start gap-2 rounded-lg border border-destructive/40 bg-card p-6">
+          <p className="text-sm font-medium">Nu am putut incarca rezervarile.</p>
+          <p className="text-sm text-muted-foreground">
+            Lista de mai jos ar fi goala din cauza erorii, nu fiindca nu ai rezervari.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => void rezervari.refetch()}>
+            Reincearca
+          </Button>
         </div>
+      ) : filtrate.length === 0 ? (
+        <div className="grid justify-items-start gap-2 rounded-lg border border-border bg-card p-6">
+          <p className="text-sm text-muted-foreground">
+            {caut || tab !== 'toate'
+              ? 'Nicio rezervare pentru filtrele alese.'
+              : 'Nicio rezervare in ziua asta.'}
+          </p>
+        </div>
+      ) : (
+        <ul className="grid gap-2">
+          {filtrate.map((rezervare) => (
+            <CardRezervare
+              key={rezervare.id}
+              rezervare={rezervare}
+              fus={fus}
+              ascunse={ascunse}
+              readOnly={readOnly}
+              inLucru={inLucru}
+              onSchimbaStatus={(status, mesaj) => schimba(rezervare, status, mesaj)}
+              onEditeaza={() => setDeEditat(rezervare)}
+              onSalveazaNote={(note) => salveazaNote(rezervare, note)}
+            />
+          ))}
+        </ul>
       )}
 
-      <SheetRezervare
-        rezervare={selectata}
-        onInchide={() => setSelectata(null)}
-        restaurantId={restaurant.id}
-        fus={fus}
-      />
+      {deEditat && (
+        <DialogEditareRezervare
+          rezervare={deEditat}
+          fus={fus}
+          restaurantId={restaurant.id}
+          onInchide={() => {
+            setDeEditat(null)
+            void queryClient.invalidateQueries({ queryKey: ['mese-libere'] })
+          }}
+        />
+      )}
     </div>
   )
 }

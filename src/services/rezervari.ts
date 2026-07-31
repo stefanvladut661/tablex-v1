@@ -98,18 +98,40 @@ export async function schimbaStatus(id: string, status: StatusRezervare): Promis
   }
 }
 
+/**
+ * Ce se poate schimba la o rezervare care exista deja (§26.3).
+ *
+ * Telefonul lipseste INTENTIONAT. E cheia fisei de client (§16.1): schimbat
+ * aici, `customer_id` ar trebui re-legat, iar vizitele s-ar imparti sau s-ar
+ * dubla intre doua fise. Un numar gresit se rezolva contopind fisele din CRM
+ * (§19.2), nu rescriind rezervarea.
+ */
 export type MutareRezervare = {
   id: string
   tableId?: string | null
+  zoneId?: string | null
   dataOra?: Date
   durataMinute?: number
+  nrPersoane?: number
+  noteInterne?: string | null
 }
 
+/**
+ * Intervalul si buffer-ul NU se calculeaza aici: le recalculeaza triggerul
+ * `rezervare_calculeaza_interval` la fiecare UPDATE. Daca le-am duplica in
+ * client, cele doua aritmetici ar diverge tacut la prima schimbare de setari.
+ *
+ * Conflictul cu alta rezervare vine ca SQLSTATE 23P01 din constrangerea
+ * EXCLUDE si e tradus in lib/erori.ts. Nu exista forma de fortare (§15.3).
+ */
 export async function mutaRezervare(mutare: MutareRezervare): Promise<void> {
   const modificari: TablesUpdate<'reservations'> = {}
   if (mutare.tableId !== undefined) modificari.table_id = mutare.tableId
+  if (mutare.zoneId !== undefined) modificari.zone_id = mutare.zoneId
   if (mutare.dataOra) modificari.data_ora = mutare.dataOra.toISOString()
   if (mutare.durataMinute) modificari.durata_minute = mutare.durataMinute
+  if (mutare.nrPersoane) modificari.nr_persoane = mutare.nrPersoane
+  if (mutare.noteInterne !== undefined) modificari.note_interne = mutare.noteInterne
 
   const { data, error } = await supabase
     .from('reservations')
@@ -118,6 +140,36 @@ export async function mutaRezervare(mutare: MutareRezervare): Promise<void> {
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Rezervarea nu a fost mutata: contul tau nu are acest drept.')
+    throw new Error('Rezervarea nu a fost modificata: contul tau nu are acest drept.')
   }
+}
+
+export type MasaDisponibila = {
+  table_id: string
+  numar_masa: string
+  capacitate: number
+  libera: boolean
+}
+
+/**
+ * Mesele pentru re-alocarea unei rezervari EXISTENTE (§26.3).
+ *
+ * Nu folosim `disponibilitate_mese`: aceea ar arata masa curenta drept ocupata
+ * de propria rezervare, deci n-ai putea schimba doar ora, pastrand masa.
+ * RPC-ul din migratia 27 ignora alocarile rezervarii primite.
+ *
+ * `dataOra` si `durata` sunt optionale: lipsa lor inseamna „la ora ei de acum".
+ */
+export async function getMeseLibere(
+  reservationId: string,
+  dataOra?: Date,
+  durataMinute?: number,
+): Promise<MasaDisponibila[]> {
+  const { data, error } = await supabase.rpc('mese_libere_pentru_rezervare', {
+    p_reservation_id: reservationId,
+    p_start: dataOra?.toISOString(),
+    p_durata_minute: durataMinute,
+  })
+  if (error) throw error
+  return data ?? []
 }

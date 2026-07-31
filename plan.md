@@ -1534,6 +1534,103 @@ In browser, in context izolat:
       „Deblocheaza Harta 2D — Upgrade la Pro Floor"
 
 ---
+6quinvicies. REZERVAREA SE POATE EDITA. LIST VIEW PE CARDURI (FAZA 2) — ✅
+
+6quinvicies.1 Gaura care se vedea doar din sala
+
+Pana acum, o rezervare avea doar tranzitii de status. La telefonul „venim 6, nu
+4, si pe la 20:30", singura solutie era ANULEAZA + creeaza din nou — operatie
+care pierde sursa, notele, si leaga o alta rezervare de fisa de client.
+
+Nu era o scapare vizibila in cod: `mutaRezervare` exista din Faza 4 si accepta
+deja `tableId`, `dataOra`, `durataMinute`. Nimic nu-l apela cu ele in afara de
+tragerea pe calendar. Serviciul era gata, interfata lipsea.
+
+6quinvicies.2 Ce NU se editeaza, si de ce
+
+TELEFONUL. E cheia fisei de client (§16.1): schimbat pe rezervare, `customer_id`
+ar trebui re-legat, iar vizitele s-ar imparti intre doua fise — sau s-ar dubla.
+Un numar gresit se rezolva contopind fisele din CRM (§16.3), unde operatia stie
+sa mute istoricul. Dialogul o spune explicit, ca nimeni sa nu caute campul.
+
+Nici STATUSUL: are butoane proprii, cu emailuri legate de tranzitii.
+
+6quinvicies.3 Migratia 27: de ce nu merge `disponibilitate_mese`
+
+Pentru o rezervare NOUA, ea raspunde corect. Pentru una care EXISTA, minte in
+ambele sensuri: masa pe care sta chiar rezervarea pe care o mut apare OCUPATA —
+de ea insasi —, deci n-ai putea schimba doar ora pastrand masa; iar la
+schimbarea orei, propriul interval vechi blocheaza mese care se elibereaza
+tocmai prin mutare.
+
+`mese_libere_pentru_rezervare` e aceeasi interogare cu un rand in plus:
+`a.reservation_id is distinct from p_reservation_id`. Verificat una langa alta:
+pentru rezervarea de pe masa 1, vechea functie zice „masa 1 ocupata", noua zice
+„libera", iar masa 2 (a altei rezervari) ramane ocupata in ambele.
+
+E SECURITY INVOKER, spre deosebire de sora ei: fiind doar pentru personal, RLS
+face singur izolarea pe restaurant, deci nu primeste `restaurant_id` din afara
+si nu trebuie sa aiba incredere in el.
+
+6quinvicies.4 A DOUA GAURA DE SECURITATE, gasita cablând preferintele
+
+Politica `admin_users_actualizare_propriu` are deasupra ei comentariul
+„preferintele personale (list_view_columns_config, nume)". Intentia era ingusta;
+dreptul acordat era pe TOT randul:
+
+    update admin_users set rol = 'manager' where user_id = auth.uid();
+
+Un ospatar isi dadea singur rol de manager si primea instantaneu Setarile,
+Echipa, stergerea GDPR a clientilor, contopirea fiselor si editarea planului.
+Escaladare de privilegii intr-o linie, fara nicio eroare pe drum. Am gasit-o
+tocmai fiindca ma pregateam sa FOLOSESC acea politica pentru §26.2.
+
+RLS nu stie sa spuna „poti actualiza randul, dar numai coloanele astea". Un
+trigger stie. Migratia 28 il adauga, plus garda din aceeasi familie cu cea a
+ultimului super admin: un restaurant nu poate ramane fara manager activ.
+
+6quinvicies.5 List View, refacut dupa §26
+
+- Carduri, nu tabel (§26.1), cu TOATE actiunile pe card (§26.3): Accepta,
+  Respinge, Sosit, Neprezentat, Modifica, Anuleaza. Motivul din spec se vede in
+  sala: la ora de varf receptia confirma zece rezervari una dupa alta, iar un
+  panou care se deschide si se inchide de zece ori costa mai mult decat toate
+  confirmarile la un loc.
+- Note interne ca zona expandabila pe card (§26.4).
+- Tab-uri cu contor (§26.7), sortare dupa ora sau nume (§26.5), cautare.
+- Campuri configurabile pe card, salvate in `admin_users.list_view_columns_config`
+  (§26.2) — coloana exista din Faza 1b si nu o folosea nimic. Salvam ce e
+  ASCUNS, nu ce e vizibil: asa, un camp adaugat maine apare automat tuturor.
+- Zilele care nu sunt azi devin DOAR CITIRE (§8.2, §25.4). Nu e o restrictie de
+  drepturi, ci de context: ziua de ieri e raportare, iar o confirmare data din
+  greseala pe ea nu mai ajuta pe nimeni.
+- Ramura de EROARE, care lipsea: fara ea, o cadere de retea arata identic cu o
+  zi goala — dezastru operational citit ca zi linistita.
+- Export CSV (§22.2) cu filtrele active. Separatorul e punct-si-virgula si
+  fisierul incepe cu BOM: Excel pe Windows romanesc citeste virgula ca separator
+  ZECIMAL si UTF-8 ca ANSI, deci fara ele exportul ajunge pe o coloana, cu
+  diacriticele stricate. Sase teste tin regulile astea pe loc.
+
+6quinvicies.6 Verificat cap-coada
+
+In baza, cu JWT-uri reale:
+- [x] noua functie vs cea veche, pe aceeasi rezervare: masa proprie libera la
+      una, ocupata la cealalta
+- [x] ospatar → `rol = 'manager'` pe randul propriu → refuzat, 42501
+- [x] acelasi ospatar → preferinta personala salvata, rolul neschimbat
+- [x] ultimul manager care se retrogradeaza → „Restaurantul ar ramane fara
+      manager"
+- [x] mutarea unei rezervari peste alta, pe aceeasi masa → 23P01, tradus deja
+
+In browser, cu cont de manager:
+- [x] cardurile arata actiunile fara click suplimentar; tab-urile numara
+- [x] dropdown-ul de masa: masa proprie selectabila, cealalta dezactivata cu
+      „ocupata — sub numarul de persoane"
+- [x] editare reala: 4 → 6 persoane, 19:00 → 20:30, nota adaugata; in baza
+      `se_termina_la` s-a recalculat singur (triggerul), masa a ramas
+- [x] ziua de maine → „doar citire", fara niciun buton de actiune
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

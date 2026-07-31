@@ -1365,6 +1365,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      mese_libere_pentru_rezervare: {
+        Args: {
+          p_durata_minute?: number
+          p_reservation_id: string
+          p_start?: string
+          p_zone_id?: string
+        }
+        Returns: {
+          capacitate: number
+          libera: boolean
+          numar_masa: string
+          table_id: string
+        }[]
+      }
       restaureaza_versiune_plan: {
         Args: { p_project_id: string }
         Returns: number
