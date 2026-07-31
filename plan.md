@@ -216,9 +216,11 @@ in router — se ataseaza la /app/setari in Faza 4.
 
 5.6 Ramas de verificat cu date reale (Faza 3, cand exista onboarding)
 
-- [ ] login complet → profil incarcat → /app afiseaza restaurantul
-- [ ] ospatar vs manager: garda RutaManager blocheaza ospatarul
-- [ ] restaurant suspendat → ecran de blocaj, nu dashboard
+Facut in sesiunea din §6duovicies, cu conturi reale de manager si ospatar:
+
+- [x] login complet → profil incarcat → /app afiseaza restaurantul
+- [x] ospatar vs manager: garda RutaManager blocheaza ospatarul
+- [x] restaurant suspendat → ecran de blocaj, nu dashboard
 
 ---
 6. FAZA 2: LANDING PAGE + HARTA 2D — ✅ COMPLETATA
@@ -1379,6 +1381,28 @@ Verificat in baza, cu un cont de designer din echipa:
       versiunea 4, iar istoricul are acum patru intrari
 - [x] un cont din afara echipei → „Doar echipa TableX poate reveni la o
       versiune de plan"
+
+---
+6duovicies. GARZILE, PROBATE CU CONTURI REALE (§5.6) — ✅
+
+Trei randuri nebifate din Faza 3, ramase asa fiindca la momentul acela nu
+existau conturi. Sunt garduri de securitate pe care nu le probase nimeni: daca
+una era sparta, era sparta TACUT — ecranul s-ar fi deschis si nimeni n-ar fi
+aflat pana cand un ospatar ar fi vazut cifra de afaceri.
+
+Verificat in browser, cu doua conturi in acelasi restaurant:
+- [x] ospatarul vede in meniu doar Calendar, Lista, Harta, Asteptare, Clienti —
+      fara Echipa si fara Setari
+- [x] /app/setari si /app/echipa scrise DIRECT in bara de adrese il intorc la
+      /app; /superadmin il intoarce pe landing. Meniul ascuns nu e o garda;
+      astea sunt.
+- [x] restaurantul suspendat → „Cont suspendat" cu motivul din baza, in locul
+      panoului. Nu un dashboard gol: un ecran care spune de ce.
+
+Ecranul „Formularul public" din Setari (§6octodecies) — pana acum singurul
+lasat neverificat in browser — a fost si el probat cap-coada, cu intrebarea
+„Scaun pentru copil?": s-a creat cu cheia derivata `scaun_pentru_copil`, a
+aparut in lista din Setari si, imediat, in widgetul public, cu „(optional)".
 
 ---
 7. COMMANDS CHEAT SHEET
