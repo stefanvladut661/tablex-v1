@@ -1,7 +1,8 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: contopirea fiselor de client (customer_merge_audit + alias de telefon) -->
-<!-- NEXT_TASK: furnizor email (RESEND_API_KEY, cere cont si domeniu); QA manual drag calendar -->
+<!-- LAST_COMPLETED: toate tabelele au interfata; garzi probate; drag testat; rute lazy -->
+<!-- NEXT_TASK: PLATI cu Stripe (decis: dupa ce restul aplicatiei e gata — acum e);
+     inainte de ele: furnizor email (RESEND_API_KEY, cere cont Resend si domeniu) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
