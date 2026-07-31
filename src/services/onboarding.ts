@@ -44,10 +44,17 @@ export async function creeazaRestaurant(date: DateRestaurantNou): Promise<string
   return data
 }
 
+/**
+ * Doua feluri de invitatie trec prin acelasi link si aceeasi pagina: intr-un
+ * restaurant sau in echipa TableX (§9.2.7). Rolul vine ca text, fiindca cele
+ * doua surse au enum-uri diferite si o functie SQL nu poate intoarce coloane
+ * cu tip variabil.
+ */
 export type DetaliiInvitatie = {
+  tip: 'restaurant' | 'echipa'
   restaurant_nume: string
   email: string
-  rol: Enums<'admin_rol'>
+  rol: Enums<'admin_rol'> | Enums<'super_admin_rol'>
   expira_la: string
 }
 
@@ -55,10 +62,15 @@ export type DetaliiInvitatie = {
 export async function getDetaliiInvitatie(token: string): Promise<DetaliiInvitatie | null> {
   const { data, error } = await supabase.rpc('detalii_invitatie', { p_token: token })
   if (error) throw error
-  return data?.[0] ?? null
+  const rand = data?.[0]
+  return rand ? (rand as DetaliiInvitatie) : null
 }
 
-export async function acceptaInvitatie(token: string): Promise<string> {
+/**
+ * Intoarce restaurantul pentru invitatiile de restaurant si null pentru cele
+ * de echipa: acolo nu exista niciun restaurant de intors.
+ */
+export async function acceptaInvitatie(token: string): Promise<string | null> {
   const { data, error } = await supabase.rpc('accepta_invitatie', { p_token: token })
   if (error) throw error
   return data

@@ -13,6 +13,7 @@ import {
   TagIcon,
 } from 'lucide-react'
 
+import { EchipaTableX } from '@/components/superadmin/EchipaTableX'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -425,9 +426,18 @@ export function SuperAdminPage() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="echipa">Echipa</TabsTrigger>
             <TabsTrigger value="setari">Setari globale</TabsTrigger>
             <TabsTrigger value="audit">Registru</TabsTrigger>
           </TabsList>
+
+          {/* ── Echipa TableX ── */}
+          <TabsContent value="echipa" className="mt-4">
+            <EchipaTableX
+              esteDeplin={profil?.tip === 'super_admin' && profil.cont.rol === 'super_admin'}
+              userId={utilizator?.id ?? ''}
+            />
+          </TabsContent>
 
           {/* ── Restaurante ── */}
           <TabsContent value="restaurante" className="mt-4 grid gap-3">

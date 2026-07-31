@@ -12,7 +12,9 @@ import { useNotificari } from '@/hooks/useNotificari'
 import { RUTE } from '@/lib/rute'
 import { acceptaInvitatie, getDetaliiInvitatie } from '@/services/onboarding'
 
-const ETICHETE_ROL = { manager: 'Manager', ospatar: 'Ospatar' } as const
+import { ETICHETE_ROL_ADMIN, ETICHETE_ROL_ECHIPA } from '@/lib/etichete'
+
+const ETICHETE_ROL: Record<string, string> = { ...ETICHETE_ROL_ADMIN, ...ETICHETE_ROL_ECHIPA }
 
 export function InvitatiePage() {
   const [parametri] = useSearchParams()
@@ -79,10 +81,12 @@ export function InvitatiePage() {
     )
   }
 
+  const esteEchipa = date.tip === 'echipa'
+
   const antet = (
     <div className="grid gap-2 rounded-lg bg-muted p-3 text-sm">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground">Restaurant</span>
+        <span className="text-muted-foreground">{esteEchipa ? 'Organizatie' : 'Restaurant'}</span>
         <span className="font-medium">{date.restaurant_nume}</span>
       </div>
       <div className="flex items-center justify-between gap-3">
@@ -122,11 +126,17 @@ export function InvitatiePage() {
     )
   }
 
+  // Un cont apartine unui singur loc: unui restaurant SAU echipei TableX.
+  // Regula e impusa de un trigger in baza; aici o spunem pe intelesul omului.
   if (profil) {
     return (
       <CadruAuth
-        titlu="Contul are deja un restaurant"
-        descriere="Un cont poate aparține unui singur restaurant."
+        titlu={
+          profil.tip === 'super_admin'
+            ? 'Contul face deja parte din echipa TableX'
+            : 'Contul are deja un restaurant'
+        }
+        descriere="Un cont poate aparține unui singur loc."
       >
         <div className="grid gap-4">
           {antet}
@@ -150,7 +160,8 @@ export function InvitatiePage() {
       await acceptaInvitatie(token)
       await reincarcaProfil()
       notificari.succes(`Bine ai venit in echipa ${date!.restaurant_nume}!`)
-      navigate(RUTE.app, { replace: true })
+      // Invitatia de echipa nu are restaurant: panoul ei e altul.
+      navigate(date!.tip === 'echipa' ? RUTE.superadmin : RUTE.app, { replace: true })
     } catch (eroare) {
       notificari.eroare(eroare)
     } finally {

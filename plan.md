@@ -1307,6 +1307,45 @@ Lectia pentru sesiunile viitoare: dupa fiecare re-render, ia snapshot nou
 inainte de clic. Aceeasi greseala ca la SVG in §6quaterdecies, alt ecran.
 
 ---
+6vicies. INVITATII IN ECHIPA TABLEX (§9.2.7) — ✅
+
+`super_admin_invitations` avea tabela, indexul de unicitate pe invitatia activa
+si politica de scriere rezervata rolului deplin. Nimic nu scria si nimic nu
+citea din ea: singurul mod de a adauga un om in echipa era un INSERT manual in
+`super_admin_users`, cu user_id-ul copiat de mana din auth.users. Adica exact
+operatia pe care tabela de invitatii o inlocuia.
+
+Decizia de forma: NU o a doua pagina de invitatie. Linkul duce tot la
+/invitatie, iar cele doua RPC-uri existente au invatat sa raspunda pentru
+ambele feluri. Tokenul e din acelasi spatiu (32 de octeti aleatori), deci nu se
+pot confunda, iar omul nu trebuie sa stie in ce tabela sta invitatia lui.
+
+- `detalii_invitatie` intoarce acum si `tip` ('restaurant' / 'echipa'), cu rolul
+  ca TEXT: cele doua surse au enum-uri diferite, iar o functie nu poate intoarce
+  coloane cu tip variabil. Semnatura s-a schimbat → DROP inainte de CREATE si
+  drepturi reasezate (lectia migratiei 07, a treia oara).
+- `accepta_invitatie` pastreaza semnatura si intoarce NULL pentru echipa: nu
+  exista niciun restaurant de intors. Pagina stie deja din `tip` unde sa mearga.
+- Membrul NU se adauga direct din ecran: randul din `super_admin_users` il
+  creeaza RPC-ul de acceptare, cu user_id-ul contului care a acceptat. Altfel
+  ar trebui sa stim un id din auth.users inainte ca omul sa aiba cont.
+
+GARDA NOUA: ultimul super admin deplin nu poate fi dezactivat, retrogradat sau
+sters. Fara ea, o singura bifa ar fi inchis panoul echipei pentru toata lumea,
+iar reintrarea ar fi cerut SQL — exact situatia din care iese sectiunea asta.
+
+Verificat in baza, cu roluri reale:
+- [x] rolul `support` → INSERT respins de RLS; deplinul creeaza invitatia
+- [x] anon citeste invitatia prin RPC si primeste tip='echipa'
+- [x] alt cont decat cel invitat → „Invitatia a fost trimisa adresei ..."
+- [x] contul invitat accepta → rand in super_admin_users cu rolul din invitatie
+      si numele din metadate, invitatia trece pe 'acceptata', RPC-ul da null
+- [x] invitatia de RESTAURANT merge in continuare prin acelasi RPC (tip=
+      'restaurant'), deci nu am spart fluxul existent
+- [x] garda ultimului deplin: incercarea a aruncat, tranzactia s-a anulat
+      singura si contul real a ramas activ
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

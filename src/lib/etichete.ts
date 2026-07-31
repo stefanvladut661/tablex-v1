@@ -27,6 +27,13 @@ export const ETICHETE_ROL_ADMIN: Record<Enums<'admin_rol'>, string> = {
   ospatar: 'Ospatar',
 }
 
+/** Rolurile din echipa TableX (§9.2.7), nu ale unui restaurant. */
+export const ETICHETE_ROL_ECHIPA: Record<Enums<'super_admin_rol'>, string> = {
+  super_admin: 'Super admin',
+  designer_architect: 'Designer / arhitect',
+  support: 'Support',
+}
+
 export const ETICHETE_STATUS_CERERE_FP: Record<Enums<'fp_request_status'>, string> = {
   pending: 'In asteptare',
   in_progress: 'In lucru',

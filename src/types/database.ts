@@ -1331,7 +1331,8 @@ export type Database = {
           email: string
           expira_la: string
           restaurant_nume: string
-          rol: Database["public"]["Enums"]["admin_rol"]
+          rol: string
+          tip: string
         }[]
       }
       disponibilitate_mese: {
