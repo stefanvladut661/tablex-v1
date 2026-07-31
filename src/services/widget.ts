@@ -99,6 +99,8 @@ export type CerereRezervare = {
   email?: string | null
   noteClient?: string | null
   gdpr: boolean
+  /** Raspunsurile la campurile proprii ale restaurantului, pe cheie. */
+  campuriCustom?: Record<string, string>
 }
 
 export type RezultatRezervare = {
@@ -120,8 +122,45 @@ export async function trimiteCerereRezervare(
     p_email: cerere.email ?? undefined,
     p_note_client: cerere.noteClient ?? undefined,
     p_gdpr: cerere.gdpr,
+    p_campuri_custom: cerere.campuriCustom ?? {},
   })
   if (error) throw error
   return data as unknown as RezultatRezervare
 }
 
+
+// ── Campurile proprii ale formularului (migratia 23) ─────────────────────
+
+export type CampFormularPublic = Tables<'campuri_formular_publice'>
+
+/**
+ * Configurarea formularului, citita de un vizitator ANONIM prin vederea
+ * publica. Cele patru campuri de sistem (nume, telefon, email, nr_persoane) au
+ * parametri proprii in rezerva_public, deci widgetul le randeaza oricum; de
+ * aici ne intereseaza restul, plus eventualele etichete schimbate.
+ */
+export const CHEIE_CAMPURI = (restaurantId: string) =>
+  ['widget', 'campuri', restaurantId] as const
+
+const CHEI_SISTEM = ['nume', 'telefon', 'email', 'nr_persoane']
+
+export async function getCampuriFormular(restaurantId: string): Promise<CampFormularPublic[]> {
+  const { data, error } = await supabase
+    .from('campuri_formular_publice')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .order('ordine', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+/**
+ * Doar campurile adaugate de restaurant, in ordinea lor.
+ *
+ * Coloanele unei vederi sunt nullabile in tipurile generate (Postgres nu
+ * garanteaza non-null prin vedere), desi aici nu pot fi goale niciodata.
+ * Filtram explicit, ca sa nu randam un camp fara cheie.
+ */
+export function campuriProprii(campuri: CampFormularPublic[]): CampFormularPublic[] {
+  return campuri.filter((camp) => camp.cheie !== null && !CHEI_SISTEM.includes(camp.cheie))
+}

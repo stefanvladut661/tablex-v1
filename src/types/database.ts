@@ -1207,6 +1207,19 @@ export type Database = {
       }
     }
     Views: {
+      campuri_formular_publice: {
+        Row: {
+          cheie: string | null
+          eticheta: string | null
+          obligatoriu: boolean | null
+          optiuni: Json | null
+          ordine: number | null
+          placeholder: string | null
+          restaurant_id: string | null
+          tip: Database["public"]["Enums"]["camp_formular_tip"] | null
+        }
+        Relationships: []
+      }
       mese_publice: {
         Row: {
           capacitate: number | null
@@ -1349,6 +1362,7 @@ export type Database = {
       }
       rezerva_public: {
         Args: {
+          p_campuri_custom?: Json
           p_client_nume: string
           p_data_ora: string
           p_email?: string

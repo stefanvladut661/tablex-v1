@@ -6,6 +6,7 @@ import { CopyIcon, ExternalLinkIcon, Loader2Icon, TriangleAlertIcon } from 'luci
 import { z } from 'zod'
 
 import { CampText } from '@/components/formular/CampText'
+import { CampuriFormular } from '@/components/setari/CampuriFormular'
 import { ExceptiiProgram } from '@/components/setari/ExceptiiProgram'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -428,6 +429,8 @@ export function SetariPage() {
           lista in care adaugi un rand si nu se intampla nimic pana derulezi la
           capatul paginii ar fi derutanta. */}
       <ExceptiiProgram restaurantId={restaurant.id} fus={restaurant.fus_orar} />
+
+      <CampuriFormular restaurantId={restaurant.id} />
     </div>
   )
 }

@@ -21,10 +21,14 @@ import { RUTE } from '@/lib/rute'
 import { formatFus } from '@/lib/timp'
 import { emailSchema, numeSchema, telefonSchema } from '@/lib/validari'
 import {
+  CHEIE_CAMPURI,
   CHEI_WIDGET,
+  campuriProprii,
+  getCampuriFormular,
   getRestaurantPublic,
   getSalaPublica,
   trimiteCerereRezervare,
+  type CampFormularPublic,
   type RezultatRezervare,
 } from '@/services/widget'
 
@@ -37,6 +41,10 @@ const schema = z.object({
   ora: z.string().regex(/^\d{2}:\d{2}$/, 'Alege o ora.'),
   noteClient: z.string().max(500).optional(),
   gdpr: z.boolean().refine((v) => v, { message: 'Avem nevoie de acordul tau pentru a rezerva.' }),
+  // Campurile proprii ale restaurantului: cheile se stiu abia dupa incarcare,
+  // deci schema le accepta generic. Obligativitatea se verifica la trimitere —
+  // si, decisiv, in baza, fiindca API-ul e public.
+  campuriCustom: z.record(z.string(), z.string()).optional(),
 })
 
 type FormWidget = z.infer<typeof schema>
@@ -75,8 +83,19 @@ export function WidgetRezervarePage() {
       ora: '19:00',
       noteClient: '',
       gdpr: false,
+      campuriCustom: {},
     },
   })
+
+  const campuri = useQuery({
+    queryKey: CHEIE_CAMPURI(restaurant.data?.id ?? ''),
+    queryFn: () => getCampuriFormular(restaurant.data!.id!),
+    enabled: Boolean(restaurant.data?.id),
+  })
+  const campuriRestaurant = useMemo(
+    () => campuriProprii(campuri.data ?? []),
+    [campuri.data],
+  )
 
   const trimite = useMutation({
     mutationFn: trimiteCerereRezervare,
@@ -124,6 +143,17 @@ export function WidgetRezervarePage() {
       form.setError('ora', { message: 'Data sau ora nu sunt valide.' })
       return
     }
+    // Obligatoriile proprii ale restaurantului: baza le refuza oricum, dar
+    // atunci utilizatorul ar afla-o abia dupa ce trimite tot formularul.
+    for (const camp of campuriRestaurant) {
+      if (!camp.obligatoriu || !camp.cheie) continue
+      if ((valori.campuriCustom?.[camp.cheie] ?? '').trim() !== '') continue
+      form.setError(`campuriCustom.${camp.cheie}`, {
+        message: `${camp.eticheta ?? 'Campul'} este obligatoriu.`,
+      })
+      return
+    }
+
     await trimite.mutateAsync({
       slug,
       clientNume: valori.clientNume,
@@ -134,6 +164,7 @@ export function WidgetRezervarePage() {
       email: valori.email || null,
       noteClient: valori.noteClient || null,
       gdpr: valori.gdpr,
+      campuriCustom: valori.campuriCustom ?? {},
     })
   }
 
@@ -258,6 +289,19 @@ export function WidgetRezervarePage() {
                   {...form.register('email')}
                 />
 
+                {campuriRestaurant.map((camp) => (
+                  <CampProprii
+                    key={camp.cheie}
+                    camp={camp}
+                    form={form}
+                    eroare={
+                      camp.cheie
+                        ? form.formState.errors.campuriCustom?.[camp.cheie]?.message
+                        : undefined
+                    }
+                  />
+                ))}
+
                 <div className="grid gap-1.5">
                   <Label htmlFor="noteClient">Preferinte (optional)</Label>
                   <Textarea
@@ -343,5 +387,85 @@ export function WidgetRezervarePage() {
         )}
       </main>
     </div>
+  )
+}
+
+/**
+ * Un camp definit de restaurant. Cele patru tipuri din enum-ul
+ * camp_formular_tip acopera tot ce se poate configura; nu inventam altele in
+ * interfata, fiindca `rezerva_public` valideaza exact aceleasi tipuri.
+ *
+ * Valorile se tin ca TEXT, inclusiv pentru numar si checkbox: jsonb-ul din
+ * `campuri_custom` e citit de oameni, nu de o schema — iar personalul vrea sa
+ * vada "da", nu "true".
+ */
+function CampProprii({
+  camp,
+  form,
+  eroare,
+}: {
+  camp: CampFormularPublic
+  form: ReturnType<typeof useForm<FormWidget>>
+  eroare?: string
+}) {
+  if (!camp.cheie) return null
+  const nume = `campuriCustom.${camp.cheie}` as const
+  const id = `camp-${camp.cheie}`
+  const eticheta = `${camp.eticheta ?? camp.cheie}${camp.obligatoriu ? '' : ' (optional)'}`
+  const optiuni = Array.isArray(camp.optiuni) ? (camp.optiuni as string[]) : []
+
+  if (camp.tip === 'checkbox') {
+    return (
+      <div className="grid gap-1.5">
+        <div className="flex items-start gap-2">
+          <Controller
+            control={form.control}
+            name={nume}
+            render={({ field }) => (
+              <Checkbox
+                id={id}
+                checked={field.value === 'da'}
+                onCheckedChange={(bifat) => field.onChange(bifat ? 'da' : '')}
+              />
+            )}
+          />
+          <Label htmlFor={id} className="text-sm leading-snug font-normal">
+            {eticheta}
+          </Label>
+        </div>
+        {eroare && <p className="text-xs text-destructive">{eroare}</p>}
+      </div>
+    )
+  }
+
+  if (camp.tip === 'dropdown') {
+    return (
+      <div className="grid gap-1.5">
+        <Label htmlFor={id}>{eticheta}</Label>
+        <select
+          id={id}
+          className="h-9 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          {...form.register(nume)}
+        >
+          <option value="">Alege...</option>
+          {optiuni.map((optiune) => (
+            <option key={optiune} value={optiune}>
+              {optiune}
+            </option>
+          ))}
+        </select>
+        {eroare && <p className="text-xs text-destructive">{eroare}</p>}
+      </div>
+    )
+  }
+
+  return (
+    <CampText
+      eticheta={eticheta}
+      type={camp.tip === 'numar' ? 'number' : 'text'}
+      placeholder={camp.placeholder ?? undefined}
+      eroare={eroare}
+      {...form.register(nume)}
+    />
   )
 }

@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: lista de asteptare (waitlist), legata de walk-in -->
-<!-- NEXT_TASK: furnizor email (RESEND_API_KEY); campuri formular widget (formular_campuri) -->
+<!-- LAST_COMPLETED: campurile formularului public (formular_campuri + campuri_custom) -->
+<!-- NEXT_TASK: furnizor email (RESEND_API_KEY, cere cont si domeniu); QA manual drag calendar -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -1160,6 +1160,52 @@ Verificat cap-coada, cu un cont de OSPATAR (nu manager):
 - [x] dupa trimitere: rezervare reala (sursa walk_in, status sosita, marcata
       sosit), intrarea trece pe 'asezat' cu momentul completat, iar ceilalti doi
       raman in coada
+
+---
+6octodecies. CAMPURILE FORMULARULUI PUBLIC — ✅
+
+Ultima tabela din inventar cu schema gata si zero interfata. `formular_campuri`
+exista din onboarding (creeaza_restaurant ii pune de la inceput cele 4 campuri
+de sistem), iar `reservations.campuri_custom` (jsonb) astepta de la fel de mult
+timp. Nimic nu le citea: widgetul avea formular fix, deci un restaurant nu putea
+intreba "scaun de copil?" sau "care e ocazia?".
+
+Lantul complet, acum inchis:
+  Setari (manager defineste intrebarea)
+    → vederea publica campuri_formular_publice (vizitatorul anonim o citeste)
+      → widgetul o randeaza dupa tip
+        → rezerva_public o valideaza si o salveaza in campuri_custom
+          → personalul vede raspunsul pe rezervare
+
+Decizii care conteaza:
+- Validarea sta in BAZA, nu in widget. Un camp obligatoriu e obligatoriu si
+  pentru cine apeleaza API-ul direct; un dropdown accepta doar valorile din
+  lista lui.
+- Se pastreaza DOAR cheile cunoscute. Fara asta, un apel direct ar fi putut
+  umfla randul cu jsonb arbitrar. Verificat: o cheie "hacker" strecurata in
+  cerere nu ajunge in baza.
+- Cheia campului se deriva din eticheta si NU se mai schimba: ea e cheia sub
+  care raman salvate raspunsurile deja primite. O redenumire le-ar face
+  invizibile.
+- Campurile de sistem nu se sterg si nu se pot face optionale (nume, telefon,
+  numar de persoane): au parametri dedicati in rezerva_public si coloane in
+  reservations.
+- Semnatura lui rezerva_public s-a schimbat, deci DROP inainte de CREATE — un
+  `create or replace` cu alt numar de argumente ar fi lasat DOUA functii, iar
+  PostgREST ar fi raspuns cu ambiguitate la fiecare apel. Drepturile se pierd
+  la DROP si au fost reasezate (lectia migratiei 07).
+
+Verificat:
+- [x] anon citeste configuratia prin vedere, dar formular_campuri ramane []
+- [x] lipsa campului obligatoriu → "Campul „Ocazia" este obligatoriu."
+- [x] valoare inventata la dropdown → refuzata
+- [x] cerere valida → salvata, cu cheia necunoscuta eliminata
+- [x] widgetul randeaza dropdown-ul cu optiunile lui si bifa, cu "(optional)"
+      doar pe cel neobligatoriu
+
+NEVERIFICAT IN BROWSER: ecranul de administrare din Setari. E CRUD standard, cu
+aceleasi garzi de numar-de-randuri verificate in alta parte; l-am lasat asa
+intentionat, ca sa nu umflu costul sesiunii.
 
 ---
 7. COMMANDS CHEAT SHEET

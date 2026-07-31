@@ -134,6 +134,31 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                 )}
               </dl>
 
+              {/* Raspunsurile la intrebarile proprii ale restaurantului
+                  (migratia 23). Cheile sunt cele din formular_campuri, pastrate
+                  ca atare — le afisam asa cum sunt, fiindca o eticheta
+                  redenumita intre timp nu trebuie sa rescrie raspunsuri vechi. */}
+              {rezervare.campuri_custom &&
+                typeof rezervare.campuri_custom === 'object' &&
+                !Array.isArray(rezervare.campuri_custom) &&
+                Object.keys(rezervare.campuri_custom).length > 0 && (
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Raspunsuri din formular
+                    </p>
+                    <dl className="mt-1 grid gap-1 text-sm">
+                      {Object.entries(rezervare.campuri_custom as Record<string, unknown>).map(
+                        ([cheie, valoare]) => (
+                          <div key={cheie} className="flex justify-between gap-3">
+                            <dt className="text-muted-foreground">{cheie.replace(/_/g, ' ')}</dt>
+                            <dd className="font-medium">{String(valoare ?? '—')}</dd>
+                          </div>
+                        ),
+                      )}
+                    </dl>
+                  </div>
+                )}
+
               {rezervare.note_client && (
                 <div className="rounded-lg bg-muted p-3">
                   <p className="text-xs font-medium text-muted-foreground">Nota clientului</p>
