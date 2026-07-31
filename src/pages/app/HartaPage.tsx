@@ -38,7 +38,13 @@ import {
   sfarsitZi,
   toZonedTime,
 } from '@/lib/timp'
+import { PanouAsteptare } from '@/components/floor-plan/PanouAsteptare'
 import { actualizeazaMasa } from '@/services/editor-plan'
+import {
+  CHEI_ASTEPTARE,
+  schimbaStatusAsteptare,
+  type IntrareAsteptare,
+} from '@/services/lista-asteptare'
 import { CHEI_MESE } from '@/services/mese'
 import type { Rezervare } from '@/services/rezervari'
 import type { MasaHarta, StatusuriMese } from '@/types/floor-plan'
@@ -128,8 +134,23 @@ export function HartaPage() {
   const [selectata, setSelectata] = useState<Rezervare | null>(null)
   const [masaLibera, setMasaLibera] = useState<{ zoneId: string; tableId: string } | null>(null)
   const [deMutat, setDeMutat] = useState<{ rezervare: Rezervare; masa: MasaHarta } | null>(null)
+  const [deAsezat, setDeAsezat] = useState<{
+    intrare: IntrareAsteptare
+    tableId: string | null
+  } | null>(null)
 
   const { muta } = useMutatiiRezervari(restaurant?.id)
+
+  /** Scoaterea din coada, dupa ce walk-in-ul chiar exista. */
+  const asazaDinCoada = useMutation({
+    mutationFn: (id: string) => schimbaStatusAsteptare(id, 'asezat'),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: CHEI_ASTEPTARE.lista(profil?.tip === 'admin' ? profil.restaurant.id : ''),
+      })
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
   const zone = useZone(restaurant?.id)
   const mese = useMese(restaurant?.id)
   const rezervari = useRezervari(
@@ -286,6 +307,12 @@ export function HartaPage() {
       </div>
 
       <aside className="grid content-start gap-4">
+        <PanouAsteptare
+          restaurantId={restaurant.id}
+          onAsaza={(intrare) => setDeAsezat({ intrare, tableId: null })}
+          onAsazaPeMasa={(intrare, tableId) => setDeAsezat({ intrare, tableId })}
+        />
+
         {esteManager && zonaCurenta && (
           <PanouMeseAdmin
             restaurantId={restaurant.id}
@@ -355,6 +382,34 @@ export function HartaPage() {
           walkIn
           zoneIdImplicit={masaLibera.zoneId}
           tableIdImplicit={masaLibera.tableId}
+        />
+      )}
+
+      {/* Asezarea unui oaspete din coada (§28.7). Trece prin acelasi walk-in
+          precompletat ca din pagina Asteptare: coada si sala trebuie sa spuna
+          acelasi lucru, deci iese din coada abia dupa ce rezervarea exista. */}
+      {deAsezat && (
+        <DialogRezervare
+          key={deAsezat.intrare.id}
+          deschis
+          onDeschisChange={(deschis) => !deschis && setDeAsezat(null)}
+          restaurantId={restaurant.id}
+          fus={fus}
+          zone={zone.data ?? []}
+          zi={zi}
+          oraImplicita={formateazaOra(oraAfisata)}
+          walkIn
+          zoneIdImplicit={deAsezat.intrare.zone_id ?? zonaCurenta?.id}
+          tableIdImplicit={deAsezat.tableId ?? undefined}
+          clientImplicit={{
+            nume: deAsezat.intrare.nume,
+            telefon: deAsezat.intrare.telefon,
+            nrPersoane: deAsezat.intrare.nr_persoane,
+          }}
+          onCreat={() => {
+            asazaDinCoada.mutate(deAsezat.intrare.id)
+            setDeAsezat(null)
+          }}
         />
       )}
 

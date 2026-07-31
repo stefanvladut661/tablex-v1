@@ -1785,10 +1785,38 @@ Verificat in browser:
 - [x] confirmat → rezervarea e pe masa 2 in baza, cu mesaj de reusita
 - [x] slot 22:00 → banner „Previzualizare pentru ora 22:00" si „Revino la acum"
 
-6septvicies.6 Ce ramane din Faza 3
+6septvicies.6 Lista de asteptare, langa harta (§28.7) — ✅
 
-Waitlist ca panou lateral langa harta (§28.7) si unirea meselor pentru grupuri
-(§28.6, §15.4).
+Spec-ul o cere ca panou PERMANENT langa plan, nu ca pagina separata, si are
+dreptate din motive de flux: cele doua se citesc impreuna. Se elibereaza masa 7
+→ cine urmeaza? Cu doua ecrane, raspunsul cere un drum dus-intors si tinerea
+minte a unui nume.
+
+Oaspetele se trage din coada direct pe o masa. Asezarea NU marcheaza doar
+intrarea ca rezolvata: deschide walk-in-ul precompletat cu numele, telefonul,
+numarul de persoane SI masa pe care l-ai lasat, iar el iese din coada abia DUPA
+ce rezervarea exista — decizia din §6septdecies, pastrata intacta. Altfel masa
+lui ar aparea libera pe harta si ar putea fi data altcuiva.
+
+DEFECT PRINS LA VERIFICARE, si nu unul de test: ascultatorii de pointer de pe
+fereastra se atasau dintr-un `useEffect` pe stare, adica abia DUPA re-randare.
+Un gest scurt — apasare si ridicare aproape simultane, cum se intampla pe o
+tableta — se termina inainte ca ei sa existe, iar tragerea nu facea absolut
+nimic si nici nu se plangea. Acum se ataseaza imperativ, in chiar pointerdown.
+(Ascultatorii stau pe fereastra fiindca gestul incepe pe HTML si se termina pe
+SVG: nu exista parinte comun.)
+
+Verificat cap-coada, in browser:
+- [x] panoul arata coada cu pozitia, numarul de persoane si minutele de
+      asteptare, reimprospatate din minut in minut
+- [x] tras pe masa 5 → walk-in precompletat: „Familia Marin", 0744555666, 3
+      persoane, „Masa 5 · 4 loc." deja aleasa
+- [x] trimis → rezervare reala (walk_in, sosita, masa 5), iar intrarea din coada
+      trece pe „asezat", cu momentul completat
+
+6septvicies.7 Ce ramane din Faza 3
+
+Doar unirea meselor pentru grupuri (§28.6, §15.4).
 
 ---
 7. COMMANDS CHEAT SHEET
