@@ -1,6 +1,6 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: teste (71), CI, incadrare automata harta, walk-in fara telefon, signup din invitatie -->
+<!-- LAST_COMPLETED: pagina de clienti (CRM) cu stergere GDPR reala prin anonimizare -->
 <!-- NEXT_TASK: conectarea furnizorului de email (RESEND_API_KEY — cere cont si domeniu verificat); vederea pe mese -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
@@ -1021,6 +1021,61 @@ signup pleaca cu redirect_to = /invitatie?token=...
 - Tragerea cu mouse-ul pe CALENDAR ramane neverificata (§6septies). In editor
   am verificat-o cu o secventa reala de pointer; la calendar instrumentul emite
   evenimente HTML5 de drag, care nu trec prin acel handler.
+
+---
+6quindecies. PAGINA DE CLIENTI (CRM, §16) — ✅
+
+Gaura cea mai mare ramasa, si nu era in nicio lista: ruta `appClienti`
+('/app/clienti') exista in lib/rute.ts inca din Faza 1c, dar nu avea pagina, nu
+era inregistrata in router si nu aparea in meniu. Tabela `customers` se umplea
+singura la fiecare rezervare — nume, vizite, neprezentari, ultima vizita — si
+nimeni nu putea vedea nimic din ea.
+
+Fisele NU se creeaza din pagina: apar din RPC-ul de rezervare, cu telefonul
+drept cheie, iar contoarele le intretine trigger-ul de la tranzitia de status.
+Personalul scrie exact doua lucruri pe care baza nu le stie: note si etichete.
+Contoarele raman ale trigger-ului, ca sa nu poata fi falsificate din interfata.
+
+Lista exclude randurile arhivate si pe cele contopite (merged_into_id): un
+client contopit e acelasi om, iar afisarea ambelor ar dubla statisticile.
+
+Pagina e vizibila SI ospatarului, nu doar managerului: el are nevoie sa stie ca
+oaspetele care intra pe usa are 12 vizite sau 3 neprezentari. Doar stergerea
+datelor e rezervata managerului.
+
+6quindecies.1 Stergerea la cerere, facuta cinstit (§22.1) — migratia 22
+
+Descoperirea care a dat forma functionalitatii: `reservations` pastreaza COPII
+ale datelor personale (client_nume, telefon, email, note_client), iar
+reservations.customer_id e ON DELETE SET NULL. Deci un buton "sterge clientul"
+ar fi sters fisa si ar fi lasat numele si telefonul persoanei in FIECARE
+rezervare a ei — adica exact promisiunea pe care GDPR o cere, incalcata tacit.
+
+Copiile nu sunt o greseala: rezervarea trebuie sa rămână lizibila si dupa ce
+fisa dispare. Solutia e anonimizare, nu stergere: inregistrarea de business
+(data, numar de persoane, masa, status) supravietuieste pentru statistici, dar
+tot ce identifica persoana dispare, iar `anonimizat_la` ramane ca dovada.
+
+A cerut o coloana noua tocmai pentru ca CHECK-ul din migratia 20 cere telefon
+not null pentru orice nu e walk-in; fara a treia cale, rezervarile din widget —
+tocmai cele cu clienti identificabili — n-ar fi putut fi anonimizate.
+
+Operatia e un RPC, nu trei scrieri din client: altfel una putea esua si datele
+ar fi ramas sterse pe jumatate. Ordinea conteaza — intai copiile din rezervari,
+abia apoi fisa; invers, un esec la mijloc ar lasa rezervari identificabile fara
+nicio fisa care sa arate ca mai e ceva de sters.
+
+6quindecies.2 Verificat cap-coada, in browser si prin API
+
+- [x] fisa se deschide cu vizite, neprezentari si istoricul rezervarilor
+- [x] stergerea: doua rezervari anonimizate, fisa disparuta; in baza raman
+      "Client anonimizat", telefon/email/note null, dar nr_persoane, status si
+      sursa NEATINSE
+- [x] ospatarul primeste "Doar managerul poate sterge datele unui client"
+- [x] anon primeste refuz la nivel de privilegii
+- [x] managerul pe un client din alt restaurant → "Clientul nu exista in acest
+      restaurant" (RLS + verificare explicita)
+- [x] ospatarul POATE citi clientii — are nevoie de ei in sala
 
 ---
 7. COMMANDS CHEAT SHEET

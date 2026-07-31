@@ -1,0 +1,411 @@
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangleIcon, SearchIcon } from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from '@/hooks/useAuth'
+import { useNotificari } from '@/hooks/useNotificari'
+import { ETICHETE_STATUS_REZERVARE, ETICHETE_SURSA_REZERVARE } from '@/lib/etichete'
+import { formatFus } from '@/lib/timp'
+import {
+  CHEI_CLIENTI,
+  actualizeazaClient,
+  getClienti,
+  getRezervariClient,
+  stergeDateleClientului,
+  type Client,
+} from '@/services/clienti'
+
+/**
+ * CRM-ul (§16). Fisele nu se creeaza de aici: apar singure din RPC-ul de
+ * rezervare, cu telefonul drept cheie, iar nr_vizite / nr_no_show le intretine
+ * un trigger la tranzitia de status. Pagina le arata si permite exact doua
+ * lucruri pe care personalul le stie si baza nu: note si etichete.
+ */
+export function ClientiPage() {
+  const { profil, esteManager } = useAuth()
+  const notificari = useNotificari()
+  const queryClient = useQueryClient()
+
+  const restaurantId = profil?.tip === 'admin' ? profil.restaurant.id : ''
+  const fus = profil?.tip === 'admin' ? profil.restaurant.fus_orar : 'Europe/Bucharest'
+
+  const [caut, setCaut] = useState('')
+  const [selectat, setSelectat] = useState<Client | null>(null)
+  const [confirmStergere, setConfirmStergere] = useState<Client | null>(null)
+
+  const clienti = useQuery({
+    queryKey: CHEI_CLIENTI.lista(restaurantId),
+    queryFn: () => getClienti(restaurantId),
+    enabled: Boolean(restaurantId),
+  })
+
+  const salveaza = useMutation({
+    mutationFn: ({ id, modificari }: { id: string; modificari: Parameters<typeof actualizeazaClient>[1] }) =>
+      actualizeazaClient(id, modificari),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: CHEI_CLIENTI.lista(restaurantId) })
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
+
+  const stergeDate = useMutation({
+    mutationFn: stergeDateleClientului,
+    onSuccess: (rezervariCuratate) => {
+      notificari.succes('Datele personale au fost sterse.', {
+        descriere:
+          rezervariCuratate > 0
+            ? `${rezervariCuratate} rezervari au fost anonimizate; raman in statistici, fara date personale.`
+            : 'Clientul nu avea rezervari.',
+      })
+      setConfirmStergere(null)
+      setSelectat(null)
+      void queryClient.invalidateQueries({ queryKey: CHEI_CLIENTI.lista(restaurantId) })
+    },
+    onError: (eroare) => {
+      setConfirmStergere(null)
+      notificari.eroare(eroare)
+    },
+  })
+
+  const filtrati = useMemo(() => {
+    const termen = caut.trim().toLowerCase()
+    if (!termen) return clienti.data ?? []
+    return (clienti.data ?? []).filter(
+      (client) =>
+        (client.nume ?? '').toLowerCase().includes(termen) ||
+        client.telefon.includes(termen) ||
+        (client.email ?? '').toLowerCase().includes(termen),
+    )
+  }, [clienti.data, caut])
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">Clienti</h1>
+          <p className="text-sm text-muted-foreground">
+            Fisele apar singure din rezervari, cu telefonul drept cheie.
+          </p>
+        </div>
+        <div className="relative">
+          <SearchIcon className="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={caut}
+            onChange={(e) => setCaut(e.target.value)}
+            placeholder="Nume, telefon, email"
+            className="h-9 w-64 pl-7"
+            aria-label="Caut clienti"
+          />
+        </div>
+      </div>
+
+      {clienti.isLoading ? (
+        <Skeleton className="h-64 w-full" />
+      ) : filtrati.length === 0 ? (
+        <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
+          {caut
+            ? 'Niciun client pentru acest filtru.'
+            : 'Inca niciun client. Prima rezervare cu telefon creeaza automat o fisa.'}
+        </p>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Client</TableHead>
+                <TableHead className="w-32">Telefon</TableHead>
+                <TableHead className="w-20 text-right">Vizite</TableHead>
+                <TableHead className="w-24 text-right">Neprezentat</TableHead>
+                <TableHead className="w-36">Ultima vizita</TableHead>
+                <TableHead className="w-40">Etichete</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtrati.map((client) => (
+                <TableRow
+                  key={client.id}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Deschide fisa ${client.nume ?? client.telefon}`}
+                  className="cursor-pointer"
+                  onClick={() => setSelectat(client)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return
+                    e.preventDefault()
+                    setSelectat(client)
+                  }}
+                >
+                  <TableCell>
+                    <div className="font-medium">{client.nume ?? 'Fara nume'}</div>
+                    {client.email && (
+                      <div className="text-xs text-muted-foreground">{client.email}</div>
+                    )}
+                  </TableCell>
+                  <TableCell className="tabular-nums">{client.telefon}</TableCell>
+                  <TableCell className="text-right tabular-nums">{client.nr_vizite}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {client.nr_no_show > 0 ? (
+                      // Semnal, nu judecata: personalul decide ce face cu el.
+                      <span className="rounded-md bg-status-ocupat-soft px-1.5 py-0.5 text-foreground">
+                        {client.nr_no_show}
+                      </span>
+                    ) : (
+                      client.nr_no_show
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground tabular-nums">
+                    {client.data_ultima_vizita
+                      ? formatFus(client.data_ultima_vizita, 'd MMM yyyy', fus)
+                      : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {client.taguri.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-[10px]">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {selectat && (
+        <FisaClient
+          client={selectat}
+          fus={fus}
+          esteManager={esteManager}
+          onInchide={() => setSelectat(null)}
+          onSalveaza={(modificari) => salveaza.mutate({ id: selectat.id, modificari })}
+          onCereStergere={() => setConfirmStergere(selectat)}
+        />
+      )}
+
+      {confirmStergere && (
+        <DialogStergereDate
+          client={confirmStergere}
+          inLucru={stergeDate.isPending}
+          onInchide={() => setConfirmStergere(null)}
+          onConfirma={() => stergeDate.mutate(confirmStergere.id)}
+        />
+      )}
+    </div>
+  )
+}
+
+function FisaClient({
+  client,
+  fus,
+  esteManager,
+  onInchide,
+  onSalveaza,
+  onCereStergere,
+}: {
+  client: Client
+  fus: string
+  esteManager: boolean
+  onInchide: () => void
+  onSalveaza: (modificari: Parameters<typeof actualizeazaClient>[1]) => void
+  onCereStergere: () => void
+}) {
+  const rezervari = useQuery({
+    queryKey: CHEI_CLIENTI.rezervari(client.id),
+    queryFn: () => getRezervariClient(client.id),
+  })
+
+  return (
+    <Sheet open onOpenChange={(deschis) => !deschis && onInchide()}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>{client.nume ?? 'Client fara nume'}</SheetTitle>
+          <SheetDescription>
+            {client.telefon}
+            {client.email ? ` · ${client.email}` : ''}
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="grid gap-5 px-4 pb-6">
+          <dl className="grid grid-cols-3 gap-2 text-sm">
+            {(
+              [
+                ['Vizite', String(client.nr_vizite)],
+                ['Neprezentat', String(client.nr_no_show)],
+                [
+                  'Ultima',
+                  client.data_ultima_vizita
+                    ? formatFus(client.data_ultima_vizita, 'd MMM', fus)
+                    : '—',
+                ],
+              ] as const
+            ).map(([eticheta, valoare]) => (
+              <div key={eticheta} className="rounded-lg border border-border p-2.5">
+                <dt className="text-xs text-muted-foreground">{eticheta}</dt>
+                <dd className="font-medium tabular-nums">{valoare}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="note-client">Note interne</Label>
+            <Textarea
+              id="note-client"
+              rows={3}
+              key={`note-${client.id}`}
+              defaultValue={client.note ?? ''}
+              placeholder="Preferinte, alergii, masa preferata..."
+              onBlur={(e) => {
+                const note = e.target.value.trim()
+                if (note === (client.note ?? '')) return
+                onSalveaza({ note: note || null })
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              Vizibile doar personalului. Nu scrie aici date de sanatate fara acordul clientului.
+            </p>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="taguri-client">Etichete</Label>
+            <Input
+              id="taguri-client"
+              key={`taguri-${client.id}`}
+              defaultValue={client.taguri.join(', ')}
+              placeholder="fidel, vegetarian, aniversare"
+              className="h-9"
+              onBlur={(e) => {
+                const taguri = e.target.value
+                  .split(',')
+                  .map((tag) => tag.trim())
+                  .filter(Boolean)
+                if (taguri.join(',') === client.taguri.join(',')) return
+                onSalveaza({ taguri })
+              }}
+            />
+            <p className="text-xs text-muted-foreground">Separate prin virgula.</p>
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Istoric</p>
+            {rezervari.isLoading ? (
+              <Skeleton className="h-24 w-full" />
+            ) : (rezervari.data ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nicio rezervare inregistrata.</p>
+            ) : (
+              <ul className="grid gap-1.5">
+                {(rezervari.data ?? []).map((rezervare) => (
+                  <li
+                    key={rezervare.id}
+                    className="flex items-center justify-between gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm"
+                  >
+                    <span className="tabular-nums">
+                      {formatFus(rezervare.data_ora, 'd MMM yyyy, HH:mm', fus)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {rezervare.nr_persoane} pers · {ETICHETE_STATUS_REZERVARE[rezervare.status]} ·{' '}
+                      {ETICHETE_SURSA_REZERVARE[rezervare.sursa]}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="grid gap-2 rounded-lg border border-destructive/40 p-3">
+            <p className="text-sm font-medium">Stergerea datelor la cerere</p>
+            <p className="text-xs text-muted-foreground">
+              {client.gdpr_consimtamant
+                ? 'Clientul si-a dat consimtamantul la prelucrarea datelor.'
+                : 'Clientul NU si-a dat consimtamantul explicit.'}
+            </p>
+            <Button
+              variant="destructive"
+              size="xs"
+              className="justify-self-start"
+              disabled={!esteManager}
+              onClick={onCereStergere}
+            >
+              Sterge datele personale
+            </Button>
+            {!esteManager && (
+              <p className="text-xs text-muted-foreground">
+                Doar managerul poate face asta. Regula e impusa si de baza de date.
+              </p>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+function DialogStergereDate({
+  client,
+  inLucru,
+  onInchide,
+  onConfirma,
+}: {
+  client: Client
+  inLucru: boolean
+  onInchide: () => void
+  onConfirma: () => void
+}) {
+  return (
+    <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangleIcon className="size-4 text-destructive" />
+            Stergi datele lui {client.nume ?? client.telefon}?
+          </DialogTitle>
+          <DialogDescription asChild>
+            <div className="grid gap-2 text-sm text-muted-foreground">
+              <p>
+                Fisa de client dispare, iar numele, telefonul, emailul si notele clientului se sterg
+                din TOATE rezervarile lui.
+              </p>
+              <p>
+                Rezervarile raman in statistici — data, numarul de persoane si masa —, dar fara
+                nimic care sa identifice persoana. Operatia nu poate fi anulata.
+              </p>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onInchide}>
+            Renunta
+          </Button>
+          <Button variant="destructive" disabled={inLucru} onClick={onConfirma}>
+            Sterge definitiv
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

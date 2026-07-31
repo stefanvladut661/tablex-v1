@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import {
   CalendarDaysIcon,
+  ContactIcon,
   LayoutGridIcon,
   ListIcon,
   LogOutIcon,
@@ -33,6 +34,7 @@ const NAVIGATIE: ElementNav[] = [
   { cale: RUTE.app, eticheta: 'Calendar', icoana: CalendarDaysIcon },
   { cale: RUTE.appRezervari, eticheta: 'Lista rezervari', icoana: ListIcon },
   { cale: RUTE.appHarta, eticheta: 'Harta salii', icoana: LayoutGridIcon },
+  { cale: RUTE.appClienti, eticheta: 'Clienti', icoana: ContactIcon },
   { cale: RUTE.appEchipa, eticheta: 'Echipa', icoana: UsersIcon, doarManager: true },
   { cale: RUTE.appSetari, eticheta: 'Setari', icoana: SettingsIcon, doarManager: true },
 ]

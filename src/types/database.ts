@@ -620,6 +620,7 @@ export type Database = {
       }
       reservations: {
         Row: {
+          anonimizat_la: string | null
           blocat_pana_la: string
           buffer_minute: number
           campuri_custom: Json
@@ -647,6 +648,7 @@ export type Database = {
           zone_id: string | null
         }
         Insert: {
+          anonimizat_la?: string | null
           blocat_pana_la: string
           buffer_minute: number
           campuri_custom?: Json
@@ -674,6 +676,7 @@ export type Database = {
           zone_id?: string | null
         }
         Update: {
+          anonimizat_la?: string | null
           blocat_pana_la?: string
           buffer_minute?: number
           campuri_custom?: Json
@@ -1263,6 +1266,10 @@ export type Database = {
       accepta_invitatie: {
         Args: { p_token: string }
         Returns: string
+      }
+      anonimizeaza_client: {
+        Args: { p_customer_id: string }
+        Returns: number
       }
       creeaza_restaurant: {
         Args: {
