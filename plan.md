@@ -1405,6 +1405,42 @@ lasat neverificat in browser — a fost si el probat cap-coada, cu intrebarea
 aparut in lista din Setari si, imediat, in widgetul public, cu „(optional)".
 
 ---
+6tervicies. TRAGEREA PE CALENDAR SI GREUTATEA APLICATIEI — ✅
+
+6tervicies.1 Tragerea, verificata cu un test, nu cu mana (§6septies)
+
+Ultima interactiune neverificata. Motivul pentru care ramasese asa: instrumentul
+de browser emite evenimente HTML5 de drag, iar calendarul asculta evenimente de
+POINTER — deci clicurile simulate nu ajungeau niciodata la handler. Concluzia
+sesiunii trecute fusese „ramane de verificat manual".
+
+Manual e o verificare care se face o data. Testul de componenta (7 cazuri) se
+face la fiecare rulare: trage cu PointerEvent-uri reale si verifica ora
+rezultata, rotunjirea la 15 minute, pragul sub care gestul e click, ambele
+capete ale grilei si un pointerup strain.
+
+jsdom nu implementeaza captura de pointer, deci testul o pune el. Fara asta ar
+fi cazut pe lipsa jsdom-ului, nu pe un defect al aplicatiei — un test care pica
+din motive false e mai rau decat niciunul.
+
+DEFECT PRINS: cand mutarea e dezactivata (`onMutaLaOra` lipsa), si pointerup-ul,
+si click-ul chemau `onSelecteaza` — deschiderea detaliilor se cerea de doua ori.
+Inofensiv azi, fiindca panoul trimite mereu handler-ul si redeschiderea
+aceluiasi dialog nu strica nimic; dar era un al doilea apel pe care nimeni nu-l
+ceruse. Acum pointerup-ul iese devreme cand nu exista gest.
+
+6tervicies.2 Un fisier de 1,1 MB pentru toata lumea
+
+Tot codul intra intr-o singura bucata: ospatarul care deschide calendarul de pe
+telefon, in sala, pe 4G, descarca si editorul de planuri al echipei, si panoul
+de super admin, si landingul cu animatii. Nimic din ce ii trebuie.
+
+Rutele se incarca acum la cerere. Rezultatul: intrarea scade de la 1,1 MB la
+442 kB (139 kB gzip), landingul (156 kB, cu sectiunea de preturi animata) il
+platesc doar vizitatorii de pe „/", iar editorul (26 kB) doar echipa. Garzile de
+ruta raman incarcate de la inceput: ele decid CE se incarca mai departe.
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

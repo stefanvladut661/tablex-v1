@@ -138,12 +138,17 @@ export function VedereZi({
   ) {
     const g = gest.current
 
+    // Fara gest inceput aici nu avem ce confirma, iar deschiderea detaliilor e
+    // treaba lui onClick. Prins de testul de tragere: cand mutarea e
+    // dezactivata, pointerup-ul si click-ul chemau amandoua onSelecteaza.
+    if (!g) return
+
     // Un pointerup din alta secventa nu are voie sa confirme o mutare.
     // Verificat: dupa un hot-reload cu butonul inca apasat, un eveniment
     // strain comita o mutare pe care nimeni nu o ceruse.
-    if (g && g.pointerId !== eveniment.pointerId) return
+    if (g.pointerId !== eveniment.pointerId) return
 
-    const delta = g?.delta ?? 0
+    const delta = g.delta
     gest.current = null
     setTragere(null)
 
@@ -152,7 +157,7 @@ export function VedereZi({
     }
 
     // Gest scurt fara deplasare = click: deschide detaliile.
-    if (!g?.aMutat || delta === 0 || !onMutaLaOra) {
+    if (!g.aMutat || delta === 0 || !onMutaLaOra) {
       onSelecteaza(bloc.rezervare)
       return
     }

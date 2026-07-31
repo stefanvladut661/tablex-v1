@@ -8,59 +8,71 @@ import {
   RutaProtejata,
   RutaSuperAdmin,
 } from '@/components/rute-protejate'
-import { DemoHartaPage } from '@/pages/DemoHartaPage'
-import { InvitatiePage } from '@/pages/InvitatiePage'
-import { LandingPage } from '@/pages/LandingPage'
-import { MentenantaPage } from '@/pages/MentenantaPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { WidgetRezervarePage } from '@/pages/WidgetRezervarePage'
-import { LoginPage } from '@/pages/auth/LoginPage'
-import { ParolaNouaPage } from '@/pages/auth/ParolaNouaPage'
-import { ResetareParolaPage } from '@/pages/auth/ResetareParolaPage'
-import { SignupPage } from '@/pages/auth/SignupPage'
-import { VerificaEmailPage } from '@/pages/auth/VerificaEmailPage'
-import { CalendarPage } from '@/pages/app/CalendarPage'
-import { ClientiPage } from '@/pages/app/ClientiPage'
-import { ListaAsteptarePage } from '@/pages/app/ListaAsteptarePage'
-import { EchipaPage } from '@/pages/app/EchipaPage'
-import { HartaPage } from '@/pages/app/HartaPage'
-import { ListaRezervariPage } from '@/pages/app/ListaRezervariPage'
-import { OnboardingPage } from '@/pages/app/OnboardingPage'
-import { SetariPage } from '@/pages/app/SetariPage'
-import { EditorPlanPage } from '@/pages/superadmin/EditorPlanPage'
-import { SuperAdminPage } from '@/pages/superadmin/SuperAdminPage'
 import { RUTE } from '@/lib/rute'
 
+/**
+ * Paginile se incarca la cerere (§7 — plasa de siguranta). Tot codul intra
+ * altfel intr-un singur fisier de peste un megabyte, pe care il descarca si
+ * ospatarul care deschide calendarul de pe telefon, in sala, pe 4G: editorul de
+ * planuri al echipei, panoul de super admin, landingul cu animatii — nimic din
+ * ce ii trebuie lui.
+ *
+ * Garzile de ruta raman incarcate de la inceput: sunt cateva randuri fiecare si
+ * decid CE se incarca mai departe, deci n-au cum sa astepte ele insele.
+ */
+const pagina = <T extends Record<string, React.ComponentType>>(
+  incarca: () => Promise<T>,
+  nume: keyof T,
+) => async () => ({ Component: (await incarca())[nume] })
+
 export const router = createBrowserRouter([
-  { path: RUTE.acasa, element: <LandingPage /> },
+  { path: RUTE.acasa, lazy: pagina(() => import('@/pages/LandingPage'), 'LandingPage') },
 
   // Doar pentru vizitatori: un utilizator logat e trimis in panoul lui.
   {
     element: <RutaOaspete />,
     children: [
-      { path: RUTE.login, element: <LoginPage /> },
-      { path: RUTE.signup, element: <SignupPage /> },
-      { path: RUTE.resetareParola, element: <ResetareParolaPage /> },
+      { path: RUTE.login, lazy: pagina(() => import('@/pages/auth/LoginPage'), 'LoginPage') },
+      { path: RUTE.signup, lazy: pagina(() => import('@/pages/auth/SignupPage'), 'SignupPage') },
+      {
+        path: RUTE.resetareParola,
+        lazy: pagina(() => import('@/pages/auth/ResetareParolaPage'), 'ResetareParolaPage'),
+      },
     ],
   },
 
   // Fara garda: /parola-noua ruleaza tocmai pe sesiunea de recovery,
   // /verifica-email e vizibil inainte de confirmarea contului, iar pagina de
   // invitatie trebuie sa poata trimite invitatul la login sau la signup.
-  { path: RUTE.parolaNoua, element: <ParolaNouaPage /> },
-  { path: RUTE.verificaEmail, element: <VerificaEmailPage /> },
-  { path: RUTE.invitatie, element: <InvitatiePage /> },
-  { path: RUTE.mentenanta, element: <MentenantaPage /> },
-  { path: RUTE.demoHarta, element: <DemoHartaPage /> },
+  {
+    path: RUTE.parolaNoua,
+    lazy: pagina(() => import('@/pages/auth/ParolaNouaPage'), 'ParolaNouaPage'),
+  },
+  {
+    path: RUTE.verificaEmail,
+    lazy: pagina(() => import('@/pages/auth/VerificaEmailPage'), 'VerificaEmailPage'),
+  },
+  { path: RUTE.invitatie, lazy: pagina(() => import('@/pages/InvitatiePage'), 'InvitatiePage') },
+  {
+    path: RUTE.mentenanta,
+    lazy: pagina(() => import('@/pages/MentenantaPage'), 'MentenantaPage'),
+  },
+  { path: RUTE.demoHarta, lazy: pagina(() => import('@/pages/DemoHartaPage'), 'DemoHartaPage') },
   // Widgetul public de rezervare, pe slug-ul restaurantului.
-  { path: '/r/:slug', element: <WidgetRezervarePage /> },
+  {
+    path: '/r/:slug',
+    lazy: pagina(() => import('@/pages/WidgetRezervarePage'), 'WidgetRezervarePage'),
+  },
 
   {
     element: <RutaProtejata />,
     children: [
       // Onboarding-ul sta INTENTIONAT in afara RutaAdmin: aici ajunge exact
       // contul care nu are inca profil, adica cel pe care RutaAdmin il respinge.
-      { path: RUTE.appOnboarding, element: <OnboardingPage /> },
+      {
+        path: RUTE.appOnboarding,
+        lazy: pagina(() => import('@/pages/app/OnboardingPage'), 'OnboardingPage'),
+      },
       {
         element: <RutaAdmin />,
         children: [
@@ -68,18 +80,33 @@ export const router = createBrowserRouter([
             // Shell-ul comun (sidebar + bara de sus) pentru tot panoul.
             element: <LayoutApp />,
             children: [
-              { path: RUTE.app, element: <CalendarPage /> },
-              { path: RUTE.appRezervari, element: <ListaRezervariPage /> },
-              { path: RUTE.appHarta, element: <HartaPage /> },
+              { path: RUTE.app, lazy: pagina(() => import('@/pages/app/CalendarPage'), 'CalendarPage') },
+              {
+                path: RUTE.appRezervari,
+                lazy: pagina(() => import('@/pages/app/ListaRezervariPage'), 'ListaRezervariPage'),
+              },
+              { path: RUTE.appHarta, lazy: pagina(() => import('@/pages/app/HartaPage'), 'HartaPage') },
               // CRM-ul e vizibil si ospatarului: el are nevoie sa stie ca
               // oaspetele care intra pe usa are 12 vizite sau 3 neprezentari.
-              { path: RUTE.appClienti, element: <ClientiPage /> },
-              { path: RUTE.appAsteptare, element: <ListaAsteptarePage /> },
+              {
+                path: RUTE.appClienti,
+                lazy: pagina(() => import('@/pages/app/ClientiPage'), 'ClientiPage'),
+              },
+              {
+                path: RUTE.appAsteptare,
+                lazy: pagina(() => import('@/pages/app/ListaAsteptarePage'), 'ListaAsteptarePage'),
+              },
               {
                 element: <RutaManager />,
                 children: [
-                  { path: RUTE.appEchipa, element: <EchipaPage /> },
-                  { path: RUTE.appSetari, element: <SetariPage /> },
+                  {
+                    path: RUTE.appEchipa,
+                    lazy: pagina(() => import('@/pages/app/EchipaPage'), 'EchipaPage'),
+                  },
+                  {
+                    path: RUTE.appSetari,
+                    lazy: pagina(() => import('@/pages/app/SetariPage'), 'SetariPage'),
+                  },
                 ],
               },
             ],
@@ -89,14 +116,20 @@ export const router = createBrowserRouter([
       {
         element: <RutaSuperAdmin />,
         children: [
-          { path: RUTE.superadmin, element: <SuperAdminPage /> },
+          {
+            path: RUTE.superadmin,
+            lazy: pagina(() => import('@/pages/superadmin/SuperAdminPage'), 'SuperAdminPage'),
+          },
           // Parametrizata, deci scrisa aici direct: RUTE.superadminEditor e o
           // functie (constructorul de cale), nu un sablon de ruta.
-          { path: '/superadmin/editor/:restaurantId', element: <EditorPlanPage /> },
+          {
+            path: '/superadmin/editor/:restaurantId',
+            lazy: pagina(() => import('@/pages/superadmin/EditorPlanPage'), 'EditorPlanPage'),
+          },
         ],
       },
     ],
   },
 
-  { path: '*', element: <NotFoundPage /> },
+  { path: '*', lazy: pagina(() => import('@/pages/NotFoundPage'), 'NotFoundPage') },
 ])
