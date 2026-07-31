@@ -43,6 +43,13 @@ export type ValoareAuth = {
   esteAdmin: boolean
   esteManager: boolean
   esteSuperAdmin: boolean
+  /**
+   * Restaurantul are Harta 2D: plan Pro Floor sau deblocare manuala de catre
+   * echipa, pentru cine a platit prin transfer (§10.1, §43.6). Aceeasi regula
+   * e impusa si de politicile RLS pe `tables` si `zones` — asta e doar
+   * oglinda ei in interfata, ca sa nu aratam butoane care esueaza.
+   */
+  areFloorPlan: boolean
 
   autentificare: (email: string, parola: string) => Promise<void>
   trimiteMagicLink: (email: string) => Promise<void>

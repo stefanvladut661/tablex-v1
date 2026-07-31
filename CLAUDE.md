@@ -1,0 +1,95 @@
+# TableX.ro — context permanent de proiect
+
+SaaS B2B de rezervari si management al meselor pentru restaurante (§0).
+React 19 + TypeScript + Vite + Tailwind v4 + shadcn/ui + Supabase.
+
+## Specificatia e sursa de adevar
+
+**`docs/tablex-prompt-complet.md`** — 52 de sectiuni, promptul initial plus cinci
+addendumuri. Toate referintele de tip §8.4, §28.12, §47.2 din cod, din migratii
+si din `plan.md` trimit acolo. Addendumurile au prioritate asupra promptului
+initial oriunde se contrazic (ex. §38.2 elimina complet Impersonate).
+
+Documentul a lipsit din repo pana in sesiunea din 31 iulie 2026, iar absenta lui
+a costat: verificarea „mai avem ceva de facut?" s-a facut luni de zile fata de
+`plan.md` — jurnalul intern al sesiunilor — in loc de fata de specificatie. Asa
+au ramas neobservate module intregi (Evenimente, pagina Acasa). **Cand raspunzi
+la „e gata?", citeste spec-ul, nu jurnalul.**
+
+`plan.md` ramane jurnalul: ce s-a facut, ce s-a decis si DE CE. Se completeaza la
+finalul fiecarei sesiuni, nu inainte.
+
+## Reguli ne-negociabile
+
+1. **Interfata e 100% in romana.** Textele vizibile poarta diacritice; numele de
+   fisiere, variabile, functii si tabele NU (`rezervari`, nu `rezervări`).
+2. **Niciodata culori hardcodate.** Doar variabilele din `src/index.css`
+   (60-30-10 + Traffic Light, §3). O culoare scrisa direct intr-o componenta e
+   un bug, nu o scurtatura.
+3. **Terminologie stricta** (§2): Super Admin (echipa TableX) / Admin (managerul
+   restaurantului) / Client (cine rezerva). Nicaieri alti termeni.
+4. **RLS obligatoriu** pe orice tabela noua legata de `restaurant_id`.
+5. **Regula se impune in BAZA, nu in interfata.** Interfata doar nu arata butoane
+   care ar esua. Orice regula aparata numai in React se ocoleste dintr-o consola
+   de browser.
+6. **Un UPDATE/DELETE respins de RLS raspunde 200 cu ZERO randuri, nu cu eroare.**
+   Deci fiecare scriere din servicii cere `.select('id')` si verifica numarul de
+   randuri. Fara asta, interfata scrie „Salvat" pentru ceva ce nu s-a intamplat.
+   Lectia a fost invatata de trei ori; a treia oara pe stergerea zilelor speciale.
+7. **`create or replace` nu schimba semnatura unei functii.** Daca se schimba
+   lista de parametri sau coloanele intoarse, e nevoie de DROP + CREATE, iar
+   drepturile (`grant execute`) se pierd la DROP si trebuie reasezate. Altfel
+   PostgREST vede doua functii si raspunde cu ambiguitate la fiecare apel.
+
+## Ce NU se face in v1 (§14)
+
+- **Fara Stripe si fara procesare reala de plati** — nici abonamente, nici bilete.
+  Se construiesc doar ecranele, fluxurile si structura de date, gata de conectat.
+- **Fara WhatsApp real** — Meta Cloud API ramane UI si log simulat.
+- **Fara Impersonate** (§38.2) — eliminat explicit din specificatie.
+- **Rezultatul Generarii AI Best-Guess nu ajunge niciodata la Admin** — e unealta
+  interna a echipei. `services/floor-plan.ts` evita intentionat sa selecteze
+  `ai_rezultat`; pastreaza asta.
+- **Adminul nu editeaza Layer 1** (pereti, usi, bar, zone speciale). Din migratia
+  26, politica RLS o si impune.
+
+## Abateri asumate fata de spec
+
+Doua, amandoua deliberate — daca le schimbi, schimba si randurile astea:
+
+- **Rutele sunt `/app/...`, fara slug**, desi §4 cere `/app/[slug]`. Un cont
+  apartine unui singur restaurant (§20.1), deci slug-ul in URL ar fi decorativ,
+  iar prezenta lui ar cere validare pe fiecare ruta.
+- **Sidebar-ul are 8 intrari, nu 7** (§24.1): Clienti (CRM, §11) e a opta.
+  Spec-ul cere CRM-ul ca modul, dar nu-l listeaza in sidebar; e folosit zilnic,
+  la telefon, iar ascunderea lui ar fi un regres.
+
+## Cum se verifica o functionalitate
+
+Ritualul, in ordine:
+
+1. **In baza, cu roluri reale.** `set local role authenticated` +
+   `set local request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}'`,
+   pe rand ca manager, ca ospatar si ca `anon`. Se verifica si refuzurile, nu
+   doar reusitele.
+2. **In browser**, intr-un context izolat (nu in sesiunea reala a
+   proprietarului — o data s-a schimbat din greseala pretul planului Pro).
+3. **`npm test` si `npm run build`** inainte de commit.
+4. **Datele de test se sterg**, inclusiv utilizatorii din `auth.users` si
+   randurile de audit produse pe drum.
+
+Testele acopera in primul rand locurile unde o greseala e INVIZIBILA: nu arunca
+eroare, doar da rezultatul gresit (fusuri orare, aranjarea in benzi, generarea
+de slug, aritmetica editorului, tragerea pe calendar).
+
+## Comenzi
+
+```bash
+npm run dev            # Vite
+npm test               # vitest run
+npm run build          # tsc + build
+```
+
+Migratiile stau in `supabase/migrations/`, un fisier per schimbare, cu
+comentariu lung in capul lui care explica DE CE, nu doar CE. Se aplica pe
+proiectul remote `xrwyscszfpiqeupqnahy`.

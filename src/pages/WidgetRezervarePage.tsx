@@ -7,6 +7,7 @@ import { CheckCircle2Icon, ClockIcon, Loader2Icon, MapPinIcon } from 'lucide-rea
 import { z } from 'zod'
 
 import { EcranIncarcare } from '@/components/EcranIncarcare'
+import { MentenantaPage } from '@/pages/MentenantaPage'
 import { HartaZona } from '@/components/floor-plan/HartaZona'
 import { CampText } from '@/components/formular/CampText'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useNotificari } from '@/hooks/useNotificari'
+import { useSetariApp } from '@/hooks/useSetariApp'
 import { programZilei } from '@/lib/program'
 import { RUTE } from '@/lib/rute'
 import { formatFus } from '@/lib/timp'
@@ -59,6 +61,8 @@ export function WidgetRezervarePage() {
   const notificari = useNotificari()
   const [rezultat, setRezultat] = useState<RezultatRezervare | null>(null)
   const [zonaId, setZonaId] = useState<string | null>(null)
+
+  const setari = useSetariApp()
 
   const restaurant = useQuery({
     queryKey: CHEI_WIDGET.restaurant(slug),
@@ -118,6 +122,17 @@ export function WidgetRezervarePage() {
   }, [restaurant.data, dataAleasa, fus])
 
   if (restaurant.isLoading) return <EcranIncarcare />
+
+  /**
+   * Mentenanta (§47.2) opreste si widgetul public, deci si iframe-ul de pe
+   * site-ul restaurantului. Verificarea sta INAINTE de „restaurantul nu a fost
+   * gasit": in mentenanta nu vrem sa spunem clientului ca restaurantul nu
+   * exista, daca de fapt platforma e cea oprita.
+   *
+   * `=== true` din acelasi motiv ca in garda de rute: cat timp setarile nu s-au
+   * incarcat, widgetul functioneaza. Fail-open.
+   */
+  if (setari.data?.maintenance_mode === true) return <MentenantaPage />
 
   if (!restaurant.data) {
     return (

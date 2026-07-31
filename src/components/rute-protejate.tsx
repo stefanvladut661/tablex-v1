@@ -5,6 +5,7 @@ import { EcranIncarcare } from '@/components/EcranIncarcare'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
+import { useSetariApp } from '@/hooks/useSetariApp'
 import { RUTE, ruteDupaLogin } from '@/lib/rute'
 
 /**
@@ -60,13 +61,27 @@ export function RutaOaspete() {
 }
 
 export function RutaProtejata() {
-  const { incarcare, esteAutentificat } = useAuth()
+  const { incarcare, esteAutentificat, profil } = useAuth()
   const locatie = useLocation()
+  const setari = useSetariApp()
 
   if (incarcare) return <EcranIncarcare />
   if (!esteAutentificat) {
     // Retinem destinatia ca sa revenim la ea dupa autentificare.
     return <Navigate to={RUTE.login} replace state={{ de_la: locatie.pathname }} />
+  }
+
+  /**
+   * Mentenanta (§47.2) inchide Portalul Admin, dar NU panoul echipei: altfel
+   * super adminul n-ar mai putea opri mentenanta pe care tocmai a pornit-o.
+   *
+   * Conditia e scrisa pe `=== true`, nu pe adevar general: cat timp setarile
+   * se incarca sau cererea a esuat, `data` e undefined si aplicatia MERGE.
+   * Fail-open deliberat — o pana de retea la un singur client nu are voie sa
+   * inchida toate restaurantele din platforma.
+   */
+  if (setari.data?.maintenance_mode === true && profil?.tip !== 'super_admin') {
+    return <Navigate to={RUTE.mentenanta} replace />
   }
 
   return <Outlet />

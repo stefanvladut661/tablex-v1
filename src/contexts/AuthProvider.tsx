@@ -186,6 +186,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       esteAdmin: profil?.tip === 'admin',
       esteManager: profil?.tip === 'admin' && profil.cont.rol === 'manager',
       esteSuperAdmin: profil?.tip === 'super_admin',
+      areFloorPlan:
+        profil?.tip === 'admin' &&
+        (profil.restaurant.plan === 'pro_floor' || profil.restaurant.floor_plan_deblocat_manual),
       autentificare,
       trimiteMagicLink,
       inregistrare,

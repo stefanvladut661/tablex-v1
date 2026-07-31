@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ClockIcon } from 'lucide-react'
 
+import { BlocajPlan } from '@/components/BlocajPlan'
 import { CereriPlan } from '@/components/floor-plan/CereriPlan'
 import { HartaZona } from '@/components/floor-plan/HartaZona'
 import { LegendaStatus } from '@/components/floor-plan/LegendaStatus'
@@ -12,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
 import { useMese, useZone } from '@/hooks/useMese'
 import { useRezervari } from '@/hooks/useRezervari'
+import { MESE_DEMO, STRUCTURA_DEMO, ZONE_DEMO, statusuriLaOra } from '@/lib/harta-demo'
 import { programZilei } from '@/lib/program'
 import {
   inceputZi,
@@ -70,7 +72,7 @@ function statusuriLaMoment(
 }
 
 export function HartaPage() {
-  const { profil } = useAuth()
+  const { profil, areFloorPlan } = useAuth()
   const restaurant = profil?.tip === 'admin' ? profil.restaurant : null
   const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
 
@@ -120,6 +122,29 @@ export function HartaPage() {
     }
     // Masa libera: cel mai probabil personalul vrea sa aseze un walk-in.
     if (zonaCurenta) setMasaLibera({ zoneId: zonaCurenta.id, tableId })
+  }
+
+  // Planul Start nu are Harta 2D (§10.1). Pagina ramane in navigatie, dar
+  // aratam sala DEMO neclara, nu sala goala a restaurantului: cine cumpara
+  // trebuie sa vada ce cumpara. Regula e impusa oricum de RLS (migratia 26).
+  if (!areFloorPlan) {
+    return (
+      <div className="grid gap-3 p-4 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-lg font-semibold tracking-tight">Harta salii</h1>
+          <LegendaStatus />
+        </div>
+        <BlocajPlan>
+          <HartaZona
+            zona={ZONE_DEMO[0]}
+            structura={STRUCTURA_DEMO[ZONE_DEMO[0].id]}
+            mese={MESE_DEMO[ZONE_DEMO[0].id]}
+            statusuri={statusuriLaOra(20, ZONE_DEMO[0].id)}
+            className="aspect-[3/2] w-full"
+          />
+        </BlocajPlan>
+      </div>
+    )
   }
 
   return (

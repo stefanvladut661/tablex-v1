@@ -1442,6 +1442,98 @@ platesc doar vizitatorii de pe „/", iar editorul (26 kB) doar echipa. Garzile 
 ruta raman incarcate de la inceput: ele decid CE se incarca mai departe.
 
 ---
+6quatervicies. SPECIFICATIA S-A INTORS IN REPO. FAZA 1 DIN RECUPERARE — ✅
+
+6quatervicies.1 Descoperirea care schimba tot
+
+Intrebat „mai e ceva in afara platilor?", am raspuns „nu". Gresit — si merita
+spus de ce, fiindca greseala era structurala, nu de neatentie: verificam fata de
+plan.md, jurnalul asta, nu fata de SPECIFICATIE. Documentul nu era in repo.
+§36 ceruse de la inceput un CLAUDE.md cu spec-ul pastrat in /docs; pasul nu s-a
+facut niciodata, iar toate referintele §8.4, §28.12, §47.2 din cod trimiteau
+intr-un document pe care nu-l mai avea nimeni la indemana.
+
+L-am gasit in transcriptul primei sesiuni: `~/Desktop/dan 3 sapt/
+tablex-prompt-complet.md`, 996 de linii, 52 de sectiuni, 5 addendumuri. Citit
+integral. Aplicatia acopera cam doua treimi din el.
+
+DOUA CORECTURI la ce spusesem:
+- PLATILE NU ERAU CERUTE. §1 si §14 le interzic explicit in v1: „construieste
+  doar UI-ul, fluxurile si structura de date, gata de conectat". Deci Stripe nu
+  e o faza mare, sunt cateva ecrane placeholder. La fel WhatsApp.
+- LIPSESTE MULT MAI MULT. Modulul Evenimente & Bilete (§8.5, §29, §18) — zero.
+  Pagina Acasa/Overview (§24.4) — inexistenta. Restaurantul nu-si poate edita
+  mesele desi §28.6 o cere. Rezervarea existenta nu se poate edita deloc. Super
+  Admin n-are Overview, Finance, Communications, Support.
+
+Spec-ul e acum in `docs/tablex-prompt-complet.md`, iar `CLAUDE.md` exista in
+radacina, cu regulile ne-negociabile si cu cele doua abateri asumate (rutele
+fara slug, CRM ca a opta intrare in sidebar). Cand se mai intreaba „e gata?",
+raspunsul se citeste din spec, nu din jurnal.
+
+6quatervicies.2 GAURA DE SECURITATE gasita comparand spec-ul cu RLS-ul
+
+Bucla de tabele de configurare din migratia RLS trata `floor_plan_layers` ca pe
+`zones` sau `program_exceptii` si ii dadea managerului `for all`. §8.4 si §14
+spun raspicat contrariul: structura salii (pereti, usi, bar) e EXCLUSIV a
+echipei. Un manager putea sterge peretii desenati de echipa cu un singur apel
+REST. Triggerele din migratia 19 apara doar stergerea meselor si zonelor cu
+rezervari viitoare; stratul de structura nu era aparat de nimic.
+
+Politica a fost stearsa, fara inlocuitor: nu exista niciun caz in care
+restaurantul sa scrie Layer 1.
+
+6quatervicies.3 Planul Start primea gratis functia platita
+
+Harta 2D e ce diferentiaza Pro Floor (10 EUR) de Start (5 EUR) — §10.1. Un cont
+Start o vedea integral. Si nu era doar o scapare de interfata: `tables` si
+`zones` erau scriabile de orice manager, deci un blocaj vizual s-ar fi ocolit
+din consola browserului.
+
+Garda e o functie in baza, `are_floor_plan()`, folosita in politicile de
+scriere: plan Pro SAU `floor_plan_deblocat_manual`. A doua conditie conteaza —
+altfel butonul „Deblocare floor plan" din panoul echipei (§43.6), pentru cine
+plateste prin transfer, ar fi ramas decorativ.
+
+In interfata, pagina ramane in navigatie si arata sala DEMO neclara, cu lacat si
+buton de upgrade. Nu sala goala a restaurantului: cine cumpara trebuie sa vada
+ce cumpara.
+
+6quatervicies.4 Modul mentenanta nu facea nimic (§47.2)
+
+Comutatorul din Setari globale se salva in `app_settings` si acolo se oprea.
+Nicio garda nu-l citea, iar `MentenantaPage` era un placeholder cu text
+hardcodat. Adica exact tipul de buton care minte.
+
+Acum blocheaza Portalul Admin si widgetul public, cu mesajul din baza, dar NU
+panoul echipei — altfel super adminul n-ar mai putea opri mentenanta pe care a
+pornit-o.
+
+Doua decizii de detaliu:
+- FAIL-OPEN, scris ca `=== true`: cat timp setarile nu s-au incarcat sau
+  cererea a esuat, aplicatia MERGE. O pana de retea la un singur client nu are
+  voie sa inchida toate restaurantele.
+- `staleTime` a scazut de la 5 minute la 1: de cand garda e reala, intarzierea
+  de acolo e exact intarzierea cu care se inchide aplicatia.
+
+6quatervicies.5 Verificat cap-coada
+
+In baza, cu JWT-uri reale:
+- [x] manager Start → `are_floor_plan()` false, `update tables` 0 randuri,
+      pozitia mesei NESCHIMBATA; manager Pro → 1 rand, pozitia schimbata
+- [x] managerul Start CITESTE in continuare mesele (blocam scrierea, nu vederea)
+- [x] manager Pro → `insert into floor_plan_layers` refuzat de RLS
+- [x] deblocare manuala pusa de echipa pe un cont Start → managerul poate scrie
+      imediat; butonul nu mai e decorativ
+
+In browser, in context izolat:
+- [x] widget public in mentenanta → mesajul din baza, nu formularul
+- [x] manager logat in mentenanta → dus la /mentenanta
+- [x] mentenanta oprita → panoul functioneaza din nou
+- [x] cont Pro → harta reala; cont Start → sala demo neclara, lacat si
+      „Deblocheaza Harta 2D — Upgrade la Pro Floor"
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev
