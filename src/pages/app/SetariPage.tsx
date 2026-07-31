@@ -6,6 +6,7 @@ import { CopyIcon, ExternalLinkIcon, Loader2Icon, TriangleAlertIcon } from 'luci
 import { z } from 'zod'
 
 import { CampText } from '@/components/formular/CampText'
+import { ExceptiiProgram } from '@/components/setari/ExceptiiProgram'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -421,6 +422,12 @@ export function SetariPage() {
           </Button>
         </div>
       </form>
+
+      {/* In AFARA formularului, si nu doar fiindca <form> nu se poate imbrica:
+          excepțiile se salveaza pe loc, nu la butonul global de mai sus. O
+          lista in care adaugi un rand si nu se intampla nimic pana derulezi la
+          capatul paginii ar fi derutanta. */}
+      <ExceptiiProgram restaurantId={restaurant.id} fus={restaurant.fus_orar} />
     </div>
   )
 }

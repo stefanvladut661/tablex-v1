@@ -1,7 +1,7 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: pagina de clienti (CRM) cu stergere GDPR reala prin anonimizare -->
-<!-- NEXT_TASK: conectarea furnizorului de email (RESEND_API_KEY — cere cont si domeniu verificat); vederea pe mese -->
+<!-- LAST_COMPLETED: zile speciale (program_exceptii) in Setari — ultima tabela cu RLS gata si zero interfata -->
+<!-- NEXT_TASK: furnizor email (RESEND_API_KEY); lista de asteptare (waitlist); campuri formular widget (formular_campuri) -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
@@ -1076,6 +1076,51 @@ nicio fisa care sa arate ca mai e ceva de sters.
 - [x] managerul pe un client din alt restaurant → "Clientul nu exista in acest
       restaurant" (RLS + verificare explicita)
 - [x] ospatarul POATE citi clientii — are nevoie de ei in sala
+
+---
+6sedecies. ZILE SPECIALE (§30.2) — ✅
+
+Gasita comparand tabelele din baza cu cele folosite de frontend — aceeasi
+metoda care descoperise si pagina de clienti. `program_exceptii` avea tabela,
+constrangeri, politici RLS corecte (scriere doar manager), iar `este_deschis`
+o consulta INAINTEA programului saptamanal, deci `rezerva_public` o respecta
+deja. Nu exista nicio interfata: un restaurant nu putea marca 25 decembrie ca
+inchis. Functionalitate complet impusa in baza si complet inutilizabila.
+
+Sectiunea sta in Setari (manager only), sub programul saptamanal — al carui
+text promitea deja "Zilele speciale se adauga separat, ca excepții".
+
+Doua decizii de forma:
+- Sectiunea are queries si mutatii PROPRII, in afara formularului paginii: o
+  lista in care adaugi un rand si nu se intampla nimic pana derulezi la capat
+  si apesi "Salveaza" ar fi derutanta. (Si <form> nu se poate imbrica.)
+- Salvarea e upsert pe (restaurant_id, data): tabela are unicitate pe ele, iar
+  "adaug 25 decembrie" a doua oara inseamna "corectez", nu "eroare de cheie".
+
+DEFECT PRINS SI DOVEDIT: stergerea nu verifica randurile afectate. Politica de
+scriere cere is_manager(), iar un DELETE respins de RLS NU intoarce eroare.
+Verificat direct cu un cont de ospatar: DELETE-ul raspunde HTTP 200 cu lista
+GOALA, iar excepția ramane pe loc. Interfata ar fi afisat "Excepție stearsa"
+pentru ceva neschimbat. Aceeasi lectie ca in Faza 3, aplicata acum si aici.
+
+Verificat cap-coada, din interfata pana in widgetul public:
+- [x] 25 decembrie marcat inchis din Setari → apare in lista ca
+      "vineri, 25 decembrie 2026 · Inchis · Craciun"
+- [x] widgetul REFUZA rezervarea pe 25 decembrie, dar o accepta pe 24
+- [x] 31 decembrie cu orar special 18:00–23:00 → cererea de la 13:00 refuzata,
+      cea de la 20:00 acceptata
+- [x] ospatarul citeste excepțiile (are nevoie), dar nu le poate sterge
+
+6sedecies.1 Ce a mai iesit la iveala din comparatie (neimplementate)
+
+Tabele cu RLS gata si fara interfata, in ordinea valorii:
+- `waitlist` — lista de asteptare. Politica exista, tabela e goala de sens
+  fara ecran. Probabil urmatoarea ca valoare.
+- `formular_campuri` — campurile formularului public. `creeaza_restaurant`
+  creeaza cele 4 campuri de sistem, dar widgetul nu le citeste inca: are
+  formular fix. Configurarea lor ar trebui sa stea tot in Setari.
+- `floor_plan_projects`, `customer_merge_audit`, `super_admin_invitations` —
+  flux intern / instrumente de echipa, fara nevoie clara in MVP.
 
 ---
 7. COMMANDS CHEAT SHEET
