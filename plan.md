@@ -1742,11 +1742,52 @@ masa poate avea maximum 12 scaune (masa 1, cerut 25)."
 - [x] apasare si ridicare in acelasi loc → NU muta nimic, deschide walk-in-ul
 - [x] 25 de locuri → refuzat de trigger, cu mesajul lui afisat
 
-6septvicies.5 Ce ramane din Faza 3
+6septvicies.5 Bara orara si re-alocarea prin tragere — ✅
 
-Nu e terminata. Mai lipsesc: re-alocarea prin tragerea rezervarii de pe o masa
-pe alta (§28.4), waitlist ca panou lateral langa harta (§28.7), bara de sloturi
-orare cu „Previzualizare pentru ora X" (§28.12) si unirea meselor pentru grupuri
+BARA DE SLOTURI (§28.12), marcata in spec drept „functie critica, obligatorie".
+Inainte exista un slider ingust in coloana din dreapta. Diferenta nu e de
+aspect: harta arata implicit ACUM, iar „acum" raspunde la o singura intrebare —
+cine sta la masa in clipa asta. Intrebarea pe care o pune receptia de zece ori
+pe seara e alta: „la 21:00 mai am unde sa pun patru oameni?".
+
+Bara sta pe toata latimea, deasupra canvasului, cu sloturi din 30 in 30 de
+minute. Ora curenta se reactualizeaza singura din minut in minut, dar NUMAI cat
+timp esti pe „acum": din clipa in care alegi alta ora, harta nu se mai misca
+sub tine — altfel previzualizarea ar sari inapoi in mijlocul unei decizii.
+Cand nu esti pe prezent, un banner o spune explicit, cu „Revino la acum".
+
+RE-ALOCAREA PRIN TRAGERE (§28.4). Aici a fost decizia grea a fazei: pe acelasi
+canvas, un pointer putea insemna trei lucruri. Regula finala:
+
+  clic pe masa          → rezervarea, sau walk-in-ul       (toti)
+  tragerea insignei ⇄   → mut CLIENTUL pe alta masa        (toti)
+  tragerea mesei        → mut MOBILA                       (doar managerul)
+
+Insigna ⇄ apare doar pe mesele care au client la ora afisata — altfel n-ar avea
+ce muta. Ospatarul primeste acum acelasi canvas ca managerul, nu unul de citit:
+mutarea unui client e operatie de SALA (§31), nu de plan. Tragerea mesei ii e
+oprita din interfata, iar RLS o refuza oricum.
+
+Doua detalii care fac diferenta intre „merge" si „merge mereu":
+- masa-tinta se afla cu `elementFromPoint`, nu din aritmetica pe dreptunghiuri:
+  raspunde exact la „ce e sub deget acum", inclusiv cand mesele se suprapun.
+- urma trasa are `pointer-events: none`. Fara asta, ea insasi ar fi elementul de
+  sub deget la ridicare, iar masa-tinta n-ar fi gasita niciodata.
+
+Mutarea cere confirmare, cum cere §28.4. Nu e prudenta exagerata: pe o tableta,
+in sala plina, un deget alunecat peste doua mese ar muta clientul fara ca nimeni
+sa observe. Dialogul arata cine se muta si avertizeaza daca masa are mai putine
+locuri decat persoane.
+
+Verificat in browser:
+- [x] insigna trasa de pe masa 1 pe masa 2 → dialog „Muti rezervarea pe masa 2?
+      Ion Popescu · 4 persoane · 16:10"
+- [x] confirmat → rezervarea e pe masa 2 in baza, cu mesaj de reusita
+- [x] slot 22:00 → banner „Previzualizare pentru ora 22:00" si „Revino la acum"
+
+6septvicies.6 Ce ramane din Faza 3
+
+Waitlist ca panou lateral langa harta (§28.7) si unirea meselor pentru grupuri
 (§28.6, §15.4).
 
 ---

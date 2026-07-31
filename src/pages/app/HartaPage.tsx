@@ -4,6 +4,7 @@ import { ClockIcon } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { BlocajPlan } from '@/components/BlocajPlan'
+import { BaraOrara } from '@/components/floor-plan/BaraOrara'
 import { CereriPlan } from '@/components/floor-plan/CereriPlan'
 import { EditorZona } from '@/components/floor-plan/EditorZona'
 import { PanouMeseAdmin } from '@/components/floor-plan/PanouMeseAdmin'
@@ -14,14 +15,25 @@ import { SheetRezervare } from '@/components/rezervari/SheetRezervare'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useMese, useZone } from '@/hooks/useMese'
 import { useNotificari } from '@/hooks/useNotificari'
+import { useMutatiiRezervari } from '@/hooks/useRezervari'
 import { useRezervari } from '@/hooks/useRezervari'
 import { MESE_DEMO, STRUCTURA_DEMO, ZONE_DEMO, statusuriLaOra } from '@/lib/harta-demo'
 import { programZilei } from '@/lib/program'
 import {
   inceputZi,
+  ora,
   oraZecimala,
   sfarsitZi,
   toZonedTime,
@@ -115,7 +127,9 @@ export function HartaPage() {
   const [zonaId, setZonaId] = useState<string | null>(null)
   const [selectata, setSelectata] = useState<Rezervare | null>(null)
   const [masaLibera, setMasaLibera] = useState<{ zoneId: string; tableId: string } | null>(null)
+  const [deMutat, setDeMutat] = useState<{ rezervare: Rezervare; masa: MasaHarta } | null>(null)
 
+  const { muta } = useMutatiiRezervari(restaurant?.id)
   const zone = useZone(restaurant?.id)
   const mese = useMese(restaurant?.id)
   const rezervari = useRezervari(
@@ -130,6 +144,15 @@ export function HartaPage() {
     () => statusuriLaMoment(rezervari.data ?? [], oraAfisata, fus),
     [rezervari.data, oraAfisata, fus],
   )
+
+  /** Ce arata canvasul ca fiind „de mutat": clientul de pe fiecare masa ocupata. */
+  const rezervariPeMese = useMemo(() => {
+    const rezultat: Record<string, { id: string; eticheta: string }> = {}
+    for (const [tableId, rezervare] of rezervarePeMasa) {
+      rezultat[tableId] = { id: rezervare.id, eticheta: rezervare.client_nume }
+    }
+    return rezultat
+  }, [rezervarePeMasa])
 
   const meseZona: MasaHarta[] = useMemo(
     () => (mese.data ?? []).filter((masa) => masa.zone_id === zonaCurenta?.id),
@@ -181,6 +204,14 @@ export function HartaPage() {
           <LegendaStatus />
         </div>
 
+        {/* §28.12 — bara de sloturi, pe toata latimea, deasupra canvasului. */}
+        <BaraOrara
+          program={program}
+          fus={fus}
+          oraAfisata={oraAfisata}
+          onSchimba={setOraAfisata}
+        />
+
         {seIncarca ? (
           <Skeleton className="aspect-[3/2] w-full" />
         ) : !zone.data?.length ? (
@@ -209,19 +240,28 @@ export function HartaPage() {
             ) : (
               zonaCurenta &&
               /**
-               * Managerul primeste canvasul editabil (§28.6): trage mesele
-               * direct pe plan. Ospatarul primeste harta de citit — RLS ii
-               * refuza oricum scrierea in `tables`, iar butoane care esueaza
-               * tacut sunt mai rele decat butoane care lipsesc.
+               * Acelasi canvas pentru ambele roluri, cu gesturi diferite:
                *
-               * Clicul pastreaza intelesul operational in ambele cazuri:
-               * deschide rezervarea, sau walk-in-ul pe o masa libera. Doar
-               * TRAGEREA muta mobila.
+               *   clic pe masa            → rezervarea, sau walk-in-ul (toti)
+               *   tragerea insignei ⇄     → mut CLIENTUL pe alta masa (toti)
+               *   tragerea mesei          → mut MOBILA (doar managerul)
+               *
+               * Ospatarul are nevoie de primele doua — sunt operatii de sala,
+               * nu de plan (§31). A treia i-o refuza oricum RLS pe `tables`,
+               * deci nici nu i-o aratam: butoanele care esueaza tacut sunt mai
+               * rele decat cele care lipsesc.
                */
-              (esteManager ? (
+              (
                 <EditorZona
                   zona={zonaCurenta}
                   stratActiv="mese"
+                  poateMutaMese={esteManager}
+                  rezervariPeMese={rezervariPeMese}
+                  onMutaRezervare={(rezervareId, peMasa) => {
+                    const rezervare = (rezervari.data ?? []).find((r) => r.id === rezervareId)
+                    const masa = meseZona.find((m) => m.id === peMasa)
+                    if (rezervare && masa) setDeMutat({ rezervare, masa })
+                  }}
                   // Layer 1 nu se incarca inca in panou: harta restaurantului
                   // a aratat dintotdeauna doar mesele. Cand structura publicata
                   // va fi adusa aici, se pune direct — canvasul o deseneaza deja.
@@ -237,15 +277,7 @@ export function HartaPage() {
                   onMutaStructura={() => {}}
                   className="aspect-[3/2] w-full"
                 />
-              ) : (
-                <HartaZona
-                  zona={zonaCurenta}
-                  mese={meseZona}
-                  statusuri={statusuri}
-                  onSelecteazaMasa={laClickMasa}
-                  className="aspect-[3/2] w-full"
-                />
-              ))
+              )
             )}
           </>
         )}
@@ -272,23 +304,12 @@ export function HartaPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
+            {/* Ora se alege din bara de deasupra hartii (§28.12); aici ramane
+                doar valoarea, mare, pentru cine se uita de la distanta. */}
             <div className="text-2xl font-semibold tabular-nums">{formateazaOra(oraAfisata)}</div>
-            <input
-              type="range"
-              min={program.deLa}
-              max={program.panaLa}
-              step={0.25}
-              value={oraAfisata}
-              onChange={(e) => setOraAfisata(Number(e.target.value))}
-              aria-label="Ora afisata pe harta"
-              className="w-full accent-primary"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
-              <span>{formateazaOra(program.deLa)}</span>
-              <span>{formateazaOra(program.panaLa)}</span>
-            </div>
             <p className="text-xs text-muted-foreground">
               Click pe o masa libera deschide un walk-in pe ea; pe una ocupata, rezervarea.
+              {esteManager && ' Trage o masa ca s-o muti pe plan.'}
             </p>
           </CardContent>
         </Card>
@@ -335,6 +356,50 @@ export function HartaPage() {
           zoneIdImplicit={masaLibera.zoneId}
           tableIdImplicit={masaLibera.tableId}
         />
+      )}
+
+      {/* §28.4 cere confirmare inainte de a finaliza mutarea. Nu e prudenta
+          exagerata: pe o tableta, in sala plina, un deget alunecat peste doua
+          mese ar muta clientul fara ca nimeni sa observe. */}
+      {deMutat && (
+        <Dialog open onOpenChange={(deschis) => !deschis && setDeMutat(null)}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Muti rezervarea pe masa {deMutat.masa.numar_masa}?</DialogTitle>
+              <DialogDescription>
+                {deMutat.rezervare.client_nume} · {deMutat.rezervare.nr_persoane} persoane ·{' '}
+                {ora(deMutat.rezervare.data_ora, fus)}
+                {deMutat.masa.capacitate < deMutat.rezervare.nr_persoane &&
+                  ` — atentie, masa are doar ${deMutat.masa.capacitate} locuri.`}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeMutat(null)}>
+                Renunta
+              </Button>
+              <Button
+                disabled={muta.isPending}
+                onClick={() =>
+                  muta.mutate(
+                    { id: deMutat.rezervare.id, tableId: deMutat.masa.id },
+                    {
+                      onSuccess: () => {
+                        notificari.succes(`Rezervarea a trecut pe masa ${deMutat.masa.numar_masa}.`)
+                        setDeMutat(null)
+                      },
+                      // Masa ocupata in interval → 23P01, tradus in lib/erori.ts.
+                      // Nu exista fortare (§15.3): dialogul ramane deschis, ca
+                      // omul sa poata alege alta masa.
+                      onError: (eroare) => notificari.eroare(eroare),
+                    },
+                  )
+                }
+              >
+                Muta rezervarea
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )

@@ -39,6 +39,16 @@ type Props = {
    * (§28.2, §28.3, §28.6).
    */
   onDeschideMasa?: (id: string) => void
+  /**
+   * Fals pentru ospatar: el foloseste harta, dar nu rearanjeaza mobila
+   * (RLS ii refuza oricum scrierea in `tables`). Clicul si tragerea unei
+   * REZERVARI raman ale lui — sunt operatii de sala, nu de plan.
+   */
+  poateMutaMese?: boolean
+  /** Ce rezervare sta pe fiecare masa la ora afisata, pentru tragerea din §28.4. */
+  rezervariPeMese?: Record<string, { id: string; eticheta: string }>
+  /** Tragerea s-a incheiat pe alta masa: apelantul cere confirmarea. */
+  onMutaRezervare?: (rezervareId: string, peMasa: string) => void
   onSelecteazaMasa: (id: string | null) => void
   onMutaMasa: (id: string, x: number, y: number) => void
   /** Elementele de structura se identifica prin indice in array-ul jsonb. */
@@ -58,6 +68,21 @@ type Gest = {
   cheie: string | number
   decalajX: number
   decalajY: number
+  /**
+   * Gest pornit pe o masa de cineva care nu are voie s-o mute (ospatarul).
+   * Il tinem totusi, ca ridicarea pointerului sa poata deschide rezervarea:
+   * altfel clicul pe masa n-ar mai face nimic pentru el.
+   */
+  blocat?: boolean
+}
+
+/** Tragerea unei REZERVARI de pe o masa pe alta (§28.4) — alt gest, alt scop. */
+type GestRezervare = {
+  pointerId: number
+  rezervareId: string
+  dePeMasa: string
+  x: number
+  y: number
 }
 
 export function EditorZona({
@@ -68,6 +93,9 @@ export function EditorZona({
   statusuri,
   masaSelectata,
   onDeschideMasa,
+  poateMutaMese = true,
+  rezervariPeMese,
+  onMutaRezervare,
   onSelecteazaMasa,
   onMutaMasa,
   structuraSelectata,
@@ -84,6 +112,8 @@ export function EditorZona({
   // singur pointermove, setState nu e inca vizibil in handler si gestul ar fi
   // citit gresit ca un simplu clic. Starea exista doar pentru previzualizare.
   const refGest = useRef<Gest | null>(null)
+  const refGestRezervare = useRef<GestRezervare | null>(null)
+  const [tragereRezervare, setTragereRezervare] = useState<{ x: number; y: number } | null>(null)
   const [previzualizare, setPrevizualizare] = useState<{
     strat: Strat
     cheie: string | number
@@ -142,6 +172,28 @@ export function EditorZona({
   }
 
   function laPointerDown(eveniment: PointerEvent<SVGSVGElement>) {
+    const punctRezervare = laCanvas(eveniment)
+    const insigna = (eveniment.target as SVGElement).closest('[data-rezervare-id]')
+
+    // Tragerea unei REZERVARI are prioritate: insigna sta deasupra mesei, iar
+    // cine o apuca vrea sa mute clientul, nu mobila (§28.4).
+    if (insigna && punctRezervare && onMutaRezervare) {
+      refGestRezervare.current = {
+        pointerId: eveniment.pointerId,
+        rezervareId: insigna.getAttribute('data-rezervare-id')!,
+        dePeMasa: insigna.getAttribute('data-de-pe-masa')!,
+        x: punctRezervare.x,
+        y: punctRezervare.y,
+      }
+      setTragereRezervare({ x: punctRezervare.x, y: punctRezervare.y })
+      try {
+        eveniment.currentTarget.setPointerCapture(eveniment.pointerId)
+      } catch {
+        // ignorat intentionat
+      }
+      return
+    }
+
     const atribut = stratActiv === 'mese' ? 'data-masa-id' : 'data-structura-indice'
     const tinta = (eveniment.target as SVGElement).closest(`[${atribut}]`)
     const punct = laCanvas(eveniment)
@@ -163,7 +215,14 @@ export function EditorZona({
     if (stratActiv === 'mese') onSelecteazaMasa(cheie as string)
     else onSelecteazaStructura(cheie as number)
 
-    const gest: Gest = { pointerId: eveniment.pointerId, strat: stratActiv, cheie, decalajX: 0, decalajY: 0 }
+    const gest: Gest = {
+      pointerId: eveniment.pointerId,
+      strat: stratActiv,
+      cheie,
+      decalajX: 0,
+      decalajY: 0,
+      blocat: stratActiv === 'mese' && !poateMutaMese,
+    }
     const masura = masuraGest(gest)
     if (!masura) return
 
@@ -182,7 +241,16 @@ export function EditorZona({
   }
 
   function laPointerMove(eveniment: PointerEvent<SVGSVGElement>) {
+    const gestRez = refGestRezervare.current
+    if (gestRez && gestRez.pointerId === eveniment.pointerId) {
+      const punct = laCanvas(eveniment)
+      if (punct) setTragereRezervare({ x: punct.x, y: punct.y })
+      return
+    }
+
     const gest = refGest.current
+    // Cine nu poate muta mese nu vede nici previzualizarea mutarii.
+    if (gest?.blocat) return
     // Legat de pointerId-ul care l-a inceput: altfel un pointerup ramas dintr-o
     // alta secventa (ex. dupa hot-reload cu butonul apasat) ar confirma mutarea.
     if (!gest || gest.pointerId !== eveniment.pointerId) return
@@ -201,8 +269,45 @@ export function EditorZona({
   }
 
   function laPointerUp(eveniment: PointerEvent<SVGSVGElement>) {
+    const gestRez = refGestRezervare.current
+    if (gestRez && gestRez.pointerId === eveniment.pointerId) {
+      refGestRezervare.current = null
+      setTragereRezervare(null)
+      try {
+        eveniment.currentTarget.releasePointerCapture(eveniment.pointerId)
+      } catch {
+        // deja eliberata
+      }
+
+      /**
+       * Masa de sub deget se afla din DOM, nu din aritmetica: elementFromPoint
+       * raspunde exact la „ce e sub cursor acum", inclusiv cand mesele se
+       * suprapun partial. O socoteala pe dreptunghiuri ar fi trebuit sa
+       * reproduca ordinea de desenare ca sa dea acelasi raspuns.
+       */
+      const sub = document.elementFromPoint(eveniment.clientX, eveniment.clientY)
+      const masaTinta = sub?.closest('[data-masa-id]')?.getAttribute('data-masa-id')
+
+      // Pe aceeasi masa, sau in gol: nu s-a cerut nimic.
+      if (masaTinta && masaTinta !== gestRez.dePeMasa) {
+        onMutaRezervare?.(gestRez.rezervareId, masaTinta)
+      }
+      return
+    }
+
     const gest = refGest.current
     if (!gest || gest.pointerId !== eveniment.pointerId) return
+
+    if (gest.blocat) {
+      refGest.current = null
+      try {
+        eveniment.currentTarget.releasePointerCapture(eveniment.pointerId)
+      } catch {
+        // deja eliberata
+      }
+      if (gest.strat === 'mese') onDeschideMasa?.(gest.cheie as string)
+      return
+    }
 
     // Curatam intai starea gestului, apoi eliberam captura. Ordinea conteaza:
     // releasePointerCapture ARUNCA daca pointerul nu mai e capturat — se
@@ -408,10 +513,61 @@ export function EditorZona({
                   status={statusMasa(masa)}
                   selectata={masaSelectata === masa.id}
                 />
+
+                {/* Manerul de re-alocare (§28.4). Exista doar cand masa are un
+                    client la ora afisata: altfel n-ar avea ce muta. */}
+                {rezervariPeMese?.[masa.id] && onMutaRezervare && (
+                  <g
+                    data-rezervare-id={rezervariPeMese[masa.id].id}
+                    data-de-pe-masa={masa.id}
+                    className="cursor-grab"
+                    role="button"
+                    aria-label={`Muta rezervarea ${rezervariPeMese[masa.id].eticheta} pe alta masa`}
+                  >
+                    <circle
+                      cx={afisata.pozitie_x + afisata.latime - 8}
+                      cy={afisata.pozitie_y + 8}
+                      r={11}
+                      className="fill-canvas-selectie stroke-background stroke-2"
+                    />
+                    <text
+                      x={afisata.pozitie_x + afisata.latime - 8}
+                      y={afisata.pozitie_y + 8}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="pointer-events-none fill-background text-[11px] font-semibold"
+                    >
+                      ⇄
+                    </text>
+                  </g>
+                )}
               </g>
             )
           })}
         </g>
+
+        {/* Urma rezervarii trase. `pointer-events-none` e obligatoriu: altfel
+            ea insasi ar fi elementul de sub deget la ridicare, iar masa-tinta
+            n-ar fi gasita niciodata. */}
+        {tragereRezervare && (
+          <g className="pointer-events-none">
+            <circle
+              cx={tragereRezervare.x}
+              cy={tragereRezervare.y}
+              r={13}
+              className="fill-canvas-selectie opacity-80"
+            />
+            <text
+              x={tragereRezervare.x}
+              y={tragereRezervare.y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              className="fill-background text-[12px] font-semibold"
+            >
+              ⇄
+            </text>
+          </g>
+        )}
       </svg>
     </div>
   )
