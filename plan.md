@@ -1631,6 +1631,63 @@ In browser, cu cont de manager:
 - [x] ziua de maine → „doar citire", fara niciun buton de actiune
 
 ---
+6sexvicies. ONBOARDING IN TREI PASI, CU PLATA LA FINAL — ✅
+
+6sexvicies.1 Ordinea ceruta de client, si de ce e cea corecta
+
+Pana acum, alegerea planului statea la mijlocul unui formular lung, iar contul
+se crea cu un singur buton. Cerinta: planul si plata se cer LA FINAL DE TOT,
+dupa ce toate datele sunt introduse si validate.
+
+E si ordinea corecta comercial. Omul care si-a scris deja numele restaurantului,
+adresa publica si datele de firma a investit ceva in ecranul ala; unul caruia i
+se cere cardul din primul pas pleaca inainte sa vada ce cumpara.
+
+Trei pasi: Datele locatiei → Planul → Activare. Trecerea de la primul cere
+validarea explicita a campurilor lui (`form.trigger`), plus verificarea ca
+adresa publica e libera.
+
+DECIZIE: restaurantul se creeaza abia la ULTIMUL pas. Asa, un onboarding
+abandonat nu lasa nici restaurant fantoma, nici o adresa publica ocupata de
+cineva care n-a terminat niciodata. Riscul, asumat: adresa se poate ocupa intre
+pasul 1 si pasul 3 — cazul e prins, iar omul e trimis inapoi la pasul 1 cu
+campul marcat, in loc sa primeasca eroarea pe ecranul de plata.
+
+Plata ramane placeholder, cum cere §14 („nu integra Stripe in v1"). Pasul 3
+arata ce va plati: abonamentul ales, plus — pentru Pro Floor — CALCULATORUL DE
+SETUP din §10.2, cu preturile reale din `app_settings`: 100 EUR pana la 50 de
+mese, +2 EUR pentru fiecare in plus. Estimarea de mese nu se salveaza nicaieri:
+numarul real iese abia din planul desenat.
+
+6sexvicies.2 Eroarea „violates foreign key constraint admin_users_user_id_fkey"
+
+Raportata de utilizator la crearea unui cont de test. Cauzata de mine: sesiunea
+din browser tinea un token pentru un cont de test pe care il stersesem la
+curatenia de dupa verificari.
+
+Lectia generala e insa a aplicatiei, nu a mea: JWT-ul traieste pana ii expira
+semnatura, INDEPENDENT de randul din `auth.users`. Verificarea `auth.uid() is
+null` din `creeaza_restaurant` trecea — uid-ul exista, omul nu —, iar operatia
+se oprea abia la cheia straina, cu un mesaj de Postgres scapat pana in
+interfata, din care nimeni nu intelege ce s-a intamplat si ce sa faca.
+
+Migratia 29 verifica existenta contului INAINTE de orice scriere si spune
+„Sesiunea ta nu mai este valida: contul a fost sters. Iesi din cont si
+autentifica-te din nou." Pusa inainte, nu dupa: altfel prima inserare
+(restaurantul) reuseste, a doua cade, si desi tranzactia se anuleaza corect,
+mesajul ramane despre o cheie straina.
+
+6sexvicies.3 Verificat cap-coada
+
+- [x] telefon invalid la pasul 1 → ramane pe loc, cu „Numarul de telefon nu
+      pare valid"; nu se poate ajunge la plan cu date nevalidate
+- [x] pasii 2 si 3 arata preturile REALE din app_settings, nu constante
+- [x] calculatorul de setup: 30 de mese → 100 EUR; 60 → 120 EUR
+- [x] „Activeaza contul" creeaza restaurantul cu planul ales, datele de firma,
+      contul de manager, zona „Salon" si cele 4 campuri de sistem
+- [x] token pentru un cont sters → mesajul nou, nu eroarea de cheie straina
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev
