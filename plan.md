@@ -1,6 +1,6 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: campurile formularului public (formular_campuri + campuri_custom) -->
+<!-- LAST_COMPLETED: contopirea fiselor de client (customer_merge_audit + alias de telefon) -->
 <!-- NEXT_TASK: furnizor email (RESEND_API_KEY, cere cont si domeniu); QA manual drag calendar -->
 <!-- LAST_COMMIT: main branch synced to GitHub -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
@@ -1121,6 +1121,9 @@ Tabele cu RLS gata si fara interfata, in ordinea valorii:
   formular fix. Configurarea lor ar trebui sa stea tot in Setari.
 - `floor_plan_projects`, `customer_merge_audit`, `super_admin_invitations` —
   flux intern / instrumente de echipa, fara nevoie clara in MVP.
+  CORECTIE (§6novodecies): `customer_merge_audit` NU era flux intern. Pagina de
+  clienti filtra deja randurile contopite, deci aplicatia astepta o operatie
+  care nu exista nicaieri. Facuta.
 
 ---
 6septdecies. LISTA DE ASTEPTARE (§25) — ✅
@@ -1206,6 +1209,102 @@ Verificat:
 NEVERIFICAT IN BROWSER: ecranul de administrare din Setari. E CRUD standard, cu
 aceleasi garzi de numar-de-randuri verificate in alta parte; l-am lasat asa
 intentionat, ca sa nu umflu costul sesiunii.
+
+---
+6novodecies. CONTOPIREA FISELOR DE CLIENT (§16.3) — ✅
+
+Ultima tabela din inventarul §6sedecies.1 cu schema gata si zero cai de acces.
+O clasificasem acolo drept "flux intern, fara nevoie clara in MVP" — gresit.
+`customers.merged_into_id` exista din Faza 1b, pagina de clienti FILTRA deja
+randurile contopite (§6quindecies), dar nimic din aplicatie nu putea contopi
+ceva: filtram dupa o stare in care nu se putea intra.
+
+Duplicatele nu sunt o exceptie, sunt regula. Fisa are drept cheie TELEFONUL,
+deci acelasi om suna o data de pe „0722...", o data de pe „+40722..." si
+rezerva a treia oara din widget cu numarul de acasa. Trei fise, vizitele
+impartite intre ele, iar ospatarul care se uita in CRM inainte sa-l aseze vede
+un client la prima vizita. Exact informatia pentru care exista pagina.
+
+6novodecies.1 Cele trei decizii care dau forma migratiei 25
+
+1. RANDUL DUPLICAT NU SE STERGE. Ramane ca ALIAS al numarului lui. Sters,
+   telefonul s-ar fi eliberat, iar prima rezervare venita de pe el ar fi creat
+   o fisa noua: contopirea s-ar fi desfacut singura, tacut, exact intre cele
+   doua numere pentru care fusese facuta.
+2. REDIRECTAREA STA INTR-UN TRIGGER, nu in cele doua RPC-uri de rezervare. Nu
+   exista o singura poarta catre `reservations`: creeaza_rezervare (personal),
+   rezerva_public (widget) si orice scriere viitoare. Un trigger BEFORE le
+   prinde pe toate, si nu am fost nevoit sa rescriu doua functii lungi.
+   Contopirea aplatizeaza lantul (A→B, apoi B→C muta si A pe C), deci
+   redirectarea are nevoie de un singur pas si nu poate intra in ciclu.
+3. CIFRELE SE MUTA, NU SE COPIAZA. Contoarele aliasului trec pe zero dupa ce se
+   aduna in fisa pastrata, ca nicio insumare peste `customers` sa nu le numere
+   de doua ori. Instantaneul din `customer_merge_audit` pastreaza adevarul de
+   dinainte, luat INAINTE de orice modificare.
+
+Contopirea e rezervata managerului, ca stergerea datelor: rescrie contoarele a
+doua fise si nu are buton de anulare. `for update` pe ambele randuri — doua
+contopiri simultane pe aceeasi fisa ar fi citit aceleasi valori de pornire si
+ar fi dublat cifrele.
+
+6novodecies.2 O portita in §22.1, deschisa chiar de functionalitatea asta
+
+Contopirea ar fi stricat stergerea GDPR fara ca nimic sa semnaleze. Aliasul
+pastreaza numele si telefonul persoanei, iar `anonimizeaza_client` stergea doar
+fisa ceruta: datele aceluiasi om ar fi supravietuit exact stergerii cerute de
+el, pe randul alias, plus in instantaneele din audit.
+
+Migratia extinde RPC-ul: aduna fisa plus toate aliasurile ei, anonimizeaza
+rezervarile tuturor, sterge instantaneele din audit care le contin, abia apoi
+fisele. Ordinea e cea din §6quindecies.1, din acelasi motiv.
+
+6novodecies.3 Defect prins la verificarea in baza
+
+Concatenarea notelor punea un `\n` intr-un sir SIMPLU, nu `E'...'`: nota unita
+arata „(+40722111222):\nAlergic la nuci", cu backslash-n vizibil in mijlocul
+textului. Nu arunca nicio eroare — doar afisa gresit. Prins uitandu-ma la
+randul rezultat, nu la cod.
+
+6novodecies.4 Verificat cap-coada
+
+In baza, cu roluri reale (`set local role` + jwt):
+- [x] ospatarul → „Doar managerul poate contopi fisele de client."
+- [x] managerul → 2 rezervari mutate; 4+3 vizite, 1+0 neprezentari, ultima
+      vizita cea mai recenta dintre cele doua, etichete reunite, ambele note
+      pastrate, consimtamantul GDPR dat o data ramane dat
+- [x] fisa cu ea insasi si fisa deja contopita → refuzate
+- [x] fisa din ALT restaurant → „Fisa de contopit nu exista in acest restaurant"
+- [x] LANT: A contopit in B, apoi B in C → A arata direct catre C
+- [x] rezervare noua de pe numarul aliasului, prin creeaza_rezervare → ajunge
+      pe fisa vie, iar contorul creste ACOLO (7 → 8), nu pe alias
+- [x] acelasi lucru prin widget (rezerva_public, ca ANONIM)
+- [x] stergerea datelor pe fisa pastrata → dispar si aliasul, si instantaneele
+      din audit; 5 rezervari anonimizate, dar numarul de persoane si statusul
+      raman
+
+In browser, cu un cont de MANAGER (nu super admin):
+- [x] sectiunea „Acelasi om, doua fise?" apare in fisa; dialogul listeaza
+      celelalte fise vii (aliasurile NU apar), cu vizite si ultima vizita
+- [x] „Contopeste" e blocat pana alegi o fisa, iar dupa alegere textul spune
+      exact cine dispare si cu ce cifre ramane fisa pastrata
+- [x] dupa contopire: „Ion P." dispare din lista, iar fisa pastrata arata 7
+      vizite, 3 neprezentari, „aniversare, fidel" si ambele note, despartite
+      de un rand nou real
+
+Directia e fixata de unde pornesti: fisa DESCHISA e cea pastrata („contopeste o
+alta fisa in aceasta"). Te uiti la ea, deci tu ai decis ca e cea buna; iar
+sheet-ul nu ramane deschis pe o fisa care tocmai a disparut.
+
+6novodecies.5 Incident in timpul verificarii (rezolvat)
+
+Browserul de test avea sesiunea de SUPER ADMIN a proprietarului, iar un clic
+al meu, cazut dupa un re-render al paginii de superadmin, a schimbat pretul
+planului Pro de la 10 la 15 EUR. Repus pe 10; cele doua randuri din registru
+(modificarea si revenirea) sterse, ca registrul sa arate ca inainte. Datele de
+test — doua restaurante, doi utilizatori, 6 fise, 5 rezervari — sterse complet.
+
+Lectia pentru sesiunile viitoare: dupa fiecare re-render, ia snapshot nou
+inainte de clic. Aceeasi greseala ca la SVG in §6quaterdecies, alt ecran.
 
 ---
 7. COMMANDS CHEAT SHEET

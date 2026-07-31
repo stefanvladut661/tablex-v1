@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangleIcon, SearchIcon } from 'lucide-react'
+import { AlertTriangleIcon, MergeIcon, SearchIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,7 @@ import { formatFus } from '@/lib/timp'
 import {
   CHEI_CLIENTI,
   actualizeazaClient,
+  contopesteClienti,
   getClienti,
   getRezervariClient,
   stergeDateleClientului,
@@ -55,6 +56,7 @@ export function ClientiPage() {
   const [caut, setCaut] = useState('')
   const [selectat, setSelectat] = useState<Client | null>(null)
   const [confirmStergere, setConfirmStergere] = useState<Client | null>(null)
+  const [contopireIn, setContopireIn] = useState<Client | null>(null)
 
   const clienti = useQuery({
     queryKey: CHEI_CLIENTI.lista(restaurantId),
@@ -88,6 +90,24 @@ export function ClientiPage() {
       setConfirmStergere(null)
       notificari.eroare(eroare)
     },
+  })
+
+  const contopeste = useMutation({
+    mutationFn: ({ principalId, duplicatId }: { principalId: string; duplicatId: string }) =>
+      contopesteClienti(principalId, duplicatId),
+    onSuccess: (rezervariMutate) => {
+      notificari.succes('Fisele au fost contopite.', {
+        descriere:
+          rezervariMutate > 0
+            ? `${rezervariMutate} rezervari au trecut la fisa pastrata. Numarul celeilalte fise ramane legat de ea.`
+            : 'Fisa absorbita nu avea rezervari. Numarul ei ramane legat de fisa pastrata.',
+      })
+      setContopireIn(null)
+      // Fisa deschisa are alte cifre acum; o inchidem in loc s-o aratam veche.
+      setSelectat(null)
+      void queryClient.invalidateQueries({ queryKey: CHEI_CLIENTI.lista(restaurantId) })
+    },
+    onError: (eroare) => notificari.eroare(eroare),
   })
 
   const filtrati = useMemo(() => {
@@ -205,6 +225,20 @@ export function ClientiPage() {
           onInchide={() => setSelectat(null)}
           onSalveaza={(modificari) => salveaza.mutate({ id: selectat.id, modificari })}
           onCereStergere={() => setConfirmStergere(selectat)}
+          onCereContopire={() => setContopireIn(selectat)}
+        />
+      )}
+
+      {contopireIn && (
+        <DialogContopire
+          pastrat={contopireIn}
+          candidati={(clienti.data ?? []).filter((client) => client.id !== contopireIn.id)}
+          fus={fus}
+          inLucru={contopeste.isPending}
+          onInchide={() => setContopireIn(null)}
+          onConfirma={(duplicat) =>
+            contopeste.mutate({ principalId: contopireIn.id, duplicatId: duplicat.id })
+          }
         />
       )}
 
@@ -227,6 +261,7 @@ function FisaClient({
   onInchide,
   onSalveaza,
   onCereStergere,
+  onCereContopire,
 }: {
   client: Client
   fus: string
@@ -234,6 +269,7 @@ function FisaClient({
   onInchide: () => void
   onSalveaza: (modificari: Parameters<typeof actualizeazaClient>[1]) => void
   onCereStergere: () => void
+  onCereContopire: () => void
 }) {
   const rezervari = useQuery({
     queryKey: CHEI_CLIENTI.rezervari(client.id),
@@ -337,6 +373,25 @@ function FisaClient({
             )}
           </div>
 
+          {esteManager && (
+            <div className="grid gap-2 rounded-lg border border-border p-3">
+              <p className="text-sm font-medium">Acelasi om, doua fise?</p>
+              <p className="text-xs text-muted-foreground">
+                Fisa are drept cheie telefonul, deci acelasi client sunat de pe alt numar
+                primeste o fisa noua. Contopirea aduce vizitele si istoricul aici.
+              </p>
+              <Button
+                variant="outline"
+                size="xs"
+                className="justify-self-start"
+                onClick={onCereContopire}
+              >
+                <MergeIcon className="size-3.5" />
+                Contopeste o alta fisa in aceasta
+              </Button>
+            </div>
+          )}
+
           <div className="grid gap-2 rounded-lg border border-destructive/40 p-3">
             <p className="text-sm font-medium">Stergerea datelor la cerere</p>
             <p className="text-xs text-muted-foreground">
@@ -362,6 +417,137 @@ function FisaClient({
         </div>
       </SheetContent>
     </Sheet>
+  )
+}
+
+/**
+ * Contopirea (§16.3). Fisa deschisa e cea PASTRATA — te uiti la ea, deci tu ai
+ * decis ca e cea buna —, iar aici alegi fisa care intra in ea. Directia e
+ * scrisa explicit: operatia nu are buton de anulare.
+ */
+function DialogContopire({
+  pastrat,
+  candidati,
+  fus,
+  inLucru,
+  onInchide,
+  onConfirma,
+}: {
+  pastrat: Client
+  candidati: Client[]
+  fus: string
+  inLucru: boolean
+  onInchide: () => void
+  onConfirma: (duplicat: Client) => void
+}) {
+  const [caut, setCaut] = useState('')
+  const [ales, setAles] = useState<Client | null>(null)
+
+  const rezultate = useMemo(() => {
+    const termen = caut.trim().toLowerCase()
+    const potrivite = termen
+      ? candidati.filter(
+          (client) =>
+            (client.nume ?? '').toLowerCase().includes(termen) ||
+            client.telefon.includes(termen) ||
+            (client.email ?? '').toLowerCase().includes(termen),
+        )
+      : candidati
+    // Lista poate fi lunga: fara cautare aratam un capat, nu tot CRM-ul.
+    return potrivite.slice(0, 30)
+  }, [candidati, caut])
+
+  return (
+    <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Contopeste o fisa in {pastrat.nume ?? pastrat.telefon}</DialogTitle>
+          <DialogDescription>
+            Alege fisa duplicata. Vizitele, neprezentarile, etichetele, notele si toate
+            rezervarile ei trec la fisa de mai sus, iar numarul ei ramane legat de ea:
+            rezervarile viitoare de pe acel numar ajung tot aici.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-2">
+          <div className="relative">
+            <SearchIcon className="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={caut}
+              onChange={(e) => {
+                setCaut(e.target.value)
+                setAles(null)
+              }}
+              placeholder="Nume, telefon, email"
+              className="h-9 pl-7"
+              aria-label="Caut fisa de contopit"
+              autoFocus
+            />
+          </div>
+
+          {rezultate.length === 0 ? (
+            <p className="rounded-md border border-border p-4 text-sm text-muted-foreground">
+              {candidati.length === 0
+                ? 'Nu mai exista alta fisa de client.'
+                : 'Nicio fisa pentru acest filtru.'}
+            </p>
+          ) : (
+            <ul className="max-h-64 overflow-y-auto rounded-md border border-border">
+              {rezultate.map((client) => {
+                const selectat = ales?.id === client.id
+                return (
+                  <li key={client.id}>
+                    <button
+                      type="button"
+                      aria-pressed={selectat}
+                      onClick={() => setAles(selectat ? null : client)}
+                      className={`flex w-full items-center justify-between gap-3 border-b border-border px-3 py-2 text-left text-sm last:border-b-0 ${
+                        selectat ? 'bg-accent' : 'hover:bg-muted/60'
+                      }`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">
+                          {client.nume ?? 'Fara nume'}
+                        </span>
+                        <span className="block text-xs text-muted-foreground tabular-nums">
+                          {client.telefon}
+                          {client.data_ultima_vizita
+                            ? ` · ultima ${formatFus(client.data_ultima_vizita, 'd MMM yyyy', fus)}`
+                            : ' · nicio vizita'}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                        {client.nr_vizite} vizite
+                        {client.nr_no_show > 0 ? ` · ${client.nr_no_show} neprez.` : ''}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          {ales && (
+            <p className="rounded-md border border-destructive/40 p-3 text-sm">
+              <strong>{ales.nume ?? ales.telefon}</strong> ({ales.telefon}) dispare din lista, iar{' '}
+              <strong>{pastrat.nume ?? pastrat.telefon}</strong> va avea{' '}
+              <span className="tabular-nums">{pastrat.nr_vizite + ales.nr_vizite}</span> vizite si{' '}
+              <span className="tabular-nums">{pastrat.nr_no_show + ales.nr_no_show}</span>{' '}
+              neprezentari. Operatia nu poate fi anulata.
+            </p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onInchide}>
+            Renunta
+          </Button>
+          <Button disabled={!ales || inLucru} onClick={() => ales && onConfirma(ales)}>
+            Contopeste
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

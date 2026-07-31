@@ -1284,6 +1284,10 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: number
       }
+      contopeste_clienti: {
+        Args: { p_duplicat_id: string; p_principal_id: string }
+        Returns: number
+      }
       creeaza_restaurant: {
         Args: {
           p_adresa?: string

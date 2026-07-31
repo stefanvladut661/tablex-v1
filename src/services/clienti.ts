@@ -70,12 +70,41 @@ export async function actualizeazaClient(
 }
 
 /**
+ * Contopirea a doua fise ale aceleiasi persoane (§16.3).
+ *
+ * Duplicatele apar singure, fiindca fisa are drept cheie telefonul: acelasi om
+ * suna o data de pe „0722...", o data de pe „+40722..." si rezerva a treia oara
+ * din widget cu numarul de acasa.
+ *
+ * Fisa absorbita NU dispare: ramane ca alias al numarului ei, iar un trigger
+ * duce rezervarile viitoare venite de pe el la fisa pastrata. Stearsa, numarul
+ * s-ar fi eliberat si prima rezervare de pe el ar fi desfacut contopirea.
+ *
+ * Intoarce cate rezervari au fost mutate.
+ */
+export async function contopesteClienti(
+  principalId: string,
+  duplicatId: string,
+): Promise<number> {
+  const { data, error } = await supabase.rpc('contopeste_clienti', {
+    p_principal_id: principalId,
+    p_duplicat_id: duplicatId,
+  })
+  if (error) throw error
+  return data ?? 0
+}
+
+/**
  * Stergerea datelor la cerere (§22.1).
  *
  * NU e un simplu delete: `reservations` pastreaza copii ale numelui,
  * telefonului si emailului, iar legatura e ON DELETE SET NULL. Sterse doar din
  * `customers`, datele personale ar fi supravietuit in fiecare rezervare.
  * RPC-ul face totul atomic si intoarce cate rezervari a curatat.
+ *
+ * Sterge si aliasurile lasate de contopiri, plus instantaneele din audit:
+ * altfel numele si telefonul aceleiasi persoane ar fi supravietuit exact
+ * stergerii cerute de ea.
  */
 export async function stergeDateleClientului(customerId: string): Promise<number> {
   const { data, error } = await supabase.rpc('anonimizeaza_client', {
