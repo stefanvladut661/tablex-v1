@@ -74,34 +74,30 @@ export const PARALLAX = { ampX: -140, ampY: -90 } as const
 export const ARC_MOUSE = { stiffness: 55, damping: 18, mass: 0.7 } as const
 
 /**
- * Asset-ul cu mana + telefonul: mana-manechin din portelan alb mat, telefon
- * negru vertical cu ecranul spre camera, compozitie 3:4, fundal transparent.
- *
- * Candidatii se incearca in ordine. SVG-ul e ilustratia vectoriala livrata
- * cu proiectul; daca generezi ulterior varianta foto (WebP/PNG cu alpha,
- * 2400x3200), pune fisierul in /public/hero/ si adauga-l INAINTEA svg-ului
- * in lista — apoi recalibreaza ECRAN_RECT pe fotografia reala.
- * Daca niciun candidat nu se incarca, ramane silueta CSS.
+ * Asset-ul cu mana + telefonul: fotografie reala — mana umana alba
+ * (desaturata) tinand un telefon cu ecranul GOL (alb) spre camera,
+ * 635x927 px, fundal transparent. UI-ul TableX se suprapune in DOM,
+ * prin ECRAN_RECT.
  */
 export const ASSETS = {
-  mana: ['/hero/mana-telefon.svg'],
+  mana: '/hero/mana-telefon.png',
 } as const
 
-/** Cadrul rezervat pentru mana + telefon — raportul compozitiei (3:4). */
-export const ASPECT_CADRU = '3 / 4'
+/** Dimensiunile intrinseci ale fotografiei — pentru width/height pe <img>
+ *  (rezerva spatiul inainte de incarcare, zero CLS) si pentru aspect. */
+export const MANA_PX = { latime: 635, inaltime: 927 } as const
 
 /**
- * Unde sta ecranul DOM peste telefonul din imagine, in procente din cadrul
- * 3:4. Valorile sunt EXACTE pentru mana-telefon.svg (ecranul e desenat la
- * x=260 y=184 w=560 h=1182 in spatiul 1200x1600, colturi rx=72) — deci
- * calibrarea e prin constructie. Pentru o fotografie viitoare, ajusteaza
- * pana cand UI-ul DOM acopera exact ecranul negru din imagine.
+ * Unde sta ecranul DOM peste telefonul din fotografie, in procente din
+ * cadrul imaginii. Valorile sunt MASURATE pe pixelii fotografiei
+ * (ecranul alb ocupa x=117..432, y=33..710 in spatiul 635x927, colturi
+ * cu raza ~37px) — nu le ajusta dupa ochi fara sa re-masori.
  */
 export const ECRAN_RECT = {
-  top: '11.5%',
-  left: '21.67%',
-  width: '46.67%',
-  /** border-radius eliptic: 72/560 pe orizontala, 72/1182 pe verticala. */
-  raza: '12.9% / 6.1%',
-  rotate: 0,
+  top: '3.56%',
+  left: '18.43%',
+  width: '49.76%',
+  height: '73.08%',
+  /** border-radius eliptic: 37/316 pe orizontala, 37/677 pe verticala. */
+  raza: '11.7% / 5.4%',
 } as const

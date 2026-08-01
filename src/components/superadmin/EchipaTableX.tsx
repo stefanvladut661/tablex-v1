@@ -25,6 +25,7 @@ import {
 import { useNotificari } from '@/hooks/useNotificari'
 import { ETICHETE_ROL_ECHIPA, ETICHETE_STATUS_INVITATIE } from '@/lib/etichete'
 import { RUTE } from '@/lib/rute'
+import { trimiteEmail } from '@/services/email'
 import {
   CHEI_ECHIPA_TX,
   actualizeazaMembruEchipa,
@@ -63,13 +64,24 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
 
   const invita = useMutation({
     mutationFn: () => invitaInEchipa(email, rol, userId),
-    onSuccess: (invitatie) => {
-      copiazaLink(invitatie.token)
-      notificari.succes('Invitatie creata.', {
-        descriere: 'Linkul e in clipboard. Trimite-l pe email persoanei invitate.',
-      })
+    onSuccess: async (invitatie) => {
       setEmail('')
       reincarca()
+
+      // Emailul e best-effort (§47.1): daca furnizorul nu e configurat sau
+      // trimiterea esueaza, linkul ajunge in clipboard si il trimiti tu.
+      // Invitatia exista in ambele cazuri.
+      const rezultat = await trimiteEmail('invitatie_echipa', invitatie.id)
+      if (rezultat.trimis) {
+        notificari.succes('Invitatie trimisa pe email.', { descriere: invitatie.email })
+      } else {
+        copiazaLink(invitatie.token)
+        notificari.succes('Invitatie creata.', {
+          descriere: rezultat.simulat
+            ? 'Emailul automat nu e configurat, deci linkul e in clipboard.'
+            : 'Linkul e in clipboard. Trimite-l pe email persoanei invitate.',
+        })
+      }
     },
     onError: (eroare) => notificari.eroare(eroare),
   })

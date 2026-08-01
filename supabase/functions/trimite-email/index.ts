@@ -28,7 +28,12 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
  *   supabase secrets set URL_APLICATIE=https://app.tablex.ro
  */
 
-type TipEmail = 'invitatie' | 'rezervare_confirmata' | 'rezervare_respinsa' | 'rezervare_noua'
+type TipEmail =
+  | 'invitatie'
+  | 'invitatie_echipa'
+  | 'rezervare_confirmata'
+  | 'rezervare_respinsa'
+  | 'rezervare_noua'
 
 type Cerere = { tip: TipEmail; id: string }
 
@@ -155,7 +160,38 @@ Deno.serve(async (req) => {
   let mesaj: Mesaj
 
   try {
-    if (cerere.tip === 'invitatie') {
+    if (cerere.tip === 'invitatie_echipa') {
+      // Invitatia in echipa TableX (§47.1) — acelasi mecanism ca la Ospatar.
+      // Citirea trece prin RLS: doar rolul super_admin vede invitatiile, deci
+      // doar el poate declansa emailul.
+      const { data, error } = await supabase
+        .from('super_admin_invitations')
+        .select('email, rol, token, expira_la')
+        .eq('id', cerere.id)
+        .single()
+      if (error) throw error
+
+      const link = `${URL_APP}/invitatie?token=${encodeURIComponent(data.token)}`
+      const rol =
+        data.rol === 'super_admin'
+          ? 'Super Admin'
+          : data.rol === 'designer_architect'
+            ? 'Designer / Architect'
+            : 'Support'
+
+      mesaj = {
+        catre: data.email,
+        subiect: 'Invitatie in echipa TableX',
+        html: sablon(
+          'Ai fost invitat in echipa TableX',
+          [
+            `Rolul tau va fi <strong>${rol}</strong>. Deschide linkul de mai jos, autentifica-te cu aceasta adresa de email si vei intra in panoul echipei.`,
+            `Invitatia expira pe ${new Date(data.expira_la).toLocaleDateString('ro-RO')}.`,
+          ],
+          { text: 'Accepta invitatia', url: link },
+        ),
+      }
+    } else if (cerere.tip === 'invitatie') {
       const { data, error } = await supabase
         .from('staff_invitations')
         .select('email, rol, token, expira_la, restaurant:restaurants(nume)')

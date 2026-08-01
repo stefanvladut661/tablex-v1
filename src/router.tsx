@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 
 import { LayoutApp } from '@/components/layout/LayoutApp'
+import { LayoutSuperAdmin } from '@/components/superadmin/LayoutSuperAdmin'
 import {
   RutaAdmin,
   RutaManager,
@@ -134,11 +135,47 @@ export const router = createBrowserRouter([
         element: <RutaSuperAdmin />,
         children: [
           {
-            path: RUTE.superadmin,
-            lazy: pagina(() => import('@/pages/superadmin/SuperAdminPage'), 'SuperAdminPage'),
+            // Command Center-ul (§9.2): shell cu sidebar de 7 sectiuni.
+            // Filtrarea sectiunilor pe rol (§47.4) o face layout-ul insusi.
+            element: <LayoutSuperAdmin />,
+            children: [
+              {
+                path: RUTE.superadmin,
+                lazy: pagina(() => import('@/pages/superadmin/OverviewPage'), 'OverviewPage'),
+              },
+              {
+                path: RUTE.superadminStudio,
+                lazy: pagina(() => import('@/pages/superadmin/StudioPage'), 'StudioPage'),
+              },
+              {
+                path: RUTE.superadminRestaurante,
+                lazy: pagina(
+                  () => import('@/pages/superadmin/RestaurantePage'),
+                  'RestaurantePage',
+                ),
+              },
+              {
+                path: RUTE.superadminFinante,
+                lazy: pagina(() => import('@/pages/superadmin/FinantePage'), 'FinantePage'),
+              },
+              {
+                path: RUTE.superadminComunicari,
+                lazy: pagina(() => import('@/pages/superadmin/ComunicariPage'), 'ComunicariPage'),
+              },
+              {
+                path: RUTE.superadminSuport,
+                lazy: pagina(() => import('@/pages/superadmin/SuportPage'), 'SuportPage'),
+              },
+              {
+                path: RUTE.superadminSetari,
+                lazy: pagina(() => import('@/pages/superadmin/SetariSAPage'), 'SetariSAPage'),
+              },
+            ],
           },
-          // Parametrizata, deci scrisa aici direct: RUTE.superadminEditor e o
-          // functie (constructorul de cale), nu un sablon de ruta.
+          // Editorul ramane full-screen, in afara shell-ului: canvas-ul are
+          // nevoie de tot ecranul, iar sidebar-ul l-ar sufoca. Parametrizata,
+          // deci scrisa aici direct: RUTE.superadminEditor e o functie
+          // (constructorul de cale), nu un sablon de ruta.
           {
             path: '/superadmin/editor/:restaurantId',
             lazy: pagina(() => import('@/pages/superadmin/EditorPlanPage'), 'EditorPlanPage'),

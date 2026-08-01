@@ -64,7 +64,9 @@ export type DateRezervareNoua = {
 export async function creeazaRezervare(date: DateRezervareNoua): Promise<string> {
   const { data, error } = await supabase.rpc('creeaza_rezervare', {
     p_client_nume: date.clientNume,
-    p_telefon: date.telefon,
+    // Baza accepta NULL aici (walk-in, §25.6), dar generatorul de tipuri
+    // scoate parametrii SQL fara default ca obligatorii si ne-nuli.
+    p_telefon: date.telefon as string,
     p_nr_persoane: date.nrPersoane,
     p_data_ora: date.dataOra.toISOString(),
     p_table_id: date.tableId ?? undefined,

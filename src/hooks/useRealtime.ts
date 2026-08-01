@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { supabase } from '@/lib/supabase'
@@ -55,4 +55,54 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
       void supabase.removeChannel(canal)
     }
   }, [restaurantId, queryClient])
+}
+
+/**
+ * Canalul echipei TableX: clopotelul intern (§38.4) si inbox-ul de tichete
+ * (§46.1) se improspateaza singure. Postgres Changes respecta RLS, deci un
+ * cont care nu e in echipa nu primeste nimic pe canalul asta.
+ *
+ * Intoarce starea conexiunii pentru indicatorul din footer (§9.3).
+ */
+export function useRealtimeEchipa(activ: boolean): boolean {
+  const queryClient = useQueryClient()
+  const [conectat, setConectat] = useState(false)
+
+  useEffect(() => {
+    if (!activ) return
+
+    const canal = supabase
+      .channel('echipa-tablex')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificari' },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.echipa })
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'support_tickets' },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ['sa', 'suport'] })
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'support_ticket_mesaje' },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ['sa', 'suport'] })
+        },
+      )
+      .subscribe((status) => {
+        setConectat(status === 'SUBSCRIBED')
+      })
+
+    return () => {
+      setConectat(false)
+      void supabase.removeChannel(canal)
+    }
+  }, [activ, queryClient])
+
+  return conectat
 }

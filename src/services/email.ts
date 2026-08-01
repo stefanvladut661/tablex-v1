@@ -1,6 +1,10 @@
 import { supabase } from '@/lib/supabase'
 
-export type TipEmail = 'invitatie' | 'rezervare_confirmata' | 'rezervare_respinsa'
+export type TipEmail =
+  | 'invitatie'
+  | 'invitatie_echipa'
+  | 'rezervare_confirmata'
+  | 'rezervare_respinsa'
 
 export type RezultatEmail = {
   trimis: boolean

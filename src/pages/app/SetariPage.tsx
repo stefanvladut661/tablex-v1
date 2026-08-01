@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { CampText } from '@/components/formular/CampText'
 import { ExceptiiProgram } from '@/components/setari/ExceptiiProgram'
 import { TabAbonament } from '@/components/setari/TabAbonament'
+import { TabSuport } from '@/components/setari/TabSuport'
 import { TabWhatsApp } from '@/components/setari/TabWhatsApp'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EchipaPage } from '@/pages/app/EchipaPage'
@@ -156,6 +157,7 @@ export function SetariPage() {
           <TabsTrigger value="echipa">Echipa</TabsTrigger>
           <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
           <TabsTrigger value="abonament">Abonament</TabsTrigger>
+          <TabsTrigger value="suport">Suport</TabsTrigger>
         </TabsList>
 
         <TabsContent value="restaurant" className="mt-4 grid gap-4">
@@ -455,6 +457,11 @@ export function SetariPage() {
 
         <TabsContent value="abonament" className="mx-auto mt-4 max-w-3xl">
           <TabAbonament restaurant={restaurant} />
+        </TabsContent>
+
+        {/* §46.1 — tichetele de suport pleaca din dashboard-ul Adminului. */}
+        <TabsContent value="suport" className="mx-auto mt-4 max-w-3xl">
+          <TabSuport restaurantId={restaurant.id} />
         </TabsContent>
       </Tabs>
     </div>

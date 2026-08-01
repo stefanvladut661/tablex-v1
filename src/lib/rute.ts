@@ -35,8 +35,17 @@ export const RUTE = {
   appAsteptare: '/app/asteptare',
   appSetari: '/app/setari',
 
-  /** Panoul echipei TableX. */
+  /**
+   * Panoul echipei TableX — command center cu 7 sectiuni in sidebar (§9.2).
+   * Radacina e Overview-ul global; restul sectiunilor sunt sub ea.
+   */
   superadmin: '/superadmin',
+  superadminStudio: '/superadmin/studio',
+  superadminRestaurante: '/superadmin/restaurante',
+  superadminFinante: '/superadmin/finante',
+  superadminComunicari: '/superadmin/comunicari',
+  superadminSuport: '/superadmin/suport',
+  superadminSetari: '/superadmin/setari',
   /** Editorul de floor plan (§8.4) — se deseneaza de echipa, nu de restaurant. */
   superadminEditor: (restaurantId: string) => `/superadmin/editor/${restaurantId}`,
 
