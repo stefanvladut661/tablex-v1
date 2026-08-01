@@ -62,6 +62,13 @@ export type Database = {
             foreignKeyName: "admin_users_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_users_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -148,6 +155,13 @@ export type Database = {
             foreignKeyName: "audit_super_admin_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_super_admin_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -193,238 +207,17 @@ export type Database = {
             foreignKeyName: "customer_merge_audit_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_merge_audit_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
         ]
-      }
-      events: {
-        Row: {
-          afis_url: string | null
-          created_at: string
-          created_by: string | null
-          data_ora: string
-          descriere: string | null
-          durata_minute: number
-          id: string
-          nr_no_show_eveniment: number
-          nume: string
-          popup_activ: boolean
-          popup_zile_inainte: number
-          restaurant_id: string
-          status: Database["public"]["Enums"]["event_status"]
-          updated_at: string
-        }
-        Insert: {
-          afis_url?: string | null
-          created_at?: string
-          created_by?: string | null
-          data_ora: string
-          descriere?: string | null
-          durata_minute?: number
-          id?: string
-          nr_no_show_eveniment?: number
-          nume: string
-          popup_activ?: boolean
-          popup_zile_inainte?: number
-          restaurant_id: string
-          status?: Database["public"]["Enums"]["event_status"]
-          updated_at?: string
-        }
-        Update: {
-          afis_url?: string | null
-          created_at?: string
-          created_by?: string | null
-          data_ora?: string
-          descriere?: string | null
-          durata_minute?: number
-          id?: string
-          nr_no_show_eveniment?: number
-          nume?: string
-          popup_activ?: boolean
-          popup_zile_inainte?: number
-          restaurant_id?: string
-          status?: Database["public"]["Enums"]["event_status"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      event_tables: {
-        Row: { event_id: string; table_id: string }
-        Insert: { event_id: string; table_id: string }
-        Update: { event_id?: string; table_id?: string }
-        Relationships: []
-      }
-      event_ticket_pricing: {
-        Row: {
-          event_id: string
-          id: string
-          masa_forma: Database["public"]["Enums"]["masa_forma"] | null
-          pret_eur: number
-          zone_id: string | null
-        }
-        Insert: {
-          event_id: string
-          id?: string
-          masa_forma?: Database["public"]["Enums"]["masa_forma"] | null
-          pret_eur: number
-          zone_id?: string | null
-        }
-        Update: {
-          event_id?: string
-          id?: string
-          masa_forma?: Database["public"]["Enums"]["masa_forma"] | null
-          pret_eur?: number
-          zone_id?: string | null
-        }
-        Relationships: []
-      }
-      tickets: {
-        Row: {
-          client_nume: string
-          cod: string
-          comision_eur: number
-          created_at: string
-          email: string | null
-          event_id: string
-          id: string
-          nr_persoane: number
-          platit_la: string | null
-          pret_eur: number
-          restaurant_id: string
-          scanat_la: string | null
-          status_plata: Database["public"]["Enums"]["ticket_plata_status"]
-          table_id: string | null
-          telefon: string | null
-          updated_at: string
-        }
-        Insert: {
-          client_nume: string
-          cod?: string
-          comision_eur?: number
-          created_at?: string
-          email?: string | null
-          event_id: string
-          id?: string
-          nr_persoane?: number
-          platit_la?: string | null
-          pret_eur?: number
-          restaurant_id: string
-          scanat_la?: string | null
-          status_plata?: Database["public"]["Enums"]["ticket_plata_status"]
-          table_id?: string | null
-          telefon?: string | null
-          updated_at?: string
-        }
-        Update: {
-          client_nume?: string
-          cod?: string
-          comision_eur?: number
-          created_at?: string
-          email?: string | null
-          event_id?: string
-          id?: string
-          nr_persoane?: number
-          platit_la?: string | null
-          pret_eur?: number
-          restaurant_id?: string
-          scanat_la?: string | null
-          status_plata?: Database["public"]["Enums"]["ticket_plata_status"]
-          table_id?: string | null
-          telefon?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      whatsapp_credit_packages: {
-        Row: {
-          activ: boolean
-          credite: number
-          id: string
-          nume: string
-          ordine: number
-          pret_eur: number
-        }
-        Insert: {
-          activ?: boolean
-          credite: number
-          id?: string
-          nume: string
-          ordine?: number
-          pret_eur: number
-        }
-        Update: {
-          activ?: boolean
-          credite?: number
-          id?: string
-          nume?: string
-          ordine?: number
-          pret_eur?: number
-        }
-        Relationships: []
-      }
-      whatsapp_tranzactii: {
-        Row: {
-          created_at: string
-          credite: number
-          descriere: string | null
-          id: string
-          pret_eur: number | null
-          restaurant_id: string
-          tip: Database["public"]["Enums"]["wallet_tranzactie_tip"]
-        }
-        Insert: {
-          created_at?: string
-          credite: number
-          descriere?: string | null
-          id?: string
-          pret_eur?: number | null
-          restaurant_id: string
-          tip: Database["public"]["Enums"]["wallet_tranzactie_tip"]
-        }
-        Update: {
-          created_at?: string
-          credite?: number
-          descriere?: string | null
-          id?: string
-          pret_eur?: number | null
-          restaurant_id?: string
-          tip?: Database["public"]["Enums"]["wallet_tranzactie_tip"]
-        }
-        Relationships: []
-      }
-      whatsapp_mesaje: {
-        Row: {
-          continut: string | null
-          created_at: string
-          eroare: string | null
-          id: string
-          restaurant_id: string
-          sablon: string
-          status: Database["public"]["Enums"]["wa_mesaj_status"]
-          telefon: string
-        }
-        Insert: {
-          continut?: string | null
-          created_at?: string
-          eroare?: string | null
-          id?: string
-          restaurant_id: string
-          sablon: string
-          status?: Database["public"]["Enums"]["wa_mesaj_status"]
-          telefon: string
-        }
-        Update: {
-          continut?: string | null
-          created_at?: string
-          eroare?: string | null
-          id?: string
-          restaurant_id?: string
-          sablon?: string
-          status?: Database["public"]["Enums"]["wa_mesaj_status"]
-          telefon?: string
-        }
-        Relationships: []
       }
       customers: {
         Row: {
@@ -490,6 +283,176 @@ export type Database = {
             foreignKeyName: "customers_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_tables: {
+        Row: {
+          event_id: string
+          table_id: string
+        }
+        Insert: {
+          event_id: string
+          table_id: string
+        }
+        Update: {
+          event_id?: string
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_tables_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "evenimente_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tables_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tables_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "mese_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tables_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_ticket_pricing: {
+        Row: {
+          event_id: string
+          id: string
+          masa_forma: Database["public"]["Enums"]["masa_forma"] | null
+          pret_eur: number
+          zone_id: string | null
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          masa_forma?: Database["public"]["Enums"]["masa_forma"] | null
+          pret_eur: number
+          zone_id?: string | null
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          masa_forma?: Database["public"]["Enums"]["masa_forma"] | null
+          pret_eur?: number
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ticket_pricing_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "evenimente_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_pricing_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_pricing_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_ticket_pricing_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          afis_url: string | null
+          created_at: string
+          created_by: string | null
+          data_ora: string
+          descriere: string | null
+          durata_minute: number
+          id: string
+          nr_no_show_eveniment: number
+          nume: string
+          popup_activ: boolean
+          popup_zile_inainte: number
+          restaurant_id: string
+          status: Database["public"]["Enums"]["event_status"]
+          updated_at: string
+        }
+        Insert: {
+          afis_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_ora: string
+          descriere?: string | null
+          durata_minute?: number
+          id?: string
+          nr_no_show_eveniment?: number
+          nume: string
+          popup_activ?: boolean
+          popup_zile_inainte?: number
+          restaurant_id: string
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Update: {
+          afis_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_ora?: string
+          descriere?: string | null
+          durata_minute?: number
+          id?: string
+          nr_no_show_eveniment?: number
+          nume?: string
+          popup_activ?: boolean
+          popup_zile_inainte?: number
+          restaurant_id?: string
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -543,7 +506,21 @@ export type Database = {
             foreignKeyName: "floor_plan_layers_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_layers_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_layers_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone_publice"
             referencedColumns: ["id"]
           },
           {
@@ -616,7 +593,21 @@ export type Database = {
             foreignKeyName: "floor_plan_projects_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_projects_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_projects_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone_publice"
             referencedColumns: ["id"]
           },
           {
@@ -690,6 +681,13 @@ export type Database = {
             foreignKeyName: "floor_plan_requests_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_requests_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -742,6 +740,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "formular_campuri_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "formular_campuri_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -800,6 +805,13 @@ export type Database = {
             foreignKeyName: "notificari_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificari_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -841,6 +853,13 @@ export type Database = {
             foreignKeyName: "program_exceptii_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_exceptii_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -860,6 +879,7 @@ export type Database = {
           data_ora: string
           durata_minute: number
           email: string | null
+          event_id: string | null
           gdpr_consimtamant: boolean
           id: string
           note_client: string | null
@@ -888,6 +908,7 @@ export type Database = {
           data_ora: string
           durata_minute: number
           email?: string | null
+          event_id?: string | null
           gdpr_consimtamant?: boolean
           id?: string
           note_client?: string | null
@@ -916,6 +937,7 @@ export type Database = {
           data_ora?: string
           durata_minute?: number
           email?: string | null
+          event_id?: string | null
           gdpr_consimtamant?: boolean
           id?: string
           note_client?: string | null
@@ -940,6 +962,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reservations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "evenimente_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reservations_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
@@ -950,7 +993,21 @@ export type Database = {
             foreignKeyName: "reservations_table_id_fkey"
             columns: ["table_id"]
             isOneToOne: false
+            referencedRelation: "mese_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
             referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone_publice"
             referencedColumns: ["id"]
           },
           {
@@ -1115,10 +1172,38 @@ export type Database = {
             foreignKeyName: "staff_invitations_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_invitations_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
         ]
+      }
+      statusuri_servicii: {
+        Row: {
+          detaliu: string | null
+          serviciu: Database["public"]["Enums"]["serviciu_extern"]
+          status: Database["public"]["Enums"]["serviciu_status"]
+          verificat_la: string
+        }
+        Insert: {
+          detaliu?: string | null
+          serviciu: Database["public"]["Enums"]["serviciu_extern"]
+          status?: Database["public"]["Enums"]["serviciu_status"]
+          verificat_la?: string
+        }
+        Update: {
+          detaliu?: string | null
+          serviciu?: Database["public"]["Enums"]["serviciu_extern"]
+          status?: Database["public"]["Enums"]["serviciu_status"]
+          verificat_la?: string
+        }
+        Relationships: []
       }
       super_admin_invitations: {
         Row: {
@@ -1189,6 +1274,116 @@ export type Database = {
         }
         Relationships: []
       }
+      support_response_templates: {
+        Row: {
+          continut: string
+          created_at: string
+          id: string
+          super_admin_user_id: string | null
+          titlu: string
+        }
+        Insert: {
+          continut: string
+          created_at?: string
+          id?: string
+          super_admin_user_id?: string | null
+          titlu: string
+        }
+        Update: {
+          continut?: string
+          created_at?: string
+          id?: string
+          super_admin_user_id?: string | null
+          titlu?: string
+        }
+        Relationships: []
+      }
+      support_ticket_mesaje: {
+        Row: {
+          autor: string | null
+          continut: string
+          created_at: string
+          de_la_echipa: boolean
+          id: string
+          nota_interna: boolean
+          ticket_id: string
+        }
+        Insert: {
+          autor?: string | null
+          continut: string
+          created_at?: string
+          de_la_echipa?: boolean
+          id?: string
+          nota_interna?: boolean
+          ticket_id: string
+        }
+        Update: {
+          autor?: string | null
+          continut?: string
+          created_at?: string
+          de_la_echipa?: boolean
+          id?: string
+          nota_interna?: boolean
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_mesaje_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          deschis_de: string | null
+          id: string
+          prioritate: Database["public"]["Enums"]["support_prioritate"]
+          restaurant_id: string
+          status: Database["public"]["Enums"]["support_status"]
+          subiect: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deschis_de?: string | null
+          id?: string
+          prioritate?: Database["public"]["Enums"]["support_prioritate"]
+          restaurant_id: string
+          status?: Database["public"]["Enums"]["support_status"]
+          subiect: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deschis_de?: string | null
+          id?: string
+          prioritate?: Database["public"]["Enums"]["support_prioritate"]
+          restaurant_id?: string
+          status?: Database["public"]["Enums"]["support_status"]
+          subiect?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       table_allocations: {
         Row: {
           created_at: string
@@ -1229,6 +1424,13 @@ export type Database = {
             foreignKeyName: "table_allocations_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_allocations_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -1236,7 +1438,21 @@ export type Database = {
             foreignKeyName: "table_allocations_table_id_fkey"
             columns: ["table_id"]
             isOneToOne: false
+            referencedRelation: "mese_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_allocations_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
             referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_allocations_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -1301,6 +1517,13 @@ export type Database = {
             foreignKeyName: "tables_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -1308,7 +1531,114 @@ export type Database = {
             foreignKeyName: "tables_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "zone_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          client_nume: string
+          cod: string
+          comision_eur: number
+          created_at: string
+          email: string | null
+          event_id: string
+          id: string
+          nr_persoane: number
+          platit_la: string | null
+          pret_eur: number
+          restaurant_id: string
+          scanat_la: string | null
+          status_plata: Database["public"]["Enums"]["ticket_plata_status"]
+          table_id: string | null
+          telefon: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_nume: string
+          cod?: string
+          comision_eur?: number
+          created_at?: string
+          email?: string | null
+          event_id: string
+          id?: string
+          nr_persoane?: number
+          platit_la?: string | null
+          pret_eur?: number
+          restaurant_id: string
+          scanat_la?: string | null
+          status_plata?: Database["public"]["Enums"]["ticket_plata_status"]
+          table_id?: string | null
+          telefon?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_nume?: string
+          cod?: string
+          comision_eur?: number
+          created_at?: string
+          email?: string | null
+          event_id?: string
+          id?: string
+          nr_persoane?: number
+          platit_la?: string | null
+          pret_eur?: number
+          restaurant_id?: string
+          scanat_la?: string | null
+          status_plata?: Database["public"]["Enums"]["ticket_plata_status"]
+          table_id?: string | null
+          telefon?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "evenimente_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "mese_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
             referencedColumns: ["id"]
           },
         ]
@@ -1364,7 +1694,21 @@ export type Database = {
             foreignKeyName: "waitlist_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "mese_publice"
             referencedColumns: ["id"]
           },
           {
@@ -1378,7 +1722,158 @@ export type Database = {
             foreignKeyName: "waitlist_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
+            referencedRelation: "zone_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
             referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_credit_packages: {
+        Row: {
+          activ: boolean
+          credite: number
+          id: string
+          nume: string
+          ordine: number
+          pret_eur: number
+        }
+        Insert: {
+          activ?: boolean
+          credite: number
+          id?: string
+          nume: string
+          ordine?: number
+          pret_eur: number
+        }
+        Update: {
+          activ?: boolean
+          credite?: number
+          id?: string
+          nume?: string
+          ordine?: number
+          pret_eur?: number
+        }
+        Relationships: []
+      }
+      whatsapp_mesaje: {
+        Row: {
+          continut: string | null
+          created_at: string
+          eroare: string | null
+          id: string
+          restaurant_id: string
+          sablon: string
+          status: Database["public"]["Enums"]["wa_mesaj_status"]
+          telefon: string
+        }
+        Insert: {
+          continut?: string | null
+          created_at?: string
+          eroare?: string | null
+          id?: string
+          restaurant_id: string
+          sablon: string
+          status?: Database["public"]["Enums"]["wa_mesaj_status"]
+          telefon: string
+        }
+        Update: {
+          continut?: string | null
+          created_at?: string
+          eroare?: string | null
+          id?: string
+          restaurant_id?: string
+          sablon?: string
+          status?: Database["public"]["Enums"]["wa_mesaj_status"]
+          telefon?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_mesaje_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_mesaje_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_templates: {
+        Row: {
+          continut: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nume: string
+        }
+        Insert: {
+          continut: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nume: string
+        }
+        Update: {
+          continut?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nume?: string
+        }
+        Relationships: []
+      }
+      whatsapp_tranzactii: {
+        Row: {
+          created_at: string
+          credite: number
+          descriere: string | null
+          id: string
+          pret_eur: number | null
+          restaurant_id: string
+          tip: Database["public"]["Enums"]["wallet_tranzactie_tip"]
+        }
+        Insert: {
+          created_at?: string
+          credite: number
+          descriere?: string | null
+          id?: string
+          pret_eur?: number | null
+          restaurant_id: string
+          tip: Database["public"]["Enums"]["wallet_tranzactie_tip"]
+        }
+        Update: {
+          created_at?: string
+          credite?: number
+          descriere?: string | null
+          id?: string
+          pret_eur?: number | null
+          restaurant_id?: string
+          tip?: Database["public"]["Enums"]["wallet_tranzactie_tip"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_tranzactii_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_tranzactii_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
         ]
@@ -1428,6 +1923,13 @@ export type Database = {
             foreignKeyName: "zones_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zones_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -1435,19 +1937,6 @@ export type Database = {
       }
     }
     Views: {
-      evenimente_publice: {
-        Row: {
-          afis_url: string | null
-          data_ora: string | null
-          descriere: string | null
-          id: string | null
-          nume: string | null
-          pret_de_la: number | null
-          restaurant_id: string | null
-          slug: string | null
-        }
-        Relationships: []
-      }
       campuri_formular_publice: {
         Row: {
           cheie: string | null
@@ -1459,7 +1948,50 @@ export type Database = {
           restaurant_id: string | null
           tip: Database["public"]["Enums"]["camp_formular_tip"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "formular_campuri_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formular_campuri_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evenimente_publice: {
+        Row: {
+          afis_url: string | null
+          data_ora: string | null
+          descriere: string | null
+          id: string | null
+          nume: string | null
+          pret_de_la: number | null
+          restaurant_id: string | null
+          slug: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mese_publice: {
         Row: {
@@ -1476,7 +2008,36 @@ export type Database = {
           rotatie: number | null
           zone_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tables_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       restaurante_publice: {
         Row: {
@@ -1493,6 +2054,34 @@ export type Database = {
           slug: string | null
           tip_locatie: string | null
         }
+        Insert: {
+          aprobare_automata?: boolean | null
+          culoare_accent?: string | null
+          durata_implicita_minute?: number | null
+          fus_orar?: string | null
+          id?: string | null
+          logo_url?: string | null
+          max_scaune_masa?: number | null
+          nume?: string | null
+          oras?: string | null
+          program_standard?: Json | null
+          slug?: string | null
+          tip_locatie?: string | null
+        }
+        Update: {
+          aprobare_automata?: boolean | null
+          culoare_accent?: string | null
+          durata_implicita_minute?: number | null
+          fus_orar?: string | null
+          id?: string | null
+          logo_url?: string | null
+          max_scaune_masa?: number | null
+          nume?: string | null
+          oras?: string | null
+          program_standard?: Json | null
+          slug?: string | null
+          tip_locatie?: string | null
+        }
         Relationships: []
       }
       structura_publica: {
@@ -1501,7 +2090,36 @@ export type Database = {
           restaurant_id: string | null
           zone_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_layers_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_layers_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_layers_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_layers_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       zone_publice: {
         Row: {
@@ -1513,22 +2131,42 @@ export type Database = {
           ordine_afisare: number | null
           restaurant_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "zones_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zones_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
-      accepta_invitatie: {
-        Args: { p_token: string }
-        Returns: string
+      accepta_invitatie: { Args: { p_token: string }; Returns: string }
+      anonimizeaza_client: { Args: { p_customer_id: string }; Returns: number }
+      anunta_credite_epuizate: {
+        Args: { p_restaurant_id: string }
+        Returns: undefined
       }
-      anonimizeaza_client: {
-        Args: { p_customer_id: string }
-        Returns: number
+      are_floor_plan: { Args: never; Returns: boolean }
+      capacitate_eveniment: { Args: { p_event_id: string }; Returns: number }
+      consuma_credit: {
+        Args: { p_continut?: string; p_sablon: string; p_telefon: string }
+        Returns: boolean
       }
       contopeste_clienti: {
         Args: { p_duplicat_id: string; p_principal_id: string }
         Returns: number
       }
+      credite_whatsapp: { Args: { p_restaurant_id?: string }; Returns: number }
       creeaza_restaurant: {
         Args: {
           p_adresa?: string
@@ -1557,15 +2195,13 @@ export type Database = {
           p_status?: Database["public"]["Enums"]["rezervare_status"]
           p_sursa?: Database["public"]["Enums"]["rezervare_sursa"]
           p_table_id?: string
-          p_telefon: string | null
+          p_telefon: string
           p_zone_id?: string
         }
         Returns: string
       }
-      current_restaurant_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      current_restaurant_id: { Args: never; Returns: string }
+      desparte_grup: { Args: { p_grup_id: string }; Returns: number }
       detalii_invitatie: {
         Args: { p_token: string }
         Returns: {
@@ -1594,42 +2230,11 @@ export type Database = {
         Args: { p_instant: string; p_restaurant_id: string }
         Returns: boolean
       }
-      is_manager: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_super_admin_deplin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      credite_whatsapp: {
-        Args: { p_restaurant_id?: string }
-        Returns: number
-      }
-      reincarca_credite: {
-        Args: { p_package_id: string }
-        Returns: number
-      }
-      consuma_credit: {
-        Args: { p_continut?: string; p_sablon: string; p_telefon: string }
-        Returns: boolean
-      }
-      capacitate_eveniment: {
-        Args: { p_event_id: string }
-        Returns: number
-      }
-      desparte_grup: {
-        Args: { p_grup_id: string }
-        Returns: number
-      }
-      uneste_mese: {
-        Args: { p_table_ids: string[] }
-        Returns: string
-      }
+      is_echipa_studio: { Args: never; Returns: boolean }
+      is_echipa_suport: { Args: never; Returns: boolean }
+      is_manager: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
+      is_super_admin_deplin: { Args: never; Returns: boolean }
       kpi_zi: {
         Args: { p_zi?: string }
         Returns: {
@@ -1655,6 +2260,7 @@ export type Database = {
           table_id: string
         }[]
       }
+      reincarca_credite: { Args: { p_package_id: string }; Returns: number }
       restaureaza_versiune_plan: {
         Args: { p_project_id: string }
         Returns: number
@@ -1674,10 +2280,8 @@ export type Database = {
         }
         Returns: Json
       }
-      slug_disponibil: {
-        Args: { p_slug: string }
-        Returns: boolean
-      }
+      slug_disponibil: { Args: { p_slug: string }; Returns: boolean }
+      uneste_mese: { Args: { p_table_ids: string[] }; Returns: string }
       verifica_conflicte_buffer: {
         Args: { p_buffer_nou: number; p_restaurant_id: string }
         Returns: {
@@ -1687,6 +2291,22 @@ export type Database = {
           table_id: string
         }[]
       }
+      verifica_sanatate_servicii: {
+        Args: never
+        Returns: {
+          detaliu: string | null
+          serviciu: Database["public"]["Enums"]["serviciu_extern"]
+          status: Database["public"]["Enums"]["serviciu_status"]
+          verificat_la: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "statusuri_servicii"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      verifica_secret_webhook: { Args: { p_secret: string }; Returns: boolean }
     }
     Enums: {
       admin_rol: "manager" | "ospatar"
