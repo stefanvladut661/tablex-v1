@@ -13,7 +13,6 @@ import {
   MoonIcon,
   SunIcon,
   TicketIcon,
-  UsersIcon,
 } from 'lucide-react'
 
 import { ClopotelNotificari } from '@/components/ClopotelNotificari'
@@ -42,7 +41,6 @@ const NAVIGATIE: ElementNav[] = [
   { cale: RUTE.appClienti, eticheta: 'Clienti', icoana: ContactIcon },
   { cale: RUTE.appFormular, eticheta: 'Formular', icoana: FileTextIcon, doarManager: true },
   { cale: RUTE.appEvenimente, eticheta: 'Evenimente', icoana: TicketIcon },
-  { cale: RUTE.appEchipa, eticheta: 'Echipa', icoana: UsersIcon, doarManager: true },
   { cale: RUTE.appSetari, eticheta: 'Setari', icoana: SettingsIcon, doarManager: true },
 ]
 

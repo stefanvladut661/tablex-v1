@@ -2087,6 +2087,57 @@ revin la Evenimente. Dezactivarea campurilor de SISTEM (§27.3) e vizibila in
 editor, dar comutatoarele lor raman de verificat cap-coada cu widgetul.
 
 ---
+6untriginta. SETARI PE TAB-URI, CREDITE WHATSAPP, ABONAMENT (FAZA 7) — ✅
+
+6untriginta.1 Soldul nu e o coloana
+
+Decizia care da forma portofelului (§10.3, §30.4): soldul de credite NU se
+stocheaza. E suma tranzactiilor, calculata la cerere. Un sold scris separat de
+jurnal diverge la prima scriere ratata, iar de atunci incolo nu mai stii care
+dintre ele minte. Cu suma, intrebarea nici nu se pune.
+
+A doua decizie, de securitate: `whatsapp_tranzactii` NU are politica de INSERT.
+Nimeni nu-si poate adauga credite dintr-un apel REST. Singurele cai de scriere
+sunt doua functii `security definer` care isi verifica singure apelantul —
+reincarcarea cere manager (creditele costa bani, e o decizie comerciala),
+consumul cere doar un cont din restaurant.
+
+Regula din §16.2 si §21.2 e deja adevarata, desi trimiterea reala e interzisa in
+v1 (§14): fara credit, mesajul pur si simplu NU pleaca, si nu arunca eroare.
+Clientul nu vede nimic; restaurantul vede soldul scazut. Verificat exact asa —
+primul mesaj a intrat in jurnal ca „esuat — Fara credite disponibile", al doilea
+ca „trimis", iar soldul a ajuns 199 din 200.
+
+6untriginta.2 Abonamentul (§30.5) si de ce butonul nu schimba planul
+
+Ecran simplu, cum cere spec-ul: planul curent, ce include celalalt, pretul real
+din `app_settings`, si calculatorul de setup (§10.2).
+
+Butonul de upgrade CERE upgrade-ul, nu si-l acorda. `restaurants.plan` e o
+coloana privilegiata, aparata de trigger si de audit inca din migratia 13:
+schimbarea ei e o operatie comerciala, care trece prin echipa si ramane in
+registru. Un buton care si-ar fi acordat singur Pro Floor ar fi ocolit exact
+garda pusa in Faza 1.
+
+Graficul de consum e SVG scris de mana: o librarie de charting ar fi adus zeci
+de kiloocteti pentru sase dreptunghiuri — si ar fi atins `package.json`.
+
+6untriginta.3 Setarile pe tab-uri (§30.1)
+
+Restaurant | Echipa | WhatsApp | Abonament. Echipa a fost pana acum pagina
+separata in sidebar; acum sta unde o cere spec-ul, iar sidebar-ul a scazut cu o
+intrare. Campurile de formular au iesit din Setari — s-au mutat in pagina
+Formular in Faza 6, si nu are sens sa fie in doua locuri.
+
+6untriginta.4 Ce ramane din Faza 7
+
+Resetarea parolei unui ospatar de catre manager (§49.8), care cere o Edge
+Function cu `service_role`. E cel mai periculos endpoint din aplicatie —
+verificarea ca apelantul e chiar managerul acelui ospatar trebuie facuta IN
+functie, nu in interfata — si merita o sesiune odihnita, nu ultimele minute
+dintr-una lunga.
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

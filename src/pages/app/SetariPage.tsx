@@ -6,8 +6,11 @@ import { CopyIcon, ExternalLinkIcon, Loader2Icon, TriangleAlertIcon } from 'luci
 import { z } from 'zod'
 
 import { CampText } from '@/components/formular/CampText'
-import { CampuriFormular } from '@/components/setari/CampuriFormular'
 import { ExceptiiProgram } from '@/components/setari/ExceptiiProgram'
+import { TabAbonament } from '@/components/setari/TabAbonament'
+import { TabWhatsApp } from '@/components/setari/TabWhatsApp'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EchipaPage } from '@/pages/app/EchipaPage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -145,6 +148,17 @@ export function SetariPage() {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* §30.1 — Setarile pe tab-uri. Echipa a fost pana acum pagina separata
+          in sidebar; spec-ul o cere aici, langa celelalte configurari. */}
+      <Tabs defaultValue="restaurant">
+        <TabsList className="mx-auto flex max-w-3xl">
+          <TabsTrigger value="restaurant">Restaurant</TabsTrigger>
+          <TabsTrigger value="echipa">Echipa</TabsTrigger>
+          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+          <TabsTrigger value="abonament">Abonament</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="restaurant" className="mt-4 grid gap-4">
       <form
         onSubmit={form.handleSubmit((valori) => salveaza.mutate(valori))}
         noValidate
@@ -429,8 +443,20 @@ export function SetariPage() {
           lista in care adaugi un rand si nu se intampla nimic pana derulezi la
           capatul paginii ar fi derutanta. */}
       <ExceptiiProgram restaurantId={restaurant.id} fus={restaurant.fus_orar} />
+        </TabsContent>
 
-      <CampuriFormular restaurantId={restaurant.id} />
+        <TabsContent value="echipa" className="mt-4">
+          <EchipaPage />
+        </TabsContent>
+
+        <TabsContent value="whatsapp" className="mx-auto mt-4 max-w-3xl">
+          <TabWhatsApp restaurantId={restaurant.id} />
+        </TabsContent>
+
+        <TabsContent value="abonament" className="mx-auto mt-4 max-w-3xl">
+          <TabAbonament restaurant={restaurant} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

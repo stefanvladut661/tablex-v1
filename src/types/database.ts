@@ -336,6 +336,96 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_credit_packages: {
+        Row: {
+          activ: boolean
+          credite: number
+          id: string
+          nume: string
+          ordine: number
+          pret_eur: number
+        }
+        Insert: {
+          activ?: boolean
+          credite: number
+          id?: string
+          nume: string
+          ordine?: number
+          pret_eur: number
+        }
+        Update: {
+          activ?: boolean
+          credite?: number
+          id?: string
+          nume?: string
+          ordine?: number
+          pret_eur?: number
+        }
+        Relationships: []
+      }
+      whatsapp_tranzactii: {
+        Row: {
+          created_at: string
+          credite: number
+          descriere: string | null
+          id: string
+          pret_eur: number | null
+          restaurant_id: string
+          tip: Database["public"]["Enums"]["wallet_tranzactie_tip"]
+        }
+        Insert: {
+          created_at?: string
+          credite: number
+          descriere?: string | null
+          id?: string
+          pret_eur?: number | null
+          restaurant_id: string
+          tip: Database["public"]["Enums"]["wallet_tranzactie_tip"]
+        }
+        Update: {
+          created_at?: string
+          credite?: number
+          descriere?: string | null
+          id?: string
+          pret_eur?: number | null
+          restaurant_id?: string
+          tip?: Database["public"]["Enums"]["wallet_tranzactie_tip"]
+        }
+        Relationships: []
+      }
+      whatsapp_mesaje: {
+        Row: {
+          continut: string | null
+          created_at: string
+          eroare: string | null
+          id: string
+          restaurant_id: string
+          sablon: string
+          status: Database["public"]["Enums"]["wa_mesaj_status"]
+          telefon: string
+        }
+        Insert: {
+          continut?: string | null
+          created_at?: string
+          eroare?: string | null
+          id?: string
+          restaurant_id: string
+          sablon: string
+          status?: Database["public"]["Enums"]["wa_mesaj_status"]
+          telefon: string
+        }
+        Update: {
+          continut?: string | null
+          created_at?: string
+          eroare?: string | null
+          id?: string
+          restaurant_id?: string
+          sablon?: string
+          status?: Database["public"]["Enums"]["wa_mesaj_status"]
+          telefon?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           arhivat: boolean
@@ -1514,6 +1604,18 @@ export type Database = {
       }
       is_super_admin_deplin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      credite_whatsapp: {
+        Args: { p_restaurant_id?: string }
+        Returns: number
+      }
+      reincarca_credite: {
+        Args: { p_package_id: string }
+        Returns: number
+      }
+      consuma_credit: {
+        Args: { p_continut?: string; p_sablon: string; p_telefon: string }
         Returns: boolean
       }
       capacitate_eveniment: {
