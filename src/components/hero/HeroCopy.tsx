@@ -39,8 +39,8 @@ export function HeroCopy() {
   const ctaInView = useInView(ctaRef)
   const delayIdle = useDelayScurs(TIMELINE.idle)
 
-  // Toate momentele fazei de text sunt exprimate fata de 2.15 in spec;
-  // pe mobil intreaga faza aluneca la 1.4s.
+  // Toate momentele fazei de text sunt exprimate fata de copy.start (1.0s);
+  // pe mobil intreaga faza aluneca la 0.9s.
   const t = (v: number) => v - TIMELINE.copy.start + copyStart
 
   return (
@@ -50,7 +50,7 @@ export function HeroCopy() {
           <LinieH1
             key={linie}
             text={linie}
-            la={t(2.35 + i * TIMELINE.copy.lineStagger)}
+            la={t(1.2 + i * TIMELINE.copy.lineStagger)}
             redus={redus}
           />
         ))}
@@ -61,7 +61,7 @@ export function HeroCopy() {
               className="block"
               initial={redus ? false : { y: '110%', rotate: 2 }}
               animate={{ y: '0%', rotate: 0 }}
-              transition={{ duration: 0.75, delay: t(2.59), ease: EASE.expo }}
+              transition={{ duration: 0.75, delay: t(1.44), ease: EASE.expo }}
             >
               {LINIE_SUBLINIATA}
             </motion.span>

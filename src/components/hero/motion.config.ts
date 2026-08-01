@@ -12,7 +12,16 @@ export const EASE = {
 } as const
 
 export const TIMELINE = {
-  mana: { delay: 0.15, durata: 1.4 },
+  mana: {
+    delay: 0.15,
+    durata: 1.4,
+    /**
+     * Balansul de dupa intrare: un singur pendul usor stanga-dreapta,
+     * pornit exact cand se termina intrarea (delay + durata), apoi mana
+     * ramane complet nemiscata — fara bucla de idle.
+     */
+    swing: { delay: 1.55, delayMobil: 1.15, durata: 1.9 },
+  },
   ecran: {
     wash: 0.55,
     antet: 0.75,
@@ -25,19 +34,19 @@ export const TIMELINE = {
   nori: { departare: 0.9, mijloc: 1.15, prim: 1.6 },
   nav: { logo: 2.1, linkuri: 2.15, actiuni: 2.3 },
   copy: {
-    /** Desktop: exact 2.0s dupa startul mainii (0.15 + 2.00). */
-    start: 2.15,
-    /** Mobil astepti mai putin — textul e primul in flux (spec §6). */
-    startMobil: 1.4,
+    /** Desktop: textul porneste la ~1s, in paralel cu finalul intrarii mainii. */
+    start: 1.0,
+    /** Mobil astepti si mai putin — textul e primul in flux (spec §6). */
+    startMobil: 0.9,
     lineStagger: 0.12,
   },
-  underline: 2.95,
-  squiggle: 2.8,
-  subtitlu: 3.05,
-  ctaPrimar: 3.2,
-  ctaSecundar: 3.3,
+  underline: 1.8,
+  squiggle: 1.65,
+  subtitlu: 1.9,
+  ctaPrimar: 2.05,
+  ctaSecundar: 2.15,
   pasari: { primul: 3.6, alDoilea: 8.5 },
-  idle: 3.8,
+  idle: 3.0,
   /** Parallax-ul de mouse nu raspunde deloc inainte de momentul asta. */
   interactiveAt: 2.0,
 } as const

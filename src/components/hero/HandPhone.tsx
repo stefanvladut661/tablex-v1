@@ -4,10 +4,11 @@ import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { ASPECT_CADRU, ASSETS, EASE, ECRAN_RECT, TIMELINE } from './motion.config'
 import { PhoneScreen } from './PhoneScreen'
-import { useDelayScurs, useMiscareHero } from './useParallax'
+import { useMiscareHero } from './useParallax'
 
 /**
- * Mana cu telefonul — singurul element care se misca in primele 2 secunde.
+ * Mana cu telefonul — intra prima, cu un balans unic din incheietura la
+ * final, apoi ramane complet nemiscata.
  *
  * Cat timp asset-ul WebP (ASSETS.mana) nu exista, componenta cade automat
  * pe o silueta desenata din CSS (telefon + mana pe tokenul --secondary).
@@ -16,14 +17,13 @@ import { useDelayScurs, useMiscareHero } from './useParallax'
  */
 
 export function HandPhone() {
-  const { redus, inView, mobil } = useMiscareHero()
+  const { redus, mobil } = useMiscareHero()
   // Se incearca pe rand candidatii din ASSETS.mana (WebP, apoi PNG);
   // cand lista se epuizeaza, ramane silueta CSS.
   const [candidat, setCandidat] = useState(0)
   const areAsset = candidat < ASSETS.mana.length
   const [asetIncarcat, setAsetIncarcat] = useState(false)
   const intrareRef = useRef<HTMLDivElement>(null)
-  const delayIdle = useDelayScurs(TIMELINE.idle)
 
   // Pe mobil intrarea e simpla: doar y + fade, fara rotate/blur (spec §6).
   const intrareInitial = mobil
@@ -75,11 +75,19 @@ export function HandPhone() {
       }}
       style={redus ? undefined : { willChange: 'transform, opacity, filter' }}
     >
-      {/* Idle: telefonul respira usor, din 3.8s, doar cat e in viewport. */}
+      {/* Balans unic dupa intrare: mana penduleaza usor stanga-dreapta din
+          incheietura (pivotul e jos, spre dreapta), o singura data, apoi
+          ramane complet nemiscata — fara nicio bucla de idle. */}
       <motion.div
         className="relative"
-        animate={redus || !inView ? undefined : { y: [0, -9, 0] }}
-        transition={{ duration: 5.5, delay: delayIdle, ease: 'easeInOut', repeat: Infinity }}
+        style={{ transformOrigin: '58% 96%' }}
+        animate={redus ? undefined : { rotate: [0, -2.4, 1.8, -0.9, 0] }}
+        transition={{
+          duration: TIMELINE.mana.swing.durata,
+          delay: mobil ? TIMELINE.mana.swing.delayMobil : TIMELINE.mana.swing.delay,
+          ease: 'easeInOut',
+          times: [0, 0.28, 0.58, 0.82, 1],
+        }}
       >
         {/* Cutia rezervata are ACELASI aspect (3:4, ca imaginea generata) in
             ambele ramuri — altfel swap-ul pe silueta ar produce layout shift,

@@ -25,7 +25,7 @@ export interface MiscareHero {
   inView: boolean
   /** Sub 768px: coregrafie taiata, nu comprimata (spec §6). */
   mobil: boolean
-  /** Momentul de start al fazei de text (2.15s desktop / 1.4s mobil). */
+  /** Momentul de start al fazei de text (1.0s desktop / 0.9s mobil). */
   copyStart: number
 }
 
