@@ -1,18 +1,22 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: toate tabelele au interfata; garzi probate; drag testat; rute lazy -->
-<!-- NEXT_TASK: PLATI cu Stripe (decis: dupa ce restul aplicatiei e gata — acum e);
-     inainte de ele: furnizor email (RESEND_API_KEY, cere cont Resend si domeniu) -->
-<!-- LAST_COMMIT: main branch synced to GitHub -->
+<!-- LAST_COMPLETED: Super-Admin Command Center complet (§9, §38-§47): sidebar 7 sectiuni,
+     Overview, Finance DEMO, Communications, Support&Ticketing, roluri interne impuse in baza -->
+<!-- NEXT_TASK: lipsurile gasite de analiza pe spec (vezi lista de mai jos, sesiunea
+     2026-08-02): 1) Harta Adminului nu incarca Layer 1 publicat; 2) vizual Evenimente
+     (afis/QR/Mod Eveniment); 3) widget public (email toggle + logo); 4) Calendar §25.4-25.6;
+     5) consuma_credit neconectat la fluxuri; 6) §20.3 suspendarea neimpusa in RLS;
+     7) pipeline AI Best-Guess. NU Stripe — §14 il exclude din v1. -->
+<!-- LAST_COMMIT: vezi git log; migratiile pana la drepturi_functii_echipa aplicate remote -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** ~90% MVP implementat
-**Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 (faze complexe)
-**Ultima sesiune:** Fazele 1c, 1d, 2, 3, 4 si 5 — de la auth pana la widget public
+**Status:** modulele mari complete; raman lipsurile punctuale gasite de analiza pe spec
+**Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 / Fable 5 (faze complexe)
+**Ultima sesiune:** 2026-08-02 — Faza 8: Super-Admin Command Center complet (§9, §38-§47)
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
-**Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote)
+**Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote, pana la drepturi_functii_echipa)
 
 ---
 
@@ -58,8 +62,37 @@ src/
 | 3 | Onboarding Flow | ✅ DONE | - | RPC creeaza_restaurant, generator slug, invitatii + pagina Echipa |
 | 4 | Dashboard & Calendar | ✅ DONE | - | Shell, calendar zi/saptamana/luna, lista, harta live, walk-in |
 | 5 | Real-time + widget public | ✅ DONE | - | Subscriptions, notificari, /r/:slug (emailurile rămân) |
+| 6 | Pagina de prezentare | ✅ DONE | - | Hero, navbar, componente UI |
+| 7 | Setari pe tab-uri + credite WhatsApp | ✅ DONE | - | Tranzactii prin RPC security definer, sold calculat |
+| 8 | Super-Admin Command Center | ✅ DONE | - | Sidebar 7 sectiuni (§9.2), Overview §39, Finance DEMO §44, Communications §45, Support §46, roluri §47.4 in baza |
 
 **Total MVP:** ~8-9 sessions (est. 800k-900k tokens @ Haiku + 200k @ Opus)
+
+### Jurnal 2026-08-02 (Faza 8) — decizii si DE CE
+
+- **Verificarea „ce mai lipseste" s-a facut pe SPEC, nu pe jurnal** (lectia din
+  CLAUDE.md): analiza sectiune-cu-sectiune a gasit ca §9 era construit ~40%.
+  NEXT_TASK-ul vechi („Stripe") era gresit — §14 exclude Stripe din v1.
+- **Rolurile interne (§47.4) impuse in BAZA, nu in interfata** (migratia
+  roluri_echipa_interna): trigger-ul de coloane privilegiate si politicile de
+  scriere cer acum `is_super_admin_deplin()`; atelierul (zones/tables/
+  floor_plan_*) ramane pe `is_echipa_studio()`; citirile financiare doar la
+  rolul deplin. Verificat cu JWT-uri pe fiecare rol, refuzurile inclusiv.
+- **Notele interne din tichete (§46.4) sunt separate prin RLS**, nu prin UI:
+  politica de citire a managerului exclude `nota_interna`; incercarea de a
+  falsifica un mesaj „de la echipa" primeste 42501. Sortarea inbox-ului
+  (§46.3) o face baza, pe ordinea enumului support_prioritate.
+- **Server Health (§38.3): doar Supabase are punct verde REAL** — RPC-ul
+  verifica_sanatate_servicii isi e propria dovada. Stripe/Meta raman marcate
+  simulat; un verde fals ar fi o minciuna in panoul echipei (§14).
+- **Lectia repetata a drepturilor pe functii:** `revoke from anon` nu ajunge
+  cata vreme PUBLIC pastreaza grantul implicit (mostenire). Prinsa de linterul
+  Supabase pe anunta_credite_epuizate; fixata in drepturi_functii_echipa.
+- **Cmd+K (§38.1) duce la View Details prin `?detalii=<id>`** pe pagina
+  Restaurante — paleta e globala, modalul are o singura implementare.
+- Analiza de acoperire (9/12 module; 3 reiau dupa limita): lipsurile mari
+  ramase sunt in NEXT_TASK — cap de lista: Harta Adminului nu incarca Layer 1
+  publicat (structura={[]}), desi vederea structura_publica exista.
 
 ---
 
