@@ -109,6 +109,13 @@ export const router = createBrowserRouter([
               {
                 element: <RutaManager />,
                 children: [
+                  // §31.1 — Formular si Setari sunt ascunse COMPLET ospatarului,
+                  // nu doar blocate: nu apar in navigatie si nu se pot deschide
+                  // nici scrise direct in bara de adrese.
+                  {
+                    path: RUTE.appFormular,
+                    lazy: pagina(() => import('@/pages/app/FormularPage'), 'FormularPage'),
+                  },
                   {
                     path: RUTE.appEchipa,
                     lazy: pagina(() => import('@/pages/app/EchipaPage'), 'EchipaPage'),

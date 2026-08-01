@@ -2021,6 +2021,72 @@ care vine in Faza 6 odata cu logo-ul restaurantului. Alocarea vizuala a meselor
 pe harta, in pasul 2 al wizardului, se face din lista, nu prin clic pe plan.
 
 ---
+6triginta. FORM BUILDER SI BRANDINGUL WIDGETULUI (FAZA 6, §27) — ✅
+
+6triginta.1 Decizia care tine faza in picioare
+
+§27.5 cere previzualizare LIVE, split-screen. Tentatia evidenta e sa scrii un
+preview separat: e mai simplu, si arata bine in ziua in care il faci. Apoi
+cineva schimba doar formularul real, iar preview-ul incepe sa minta — fara ca
+nimeni sa observe, fiindca nimeni nu compara doua ecrane.
+
+Asa ca formularul public a fost EXTRAS din `WidgetRezervarePage` intr-o
+componenta, `components/widget/FormularPublic.tsx`, folosita in amandoua
+locurile. Previzualizarea nu seamana cu pagina publica: E pagina publica, cu un
+`previzualizare` care opreste trimiterea. Managerul care se joaca in Formular nu
+poate crea din greseala o rezervare adevarata.
+
+Extragerea a mutat schema zod, `useForm`, validarea campurilor proprii,
+trimiterea si `CampProprii` — vreo 200 de linii — din pagina in componenta.
+Verificarea care conteaza dupa o asemenea mutare nu e ca preview-ul arata bine,
+ci ca WIDGETUL REAL inca functioneaza: trimis din /r/[slug], cu dropdown-ul
+propriu completat, rezervarea a ajuns in baza cu
+`campuri_custom = {"ocazia": "Aniversare"}`.
+
+6triginta.2 Branding (§27.6): bucket PUBLIC, spre deosebire de schite
+
+`restaurants.logo_url` exista din migratia tenancy si nu era folosita nicaieri —
+nici incarcare, nici afisare. Restaurantul nu-si putea pune sigla pe propria
+pagina de rezervari.
+
+Bucketul `branding` e PUBLIC, spre deosebire de `schite` (migratia 17), care e
+privat. Diferenta nu e neglijenta: schita salii e un document intern, vazut doar
+de echipa; logoul trebuie citit de orice vizitator anonim, inclusiv din
+iframe-ul de pe site-ul restaurantului. Un bucket privat ar fi cerut URL-uri
+semnate, care EXPIRA — adica un logo care dispare dupa o ora.
+
+Public inseamna insa „oricine poate CITI", nu „oricine poate pune ce vrea":
+calea incepe cu `restaurant_id`, iar politicile de scriere compara primul
+segment cu restaurantul contului si cer rol de manager.
+
+Numele fisierului poarta un timestamp. Fara el, browserul ar servi din cache
+logoul vechi de la aceeasi cale, iar restaurantul ar crede ca incarcarea n-a
+mers.
+
+6triginta.3 Restul paginii
+
+- Generator de `<iframe>` + link scurt (§27.7), amandoua cu buton de copiere.
+- Campurile proprii refolosesc editorul deja scris pentru Setari (§27.1-27.3):
+  aceleasi patru tipuri, aceeasi garda de telefon din baza.
+- Pagina e ascunsa COMPLET ospatarului (§31.1): nu apare in navigatie si nu se
+  deschide nici scrisa direct in bara de adrese — ruta sta sub `RutaManager`.
+
+6triginta.4 Verificat in browser
+
+- [x] split-screen: editorul in stanga, formularul real in dreapta
+- [x] intrebarea proprie „Care e ocazia?" (dropdown cu trei optiuni) apare
+      identic in previzualizare
+- [x] butonul de trimitere e inert in previzualizare, marcat ca atare
+- [x] widgetul public, dupa extragere, trimite corect: rezervarea a ajuns cu
+      raspunsul la intrebarea proprie salvat in campuri_custom
+
+6triginta.5 Ce ramane
+
+Afisul evenimentelor (§29.2) poate folosi de acum acelasi bucket; il leg cand
+revin la Evenimente. Dezactivarea campurilor de SISTEM (§27.3) e vizibila in
+editor, dar comutatoarele lor raman de verificat cap-coada cu widgetul.
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

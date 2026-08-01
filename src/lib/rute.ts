@@ -31,6 +31,7 @@ export const RUTE = {
   appHarta: '/app/harta',
   appClienti: '/app/clienti',
   appEvenimente: '/app/evenimente',
+  appFormular: '/app/formular',
   appAsteptare: '/app/asteptare',
   appSetari: '/app/setari',
 
