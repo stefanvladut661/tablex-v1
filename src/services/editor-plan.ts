@@ -317,3 +317,25 @@ export async function restaureazaVersiune(projectId: string): Promise<number> {
   if (error) throw error
   return data ?? 0
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Grupuri de mese (§28.6, §15.4)
+//
+// Unirea e 100% manuala: sistemul nu sugereaza combinatii. Toata logica sta in
+// RPC-uri, fiindca nu e o simpla scriere de coloana — trebuie sa intinda si
+// alocarile rezervarilor existente peste tot grupul, altfel unirea ar fi
+// valabila doar pentru rezervarile viitoare.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export async function unesteMese(tableIds: string[]): Promise<string> {
+  const { data, error } = await supabase.rpc('uneste_mese', { p_table_ids: tableIds })
+  if (error) throw error
+  return data
+}
+
+/** Intoarce cate mese au fost eliberate din grup. */
+export async function desparteGrup(grupId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('desparte_grup', { p_grup_id: grupId })
+  if (error) throw error
+  return data ?? 0
+}

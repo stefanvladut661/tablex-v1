@@ -1814,9 +1814,57 @@ Verificat cap-coada, in browser:
 - [x] trimis → rezervare reala (walk_in, sosita, masa 5), iar intrarea din coada
       trece pe „asezat", cu momentul completat
 
-6septvicies.7 Ce ramane din Faza 3
+6septvicies.7 Unirea meselor pentru grupuri (§28.6, §15.4) — ✅ FAZA 3 COMPLETA
 
-Doar unirea meselor pentru grupuri (§28.6, §15.4).
+`tables.grup_unire_id` exista din migratia floor_plan, iar
+`sincronizeaza_alocari_rezervare` il respecta de la inceput: o rezervare pusa
+pe o masa dintr-un grup blocheaza TOATE mesele grupului. Regula era deci gata
+si corecta — dar nimeni nu putea forma un grup, deci coloana ramanea vesnic
+null si comportamentul, teoretic.
+
+§15.4 e categoric: unirea e 100% MANUALA. Sistemul nu sugereaza combinatii, nu
+cauta singur „doua mese de 4 pentru 7 oameni". Omul le alege.
+
+CAPCANA, si motivul pentru care unirea e RPC si nu un simplu update de coloana:
+unirea NU reruleaza triggerul pentru rezervarile care exista deja. Doua mese
+unite dupa ce fiecare are cate o rezervare ar fi ramas cu alocarile vechi,
+fiecare pe masa ei — grupul ar fi fost o minciuna pana la urmatoarea salvare a
+fiecarei rezervari. Functia REFACE alocarile pentru rezervarile active de pe
+mesele alese.
+
+Si de aici a doua regula: nu poti uni mese ale caror rezervari se SUPRAPUN in
+timp. Ar insemna doi oameni diferiti ocupand simultan acelasi grup. Verificarea
+e explicita, cu mesaj, nu lasata pe seama constrangerii EXCLUDE — altfel omul ar
+fi primit „masa e deja ocupata" fara sa inteleaga ce legatura are cu unirea.
+
+Desfacerea nu se rezuma la stergerea coloanei: sterge intai alocarile
+IMPRUMUTATE (cele puse pe o masa care nu e masa proprie a rezervarii). Fara
+asta, mesele ar fi ramas blocate dupa desfacere, fara ca nimic din interfata sa
+arate de ce.
+
+DEFECT PRINS: prima versiune lua zona de referinta cu `min(t.zone_id)`.
+`min()` nu exista pentru uuid, iar functia cadea la primul apel. Acum ia zona
+primei mese din lista — nu cautam un minim, ci un reper.
+
+Verificat in baza, cu roluri reale:
+- [x] o singura masa → „Alege cel putin doua mese"
+- [x] mese din zone diferite → „Mesele unite trebuie sa fie in aceeasi zona"
+- [x] doua mese cu rezervari care se suprapun → refuzat cu mesajul lui
+- [x] unire reala: rezervarea existenta de pe masa 1 blocheaza acum si masa 2
+      (1 alocare → 2), fara nicio resalvare a rezervarii
+- [x] desfacere → alocarea imprumutata dispare, rezervarea ramane pe masa ei,
+      nicio masa nu mai e in grup
+- [x] ospatarul → „Doar managerul poate uni mese"
+
+In interfata: panoul de mese arata colegii de grup si capacitatea insumata, iar
+pentru o masa negrupata ofera lista celorlalte mese libere din zona, cu totalul
+de locuri calculat inainte de a apasa.
+
+NEFACUT, asumat: mesele unite NU se lipesc vizual intr-o forma combinata, cum
+sugereaza §28.6. Raman desenate separat, iar apartenenta la grup se citeste din
+panou. Forma combinata cere geometrie de contur (union de dreptunghiuri
+rotite), care e o bucata de lucru in sine, fara consecinta functionala:
+blocarea meselor e deja corecta.
 
 ---
 7. COMMANDS CHEAT SHEET

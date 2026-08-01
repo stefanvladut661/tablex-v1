@@ -1365,6 +1365,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      desparte_grup: {
+        Args: { p_grup_id: string }
+        Returns: number
+      }
+      uneste_mese: {
+        Args: { p_table_ids: string[] }
+        Returns: string
+      }
       mese_libere_pentru_rezervare: {
         Args: {
           p_durata_minute?: number

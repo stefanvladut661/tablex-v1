@@ -318,7 +318,7 @@ export function HartaPage() {
             restaurantId={restaurant.id}
             zona={zonaCurenta}
             masa={meseZona.find((m) => m.id === masaDeEditat) ?? null}
-            meseInZona={meseZona.length}
+            mese={meseZona}
             onSelecteaza={setMasaDeEditat}
           />
         )}
