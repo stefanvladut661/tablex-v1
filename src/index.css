@@ -2,13 +2,19 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource/ibm-plex-mono/500.css";
 
 @custom-variant dark (&:is(.dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════
    TableX — Design System (spec §3, §50)
    Regula 60-30-10:
-     60% fundal/canvas · 30% structura/navigatie · 10% accent (verde smarald)
+     60% fundal/canvas · 30% structura/navigatie · 10% accent (albastru royal)
+
+   Accentul e albastru royal profund (#1D4ED8), nu verde. Verdele ramane
+   rezervat exclusiv sistemului traffic-light al hartii (--status-liber):
+   asa nu mai confunzi "buton principal" cu "masa libera".
 
    REGULA NE-NEGOCIABILA: nicio culoare hardcodata in componente.
    Orice culoare se ia de aici, ca token semantic. Vezi CLAUDE.md.
@@ -26,31 +32,33 @@
   --popover-foreground: #0f172a;
 
   /* ── 10% — accent / actiuni principale ───────────────────────────── */
-  --primary: #059669; /* Verde Smarald */
+  --primary: #1d4ed8; /* Royal Blue profund — contrast 6.7:1 cu alb (AAA) */
   --primary-foreground: #ffffff;
 
   /* ── 30% — structura & navigatie (Carbon Slate) ──────────────────── */
   --secondary: #e2e8f0;
   --secondary-foreground: #1e293b;
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #ecfdf5;
-  --accent-foreground: #065f46;
+  /* Slate 600, nu 500: #64748b pe --muted dadea 4.34:1, sub AA (4.5:1). */
+  --muted-foreground: #475569;
+  --accent: #eff6ff;
+  --accent-foreground: #1e40af;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #059669;
+  --ring: #1d4ed8;
 
-  /* Sidebar-ul e purtatorul principal al celor 30% (#1E293B) */
+  /* Sidebar-ul e purtatorul principal al celor 30% (#1E293B).
+     Fiind inchis si in tema deschisa, accentul lui e varianta luminoasa. */
   --sidebar: #1e293b;
   --sidebar-foreground: #e2e8f0;
-  --sidebar-primary: #10b981;
-  --sidebar-primary-foreground: #052e1f;
+  --sidebar-primary: #60a5fa;
+  --sidebar-primary-foreground: #0c1e3a;
   --sidebar-accent: #334155;
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #334155;
-  --sidebar-ring: #10b981;
+  --sidebar-ring: #60a5fa;
 
   /* ── Traffic Light System — Harta 2D (§3, §7.4) ──────────────────── */
   --status-liber: #10b981; /* verde — masa libera / rezervare confirmata */
@@ -78,10 +86,16 @@
   --canvas-zona-speciala: #cbd5e1;
   --canvas-planta: #16a34a;
   --canvas-piscina: #38bdf8;
-  --canvas-selectie: #059669;
+  --canvas-selectie: #1d4ed8;
+
+  /* ── Hero landing (spec "Hero animat") ───────────────────────────── */
+  /* --signal apare intr-un SINGUR loc pe ecran: underline-ul din H1. */
+  --signal: #ff5a1f;
+  /* Norii decorativi; pe tema inchisa devin un slate vizibil pe fundal. */
+  --cloud: #ffffff;
 
   /* ── Grafice ─────────────────────────────────────────────────────── */
-  --chart-1: #059669;
+  --chart-1: #1d4ed8;
   --chart-2: #1e293b;
   --chart-3: #f59e0b;
   --chart-4: #8b5cf6;
@@ -97,29 +111,29 @@
   --popover: #0f172a;
   --popover-foreground: #f8fafc;
 
-  --primary: #10b981; /* varianta mai luminoasa, pe fundal inchis */
-  --primary-foreground: #052e1f;
+  --primary: #60a5fa; /* varianta mai luminoasa, pe fundal inchis */
+  --primary-foreground: #0c1e3a;
 
   --secondary: #1e293b;
   --secondary-foreground: #e2e8f0;
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
-  --accent: #134e4a;
-  --accent-foreground: #d1fae5;
+  --accent: #1e3a8a;
+  --accent-foreground: #dbeafe;
   --destructive: #f87171;
   --destructive-foreground: #450a0a;
   --border: #1e293b;
   --input: #1e293b;
-  --ring: #10b981;
+  --ring: #60a5fa;
 
   --sidebar: #0f172a;
   --sidebar-foreground: #cbd5e1;
-  --sidebar-primary: #10b981;
-  --sidebar-primary-foreground: #052e1f;
+  --sidebar-primary: #60a5fa;
+  --sidebar-primary-foreground: #0c1e3a;
   --sidebar-accent: #1e293b;
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #1e293b;
-  --sidebar-ring: #10b981;
+  --sidebar-ring: #60a5fa;
 
   --status-liber: #10b981;
   --status-liber-foreground: #052e1f;
@@ -145,9 +159,12 @@
   --canvas-zona-speciala: #334155;
   --canvas-planta: #4ade80;
   --canvas-piscina: #7dd3fc;
-  --canvas-selectie: #10b981;
+  --canvas-selectie: #60a5fa;
 
-  --chart-1: #10b981;
+  --signal: #ff7a47;
+  --cloud: #2b3a52;
+
+  --chart-1: #60a5fa;
   --chart-2: #cbd5e1;
   --chart-3: #fbbf24;
   --chart-4: #a78bfa;
@@ -224,7 +241,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --font-heading: var(--font-sans);
+  --color-signal: var(--signal);
+  --color-cloud: var(--cloud);
+  /* Titlurile intregii aplicatii vorbesc limba hero-ului: Plus Jakarta. */
+  --font-heading: var(--font-display);
+  --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", var(--font-sans);
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
@@ -239,6 +261,22 @@
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
     @apply font-sans;
+  }
+
+  /* Ancorele aluneca, nu sar — parte din limbajul de tranzitii al paginii. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Titlurile poarta fontul display al hero-ului, cu tracking strans. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 
   body {
@@ -269,5 +307,30 @@
     .camp-invalid {
       animation: none;
     }
+  }
+}
+
+@layer components {
+  /* Fundalul hero-ului: wash liniar discret, NU gradient mesh (spec §1). */
+  .hero-wash {
+    background-image: linear-gradient(160deg, var(--card), var(--muted));
+  }
+
+  /* Grid de 1px la 96px, estompat spre marginea de jos — semnal de
+     "software serios", nu decor. Culoarea vine din foreground, deci
+     functioneaza pe ambele teme. */
+  .hero-grid {
+    background-image: linear-gradient(
+        to right,
+        color-mix(in oklab, var(--foreground) 8%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--foreground) 8%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 96px 96px;
+    mask-image: radial-gradient(120% 95% at 50% 0%, #000 40%, transparent 85%);
   }
 }

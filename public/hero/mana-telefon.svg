@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" width="1200" height="1600" role="img" aria-label="">
+  <!--
+    Mana-manechin din portelan alb mat tinand un telefon negru vertical.
+    Compozitie 3:4, fundal transparent, lumina difuza din stanga-sus.
+    Ecranul e negru mat, fara UI: interfata TableX se suprapune in DOM
+    (ECRAN_RECT din motion.config.ts e calibrat pe coordonatele de aici:
+    ecran x=260 y=184 w=560 h=1182, colturi rx=72).
+  -->
+  <defs>
+    <!-- Portelan: alb spre gri rece, luminat din stanga-sus -->
+    <linearGradient id="portelan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#F1F4F8"/>
+      <stop offset="1" stop-color="#DBE1EA"/>
+    </linearGradient>
+    <linearGradient id="portelanInchis" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EDF1F6"/>
+      <stop offset="1" stop-color="#CDD5E0"/>
+    </linearGradient>
+    <!-- Umbra de contact: gri neutru, moale, se stinge spre margini -->
+    <radialGradient id="umbraContact" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#46536B" stop-opacity="0.30"/>
+      <stop offset="0.7" stop-color="#46536B" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#46536B" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Rama telefonului: negru cald, mai luminos spre stanga-sus -->
+    <linearGradient id="ramaTel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#262A33"/>
+      <stop offset="0.5" stop-color="#14171E"/>
+      <stop offset="1" stop-color="#0B0D12"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ═══ Palma si incheietura: coboara spre dreapta-jos, taiate de cadru ═══ -->
+  <path fill="url(#portelanInchis)" d="
+    M 620 1150
+    C 760 1110, 930 1130, 1030 1220
+    C 1130 1310, 1190 1420, 1235 1560
+    L 1290 1700 L 700 1700
+    C 640 1540, 590 1420, 565 1330
+    C 545 1250, 555 1180, 620 1150 Z"/>
+  <!-- lumina de sus pe incheietura -->
+  <ellipse cx="880" cy="1240" rx="180" ry="60" fill="#FFFFFF" opacity="0.28" transform="rotate(32 880 1240)"/>
+
+  <!-- Podul palmei, vizibil sub marginea de jos a telefonului -->
+  <ellipse cx="560" cy="1430" rx="300" ry="100" fill="url(#portelanInchis)"/>
+  <!-- umbra telefonului pe palma -->
+  <ellipse cx="555" cy="1400" rx="290" ry="30" fill="url(#umbraContact)" opacity="0.9"/>
+
+  <!-- ═══ Telefonul: negru mat, vertical, ecran frontal ═══ -->
+  <rect x="236" y="160" width="608" height="1230" rx="96" fill="url(#ramaTel)"/>
+  <!-- muchia stanga prinde lumina -->
+  <path d="M 296 190 C 262 220, 248 260, 248 320 L 248 1230 C 248 1290, 262 1330, 296 1360"
+        fill="none" stroke="#4A5364" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+  <!-- Ecranul: negru plin, zero reflexii, zero UI (aici intra DOM-ul) -->
+  <rect x="260" y="184" width="560" height="1182" rx="72" fill="#08090D"/>
+
+  <!-- umbrele degetelor pe muchia stanga a telefonului -->
+  <ellipse cx="352" cy="400" rx="34" ry="74" fill="url(#umbraContact)"/>
+  <ellipse cx="364" cy="592" rx="34" ry="74" fill="url(#umbraContact)"/>
+  <ellipse cx="352" cy="784" rx="34" ry="74" fill="url(#umbraContact)"/>
+  <ellipse cx="318" cy="966" rx="30" ry="62" fill="url(#umbraContact)"/>
+
+  <!-- ═══ Varfurile degetelor, infasurate peste muchia stanga ═══ -->
+  <!-- aratator -->
+  <rect x="168" y="342" width="172" height="118" rx="59" fill="url(#portelan)" transform="rotate(-4 254 401)"/>
+  <ellipse cx="232" cy="374" rx="58" ry="20" fill="#FFFFFF" opacity="0.45" transform="rotate(-6 232 374)"/>
+  <!-- mijlociu (cel mai lung) -->
+  <rect x="164" y="534" width="188" height="120" rx="60" fill="url(#portelan)" transform="rotate(-3 258 594)"/>
+  <ellipse cx="234" cy="566" rx="62" ry="20" fill="#FFFFFF" opacity="0.45" transform="rotate(-5 234 566)"/>
+  <!-- inelar -->
+  <rect x="168" y="726" width="172" height="118" rx="59" fill="url(#portelan)" transform="rotate(-4 254 785)"/>
+  <ellipse cx="232" cy="758" rx="56" ry="19" fill="#FFFFFF" opacity="0.45" transform="rotate(-6 232 758)"/>
+  <!-- mic (mai scurt, mai subtire) -->
+  <rect x="182" y="920" width="128" height="96" rx="48" fill="url(#portelan)" transform="rotate(-7 246 968)"/>
+  <ellipse cx="230" cy="946" rx="42" ry="15" fill="#FFFFFF" opacity="0.45" transform="rotate(-8 230 946)"/>
+
+  <!-- umbre de contact intre degete -->
+  <ellipse cx="212" cy="497" rx="60" ry="24" fill="url(#umbraContact)" opacity="0.65"/>
+  <ellipse cx="212" cy="690" rx="60" ry="24" fill="url(#umbraContact)" opacity="0.65"/>
+  <ellipse cx="206" cy="882" rx="54" ry="22" fill="url(#umbraContact)" opacity="0.65"/>
+
+  <!-- ═══ Policele, sprijinit pe muchia dreapta-jos ═══ -->
+  <!-- baza policelui, curge spre palma -->
+  <path fill="url(#portelanInchis)" d="
+    M 810 1080
+    C 840 1170, 900 1240, 975 1280
+    C 1030 1308, 1080 1310, 1110 1292
+    L 1050 1430
+    C 950 1400, 862 1310, 812 1210
+    C 790 1160, 786 1115, 810 1080 Z"/>
+  <!-- umbra policelui pe rama -->
+  <ellipse cx="812" cy="980" rx="40" ry="120" fill="url(#umbraContact)" transform="rotate(8 812 980)"/>
+  <!-- pulpa policelui -->
+  <rect x="762" y="838" width="126" height="300" rx="63" fill="url(#portelan)" transform="rotate(9 825 988)"/>
+  <ellipse cx="806" cy="900" rx="24" ry="64" fill="#FFFFFF" opacity="0.45" transform="rotate(9 806 900)"/>
+</svg>
