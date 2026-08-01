@@ -1,14 +1,19 @@
 import { z } from 'zod'
 
+import { verificaParola } from '@/lib/parola'
+
 export const emailSchema = z
   .email({ message: 'Adresa de email nu pare valida.' })
   .max(254, 'Adresa de email este prea lunga.')
 
-/** Minimul impus si de Supabase Auth (setarea implicita e 6; noi cerem 8). */
-export const parolaSchema = z
-  .string()
-  .min(8, 'Parola trebuie sa aiba cel putin 8 caractere.')
-  .max(72, 'Parola poate avea cel mult 72 de caractere.')
+/**
+ * Minimul impus si de Supabase Auth (setarea implicita e 6; noi cerem 8).
+ * Regula sta in `lib/parola.ts`, ca sa poata fi folosita si de codul incarcat
+ * de la primul cadru, fara sa traga zod dupa el. Aici o imbracam in zod.
+ */
+export const parolaSchema = z.string().refine((v) => verificaParola(v) === null, {
+  error: (ctx) => verificaParola(String(ctx.value)) ?? 'Parola nu e valida.',
+})
 
 /** Format romanesc: 07xxxxxxxx, 02/03xxxxxxxx, cu sau fara prefix +40. */
 export const telefonSchema = z

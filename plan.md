@@ -1867,6 +1867,76 @@ rotite), care e o bucata de lucru in sine, fara consecinta functionala:
 blocarea meselor e deja corecta.
 
 ---
+6duodetricies. PAGINA ACASA SI ACTIUNILE DE CONT (FAZA 4, partial) — ✅
+
+6duodetricies.1 Acasa (§24.4), prima pagina din sidebar
+
+Raspunde la ce se intreaba cineva care tocmai a intrat in tura: cate rezervari
+am azi, cati oameni, cat de plina e sala ACUM, si — cea mai importanta — am ceva
+netratat? Cererile pending NU expira niciodata (§15.2), deci una uitata ramane
+uitata pana o vede cineva; are banda ei, cu drum direct spre lista.
+
+`/app` devine Acasa, iar calendarul se muta la `/app/calendar`. Toate
+redirectarile de dupa autentificare duceau deja la `RUTE.app`, adica exact unde
+trebuie acum.
+
+UN SINGUR APEL pentru toate cifrele (RPC `kpi_zi`), nu cinci. Pagina se deschide
+pe o tableta, in sala, adesea pe 4G: cinci cereri inseamna cinci curse
+dus-intors si cinci momente in care ecranul arata jumatate din adevar.
+
+DEFINITIA OCUPARII e scrisa in comentariul migratiei, ca sa poata fi auditata:
+mese active ocupate acum / mese active. Nu pe zone, nu pe scaune — „50%
+ocupare" inseamna jumatate din mese. Mesele scoase din uz ies din ambii
+termeni: o sala cu 10 mese din care 2 stricate e plina la 8, nu la 10. Orice
+alta definitie ar fi la fel de valida; important e sa fie UNA si scrisa undeva.
+
+6duodetricies.2 Schimbarea parolei (§49.9) si iesirea cu confirmare (§49.3)
+
+Schimbarea parolei lipsea COMPLET. Singurul drum era „Am uitat parola" de pe
+ecranul de login, iar ruta aceea sta in spatele garzii de OASPETE — adica era
+inaccesibila tocmai celui autentificat care voia s-o schimbe. Un ospatar caruia
+i-a vazut cineva parola nu avea absolut nimic de facut.
+
+Iesirea cere acum confirmare. Motivul e de teren: pe o tableta tinuta in mana,
+butonul din coltul barei se apasa din greseala, iar reintrarea cere o parola pe
+care ospatarul poate n-o stie pe de rost.
+
+GASIT UITANDU-MA LA ECRAN: sertarul de pe MOBIL nu avea nici actiuni de cont,
+nici iesire — deci de pe telefon nu se putea iesi din cont deloc. Exact
+dispozitivul de pe care lucreaza ospatarul (§32.1). Acum are aceleasi actiuni ca
+bara de pe desktop.
+
+6duodetricies.3 Doua lucruri care se contraziceau, acum aliniate
+
+REGULA PAROLEI. §49.1 cere minim 8 caractere, o majuscula si o cifra. Se
+verifica doar lungimea, iar ecranele promiteau deja „o litera mare si o cifra" —
+text care nu corespundea niciunei reguli. Acum regula e reala, cu teste (6), si
+accepta si majuscule cu diacritice: un restaurant romanesc scrie „Șerban1234".
+Testele vechi din validari.test.ts cereau explicit regula slaba („optcarac"
+trecea); au fost aliniate la spec.
+
+BUGETUL DE PORNIRE. Meniul de cont face parte din LayoutApp, deci se incarca de
+la primul cadru. Importand `parolaSchema` din validari.ts, tragea ZOD in
+pachetul de intrare: 435 → 512 kB, peste pragul de avertizare. Regula s-a mutat
+in `lib/parola.ts`, un modul fara dependinte, din care validari.ts isi
+construieste schema. O singura sursa a adevarului, si intrarea a revenit la
+442 kB.
+
+6duodetricies.4 Verificat in browser
+
+- [x] Acasa arata 3 rezervari, 9 persoane, „50% · 1 din 2 mese", 0 neprezentari
+      si banda „1 cerere asteapta un raspuns" cu buton catre lista
+- [x] „Urmatoarele sosiri" il arata pe Bogdan Pop la 13:31, cu masa
+- [x] parola „parolamea" → „Parola trebuie sa contina cel putin o litera mare"
+- [x] parola valida → schimbata; in baza, hash-ul nou se potriveste, cel vechi nu
+
+6duodetricies.5 Ce ramane din Faza 4
+
+Echipa devine tab in Setari abia in Faza 7, unde Setarile capata tab-urile din
+§30.1 — nu are sens sa mut pagina de doua ori. Formular si Evenimente intra in
+sidebar odata cu fazele lor (6 si 5).
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

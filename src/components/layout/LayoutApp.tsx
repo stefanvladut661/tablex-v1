@@ -4,9 +4,9 @@ import {
   CalendarDaysIcon,
   ClockIcon,
   ContactIcon,
+  HouseIcon,
   LayoutGridIcon,
   ListIcon,
-  LogOutIcon,
   SettingsIcon,
   MenuIcon,
   MoonIcon,
@@ -18,8 +18,8 @@ import { ClopotelNotificari } from '@/components/ClopotelNotificari'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { MeniuCont } from '@/components/layout/MeniuCont'
 import { useAuth } from '@/hooks/useAuth'
-import { useNotificari } from '@/hooks/useNotificari'
 import { useRealtimeRestaurant } from '@/hooks/useRealtime'
 import { useTema } from '@/hooks/useTema'
 import { RUTE } from '@/lib/rute'
@@ -32,7 +32,8 @@ type ElementNav = {
 }
 
 const NAVIGATIE: ElementNav[] = [
-  { cale: RUTE.app, eticheta: 'Calendar', icoana: CalendarDaysIcon },
+  { cale: RUTE.app, eticheta: 'Acasa', icoana: HouseIcon },
+  { cale: RUTE.appCalendar, eticheta: 'Calendar', icoana: CalendarDaysIcon },
   { cale: RUTE.appRezervari, eticheta: 'Lista rezervari', icoana: ListIcon },
   { cale: RUTE.appHarta, eticheta: 'Harta salii', icoana: LayoutGridIcon },
   { cale: RUTE.appAsteptare, eticheta: 'Asteptare', icoana: ClockIcon },
@@ -76,9 +77,8 @@ function Meniu({ laNavigare }: { laNavigare?: () => void }) {
  * foloseste tokenii --sidebar-* si nu fundalul obisnuit.
  */
 export function LayoutApp() {
-  const { profil, utilizator, deconectare } = useAuth()
+  const { profil, utilizator } = useAuth()
   const { temaEfectiva, comutaTema } = useTema()
-  const notificari = useNotificari()
   const [meniuDeschis, setMeniuDeschis] = useState(false)
 
   // Trebuie apelat necondiționat: hook-urile nu au voie sa depinda de un return.
@@ -108,17 +108,7 @@ export function LayoutApp() {
             </p>
             <p className="text-xs text-sidebar-foreground/60 capitalize">{profil.cont.rol}</p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-            onClick={() => {
-              void deconectare().catch((eroare) => notificari.eroare(eroare))
-            }}
-          >
-            <LogOutIcon />
-            Iesi din cont
-          </Button>
+          <MeniuCont />
         </div>
       </aside>
 
@@ -132,11 +122,24 @@ export function LayoutApp() {
                   <MenuIcon />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-64 bg-sidebar p-3">
+              <SheetContent side="left" className="flex w-64 flex-col gap-4 bg-sidebar p-3">
                 <SheetTitle className="sr-only">Navigare</SheetTitle>
-                <div className="grid gap-4">
-                  {antetSidebar}
-                  <Meniu laNavigare={() => setMeniuDeschis(false)} />
+                {antetSidebar}
+                <Meniu laNavigare={() => setMeniuDeschis(false)} />
+
+                {/* Aceleasi actiuni de cont ca pe desktop. Lipseau complet din
+                    sertar, deci de pe telefon nu se putea nici iesi din cont —
+                    exact dispozitivul de pe care lucreaza ospatarul (§32.1). */}
+                <div className="mt-auto grid gap-2 border-t border-sidebar-border pt-3">
+                  <div className="px-2.5">
+                    <p className="truncate text-sm font-medium text-sidebar-foreground">
+                      {profil.cont.nume ?? utilizator?.email}
+                    </p>
+                    <p className="text-xs text-sidebar-foreground/60 capitalize">
+                      {profil.cont.rol}
+                    </p>
+                  </div>
+                  <MeniuCont />
                 </div>
               </SheetContent>
             </Sheet>

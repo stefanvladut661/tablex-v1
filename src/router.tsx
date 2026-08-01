@@ -80,7 +80,11 @@ export const router = createBrowserRouter([
             // Shell-ul comun (sidebar + bara de sus) pentru tot panoul.
             element: <LayoutApp />,
             children: [
-              { path: RUTE.app, lazy: pagina(() => import('@/pages/app/CalendarPage'), 'CalendarPage') },
+              { path: RUTE.app, lazy: pagina(() => import('@/pages/app/AcasaPage'), 'AcasaPage') },
+              {
+                path: RUTE.appCalendar,
+                lazy: pagina(() => import('@/pages/app/CalendarPage'), 'CalendarPage'),
+              },
               {
                 path: RUTE.appRezervari,
                 lazy: pagina(() => import('@/pages/app/ListaRezervariPage'), 'ListaRezervariPage'),

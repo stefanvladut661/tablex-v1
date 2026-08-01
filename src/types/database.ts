@@ -1373,6 +1373,17 @@ export type Database = {
         Args: { p_table_ids: string[] }
         Returns: string
       }
+      kpi_zi: {
+        Args: { p_zi?: string }
+        Returns: {
+          mese_ocupate: number
+          mese_total: number
+          no_show_7_zile: number
+          pending_nerezolvate: number
+          persoane_azi: number
+          rezervari_azi: number
+        }[]
+      }
       mese_libere_pentru_rezervare: {
         Args: {
           p_durata_minute?: number

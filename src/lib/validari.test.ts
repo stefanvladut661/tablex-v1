@@ -33,15 +33,23 @@ describe('telefonSchema — format romanesc', () => {
   })
 })
 
+/**
+ * Schema doar imbraca `verificaParola` din lib/parola.ts (unde sunt si testele
+ * regulii in sine). Aici verificam ca imbracamintea nu pierde nimic pe drum.
+ *
+ * Cazurile de mai jos cereau, pana la §49.1, doar lungime: „optcarac" trecea.
+ * Trecea si prin interfata care promitea „o litera mare si o cifra".
+ */
 describe('parolaSchema', () => {
-  it('cere cel putin 8 caractere', () => {
-    expect(trece(parolaSchema, 'sapte12')).toBe(false)
-    expect(trece(parolaSchema, 'optcarac')).toBe(true)
+  it('cere lungime, majuscula si cifra (§49.1)', () => {
+    expect(trece(parolaSchema, 'Sapte12')).toBe(false)
+    expect(trece(parolaSchema, 'optcarac')).toBe(false)
+    expect(trece(parolaSchema, 'Optcarac1')).toBe(true)
   })
 
   it('nu depaseste limita bcrypt de 72 de octeti', () => {
-    expect(trece(parolaSchema, 'a'.repeat(72))).toBe(true)
-    expect(trece(parolaSchema, 'a'.repeat(73))).toBe(false)
+    expect(trece(parolaSchema, `A1${'a'.repeat(70)}`)).toBe(true)
+    expect(trece(parolaSchema, `A1${'a'.repeat(71)}`)).toBe(false)
   })
 })
 

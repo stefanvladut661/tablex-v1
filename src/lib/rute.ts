@@ -17,8 +17,13 @@ export const RUTE = {
   /** Demonstratie publica a hartii 2D, cu date fictive. */
   demoHarta: '/demo',
 
-  /** Panoul restaurantului (Manager / Ospatar). */
+  /**
+   * Panoul restaurantului (Manager / Ospatar). Radacina lui e pagina Acasa
+   * (§24.1: prima din sidebar), nu calendarul — de aceea si redirectarile de
+   * dupa autentificare duc aici.
+   */
   app: '/app',
+  appCalendar: '/app/calendar',
   /** Creare restaurant — pentru un cont autentificat fara profil. */
   appOnboarding: '/app/onboarding',
   appEchipa: '/app/echipa',
