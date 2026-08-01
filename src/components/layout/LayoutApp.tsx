@@ -11,6 +11,7 @@ import {
   MenuIcon,
   MoonIcon,
   SunIcon,
+  TicketIcon,
   UsersIcon,
 } from 'lucide-react'
 
@@ -38,6 +39,7 @@ const NAVIGATIE: ElementNav[] = [
   { cale: RUTE.appHarta, eticheta: 'Harta salii', icoana: LayoutGridIcon },
   { cale: RUTE.appAsteptare, eticheta: 'Asteptare', icoana: ClockIcon },
   { cale: RUTE.appClienti, eticheta: 'Clienti', icoana: ContactIcon },
+  { cale: RUTE.appEvenimente, eticheta: 'Evenimente', icoana: TicketIcon },
   { cale: RUTE.appEchipa, eticheta: 'Echipa', icoana: UsersIcon, doarManager: true },
   { cale: RUTE.appSetari, eticheta: 'Setari', icoana: SettingsIcon, doarManager: true },
 ]

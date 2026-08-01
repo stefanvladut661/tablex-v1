@@ -198,6 +198,144 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          afis_url: string | null
+          created_at: string
+          created_by: string | null
+          data_ora: string
+          descriere: string | null
+          durata_minute: number
+          id: string
+          nr_no_show_eveniment: number
+          nume: string
+          popup_activ: boolean
+          popup_zile_inainte: number
+          restaurant_id: string
+          status: Database["public"]["Enums"]["event_status"]
+          updated_at: string
+        }
+        Insert: {
+          afis_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_ora: string
+          descriere?: string | null
+          durata_minute?: number
+          id?: string
+          nr_no_show_eveniment?: number
+          nume: string
+          popup_activ?: boolean
+          popup_zile_inainte?: number
+          restaurant_id: string
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Update: {
+          afis_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_ora?: string
+          descriere?: string | null
+          durata_minute?: number
+          id?: string
+          nr_no_show_eveniment?: number
+          nume?: string
+          popup_activ?: boolean
+          popup_zile_inainte?: number
+          restaurant_id?: string
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      event_tables: {
+        Row: { event_id: string; table_id: string }
+        Insert: { event_id: string; table_id: string }
+        Update: { event_id?: string; table_id?: string }
+        Relationships: []
+      }
+      event_ticket_pricing: {
+        Row: {
+          event_id: string
+          id: string
+          masa_forma: Database["public"]["Enums"]["masa_forma"] | null
+          pret_eur: number
+          zone_id: string | null
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          masa_forma?: Database["public"]["Enums"]["masa_forma"] | null
+          pret_eur: number
+          zone_id?: string | null
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          masa_forma?: Database["public"]["Enums"]["masa_forma"] | null
+          pret_eur?: number
+          zone_id?: string | null
+        }
+        Relationships: []
+      }
+      tickets: {
+        Row: {
+          client_nume: string
+          cod: string
+          comision_eur: number
+          created_at: string
+          email: string | null
+          event_id: string
+          id: string
+          nr_persoane: number
+          platit_la: string | null
+          pret_eur: number
+          restaurant_id: string
+          scanat_la: string | null
+          status_plata: Database["public"]["Enums"]["ticket_plata_status"]
+          table_id: string | null
+          telefon: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_nume: string
+          cod?: string
+          comision_eur?: number
+          created_at?: string
+          email?: string | null
+          event_id: string
+          id?: string
+          nr_persoane?: number
+          platit_la?: string | null
+          pret_eur?: number
+          restaurant_id: string
+          scanat_la?: string | null
+          status_plata?: Database["public"]["Enums"]["ticket_plata_status"]
+          table_id?: string | null
+          telefon?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_nume?: string
+          cod?: string
+          comision_eur?: number
+          created_at?: string
+          email?: string | null
+          event_id?: string
+          id?: string
+          nr_persoane?: number
+          platit_la?: string | null
+          pret_eur?: number
+          restaurant_id?: string
+          scanat_la?: string | null
+          status_plata?: Database["public"]["Enums"]["ticket_plata_status"]
+          table_id?: string | null
+          telefon?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           arhivat: boolean
@@ -1207,6 +1345,19 @@ export type Database = {
       }
     }
     Views: {
+      evenimente_publice: {
+        Row: {
+          afis_url: string | null
+          data_ora: string | null
+          descriere: string | null
+          id: string | null
+          nume: string | null
+          pret_de_la: number | null
+          restaurant_id: string | null
+          slug: string | null
+        }
+        Relationships: []
+      }
       campuri_formular_publice: {
         Row: {
           cheie: string | null
@@ -1364,6 +1515,10 @@ export type Database = {
       is_super_admin_deplin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      capacitate_eveniment: {
+        Args: { p_event_id: string }
+        Returns: number
       }
       desparte_grup: {
         Args: { p_grup_id: string }

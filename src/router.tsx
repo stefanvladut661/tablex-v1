@@ -96,6 +96,12 @@ export const router = createBrowserRouter([
                 path: RUTE.appClienti,
                 lazy: pagina(() => import('@/pages/app/ClientiPage'), 'ClientiPage'),
               },
+              // Evenimentele sunt accesibile si ospatarului (§29.7): el vinde
+              // biletele la usa si le scaneaza la intrare.
+              {
+                path: RUTE.appEvenimente,
+                lazy: pagina(() => import('@/pages/app/EvenimentePage'), 'EvenimentePage'),
+              },
               {
                 path: RUTE.appAsteptare,
                 lazy: pagina(() => import('@/pages/app/ListaAsteptarePage'), 'ListaAsteptarePage'),

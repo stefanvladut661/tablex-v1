@@ -164,3 +164,30 @@ export async function getCampuriFormular(restaurantId: string): Promise<CampForm
 export function campuriProprii(campuri: CampFormularPublic[]): CampFormularPublic[] {
   return campuri.filter((camp) => camp.cheie !== null && !CHEI_SISTEM.includes(camp.cheie))
 }
+
+/**
+ * Anuntul de eveniment de pe widget (§8.5).
+ *
+ * Vederea `evenimente_publice` filtreaza deja tot ce nu trebuie vazut: doar
+ * evenimente PUBLICATE, cu anuntul pornit, si doar in fereastra configurata
+ * inainte de data. Clientul nu vede ciornele restaurantului, iar filtrul nu se
+ * poate ocoli dintr-un apel direct — nu e in interfata, e in vedere.
+ */
+export type EvenimentPublic = {
+  id: string
+  nume: string
+  descriere: string | null
+  data_ora: string
+  afis_url: string | null
+  pret_de_la: number | null
+}
+
+export async function getEvenimenteWidget(restaurantId: string): Promise<EvenimentPublic[]> {
+  const { data, error } = await supabase
+    .from('evenimente_publice')
+    .select('id, nume, descriere, data_ora, afis_url, pret_de_la')
+    .eq('restaurant_id', restaurantId)
+    .order('data_ora', { ascending: true })
+  if (error) throw error
+  return data as EvenimentPublic[]
+}

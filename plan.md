@@ -1937,6 +1937,90 @@ Echipa devine tab in Setari abia in Faza 7, unde Setarile capata tab-urile din
 sidebar odata cu fazele lor (6 si 5).
 
 ---
+6undetricies. EVENIMENTE & BILETE (§8.5, §18, §29) — ✅
+
+Cel mai mare modul lipsa din spec. Trei sectiuni intregi, zero cod.
+
+6undetricies.1 Ce era deja pregatit, din prima zi
+
+Enum-urile `event_status` si `ticket_plata_status` existau de la inceput, iar
+`table_allocations` avea din migratia 04 coloana `ticket_id`, cu
+`check (num_nonnulls(reservation_id, ticket_id) = 1)` si comentariul „FK adaugat
+in migratia evenimentelor". Cineva gandise atunci exact lucrul care conteaza:
+
+BILETELE SI REZERVARILE SCRIU IN ACEEASI TABELA DE ALOCARI. Deci constrangerea
+EXCLUDE anti-suprapunere le arbitreaza pe amandoua fara nicio logica noua. O
+masa vanduta la un eveniment nu mai poate primi o rezervare obisnuita in acelasi
+interval, iar refuzul vine din baza — nu dintr-o verificare pe care cineva ar
+putea s-o uite intr-o ramura.
+
+Verificat exact asta, si e cel mai valoros test al fazei: bilet platit pe masa 7
+la 21:00 → rezervare obisnuita pe masa 7 la 21:30 → 23P01.
+
+6undetricies.2 Trei reguli din spec, impuse in baza
+
+- §10.4 — LOCUL SE BLOCHEAZA DOAR LA PLATA. Triggerul de alocari se uita la
+  `status_plata = 'platit'`; un bilet neplatit nu tine masa. Altfel oricine ar
+  putea bloca toata sala fara sa dea un leu. Verificat: bilet neplatit → zero
+  alocari; marcat platit → alocarea apare.
+- §18.1 — CAPACITATEA NU SE STOCHEAZA. `capacitate_eveniment()` o calculeaza din
+  scaunele meselor alocate. Un numar scris de mana ar diverge de sala in clipa
+  in care cineva schimba capacitatea unei mese.
+- §18.2 — neprezentarea la eveniment are contor PROPRIU
+  (`events.nr_no_show_eveniment`) si nu atinge `customers.nr_no_show`. Cele doua
+  logici raman separate, si in date, si in interfata.
+
+Comisionul (3-5%, §10.4) se calculeaza dintr-un trigger, pe baza
+`app_settings.comision_bilete_procent`: 120 EUR → 4,80 EUR la 4%.
+
+6undetricies.3 Accesul, si de ce e o exceptie
+
+§29.7 da ospatarului acces COMPLET la evenimente si bilete — exceptie explicita
+de la matricea din §31, unde el n-are Setari si Formular. Motivul e practic: el
+vinde biletele la usa si le scaneaza la intrare. Politicile RLS spun exact asta,
+iar verificarea a confirmat-o: un cont de ospatar poate crea un eveniment.
+
+6undetricies.4 Scanarea (§29.6)
+
+Camera se deschide DOAR la apasare si se inchide dupa fiecare scanare, cum cere
+spec-ul: o camera pornita permanent pe tableta de la usa consuma bateria si
+sperie oaspetii.
+
+Citirea foloseste `BarcodeDetector`, nativ in Chrome pe Android — adica exact
+tabletele din sala — deci FARA nicio dependinta noua (si fara sa ating
+`package.json`, la care lucrezi tu). Unde lipseste, ramane codul introdus de
+mana; de aceea codul biletului e scurt si citibil cu ochiul (8 caractere), nu
+un uuid.
+
+Trei raspunsuri la scanare, nu doua: valid / deja folosit / NEPLATIT. Un bilet
+neplatit nu e „invalid" — omul chiar l-a rezervat, iar la usa asta se rezolva
+altfel decat un cod inventat.
+
+Marcarea scanarii e conditionata de `scanat_la is null` in aceeasi cerere, deci
+doua tablete care scaneaza simultan acelasi bilet nu pot primi amandoua „valid".
+Verificat: a doua incercare intoarce zero randuri.
+
+6undetricies.5 DEFECT PRINS: vederea publica nu arata nimic
+
+`evenimente_publice` fusese scrisa cu `security_invoker = true`. Vizitatorul
+anonim nu are — si nu trebuie sa aiba — nicio politica pe `events`, deci RLS-ul
+il oprea INAINTE ca filtrul vederii sa conteze: pop-up-ul nu s-ar fi afisat
+niciodata, fara nicio eroare.
+
+Celelalte vederi publice (migratiile 05 si 11) nu au optiunea asta tocmai din
+acest motiv: vederea insasi e filtrul, iar coloanele sunt alese una cate una.
+Corectat, si verificat cu trei evenimente deodata: din „Revelion" (ciorna),
+„Concert live" (publicat, peste 5 zile, fereastra 7) si „Prea devreme"
+(publicat, peste 40 de zile, fereastra 7), anonimul vede exact unul — Concert
+live.
+
+6undetricies.6 Ce ramane din faza
+
+Afisul (`afis_url`) nu are inca incarcare de imagine: cere un bucket public,
+care vine in Faza 6 odata cu logo-ul restaurantului. Alocarea vizuala a meselor
+pe harta, in pasul 2 al wizardului, se face din lista, nu prin clic pe plan.
+
+---
 7. COMMANDS CHEAT SHEET
 
 # Local dev

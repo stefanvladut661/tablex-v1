@@ -28,6 +28,7 @@ import {
   campuriProprii,
   getCampuriFormular,
   getRestaurantPublic,
+  getEvenimenteWidget,
   getSalaPublica,
   trimiteCerereRezervare,
   type CampFormularPublic,
@@ -68,6 +69,16 @@ export function WidgetRezervarePage() {
     queryKey: CHEI_WIDGET.restaurant(slug),
     queryFn: () => getRestaurantPublic(slug),
     enabled: slug.length > 0,
+  })
+
+  /**
+   * Anuntul de eveniment (§8.5). Nu filtram nimic aici: vederea publica arata
+   * doar ce e publicat, cu anunt pornit, in fereastra configurata.
+   */
+  const evenimente = useQuery({
+    queryKey: ['widget', 'evenimente', restaurant.data?.id ?? ''],
+    queryFn: () => getEvenimenteWidget(restaurant.data!.id!),
+    enabled: Boolean(restaurant.data?.id),
   })
 
   const sala = useQuery({
@@ -231,6 +242,26 @@ export function WidgetRezervarePage() {
             </CardContent>
           </Card>
         ) : (
+          <>
+            {/* Anuntul de eveniment (§8.5), deasupra formularului: e motivul
+                pentru care restaurantul plateste sa-l anunte. */}
+            {(evenimente.data ?? []).map((eveniment) => (
+              <Card key={eveniment.id} className="mb-4 border-primary">
+                <CardHeader>
+                  <CardTitle className="text-base">{eveniment.nume}</CardTitle>
+                  <CardDescription>
+                    {formatFus(eveniment.data_ora, 'EEEE, d MMMM · HH:mm', fus)}
+                    {eveniment.pret_de_la !== null && ` · bilete de la ${eveniment.pret_de_la} EUR`}
+                  </CardDescription>
+                </CardHeader>
+                {eveniment.descriere && (
+                  <CardContent className="text-sm text-muted-foreground">
+                    {eveniment.descriere}
+                  </CardContent>
+                )}
+              </Card>
+            ))}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Rezerva o masa</CardTitle>
@@ -359,6 +390,7 @@ export function WidgetRezervarePage() {
               </form>
             </CardContent>
           </Card>
+          </>
         )}
 
         {/* Previzualizarea salii: informativa, fara alegere de masa — alocarea
