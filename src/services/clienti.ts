@@ -34,7 +34,10 @@ export async function getClienti(restaurantId: string): Promise<Client[]> {
 export type RezervareClient = Pick<
   Tables<'reservations'>,
   'id' | 'data_ora' | 'nr_persoane' | 'status' | 'sursa' | 'anonimizat_la'
->
+> & {
+  /** §11 — istoricul arata si masa la care a stat clientul. */
+  masa: { numar_masa: string } | null
+}
 
 /** Istoricul unui client, pentru panoul de detaliu. */
 /**
@@ -59,7 +62,7 @@ export async function getClientDupaTelefon(
 export async function getRezervariClient(customerId: string): Promise<RezervareClient[]> {
   const { data, error } = await supabase
     .from('reservations')
-    .select('id, data_ora, nr_persoane, status, sursa, anonimizat_la')
+    .select('id, data_ora, nr_persoane, status, sursa, anonimizat_la, masa:tables(numar_masa)')
     .eq('customer_id', customerId)
     .order('data_ora', { ascending: false })
     .limit(50)

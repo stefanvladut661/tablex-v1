@@ -399,7 +399,9 @@ function FisaClient({
                       {formatFus(rezervare.data_ora, 'd MMM yyyy, HH:mm', fus)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {rezervare.nr_persoane} pers · {ETICHETE_STATUS_REZERVARE[rezervare.status]} ·{' '}
+                      {rezervare.nr_persoane} pers
+                      {rezervare.masa ? ` · masa ${rezervare.masa.numar_masa}` : ''} ·{' '}
+                      {ETICHETE_STATUS_REZERVARE[rezervare.status]} ·{' '}
                       {ETICHETE_SURSA_REZERVARE[rezervare.sursa]}
                     </span>
                   </li>
