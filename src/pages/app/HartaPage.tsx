@@ -3,8 +3,11 @@ import { ClockIcon } from 'lucide-react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { ZapIcon } from 'lucide-react'
+
 import { BlocajPlan } from '@/components/BlocajPlan'
 import { BaraOrara } from '@/components/floor-plan/BaraOrara'
+import { DialogWalkInHarta } from '@/components/rezervari/DialogWalkInHarta'
 import { CereriPlan } from '@/components/floor-plan/CereriPlan'
 import { EditorZona } from '@/components/floor-plan/EditorZona'
 import { PanouMeseAdmin } from '@/components/floor-plan/PanouMeseAdmin'
@@ -102,6 +105,7 @@ export function HartaPage() {
   const notificari = useNotificari()
   const queryClient = useQueryClient()
   const [masaDeEditat, setMasaDeEditat] = useState<string | null>(null)
+  const [walkInDeschis, setWalkInDeschis] = useState(false)
 
   /**
    * Mutarea unei mese e o scriere ca oricare alta: verificam numarul de randuri
@@ -438,6 +442,22 @@ export function HartaPage() {
             setDeAsezat(null)
           }}
         />
+      )}
+
+      {/* §32.2 — Walk-In-ul master, fix jos pe mobil/tableta: harta e ecranul
+          pe care traieste ospatarul, iar clientul care intra pe usa nu
+          asteapta cautarea unui buton in toolbar. */}
+      <Button
+        size="lg"
+        className="fixed right-4 bottom-4 z-40 shadow-lg lg:hidden"
+        onClick={() => setWalkInDeschis(true)}
+      >
+        <ZapIcon />
+        Walk-in
+      </Button>
+
+      {walkInDeschis && (
+        <DialogWalkInHarta restaurantId={restaurant.id} onInchide={() => setWalkInDeschis(false)} />
       )}
 
       {/* §28.4 cere confirmare inainte de a finaliza mutarea. Nu e prudenta

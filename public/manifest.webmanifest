@@ -1,0 +1,19 @@
+{
+  "name": "TableX — Rezervari si management al meselor",
+  "short_name": "TableX",
+  "description": "Rezervari, harta salii si CRM pentru restaurante.",
+  "lang": "ro",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

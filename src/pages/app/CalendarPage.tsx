@@ -276,6 +276,17 @@ export function CalendarPage() {
         />
       )}
 
+      {/* §32.2 — pe mobil/tableta, Walk-In-ul master sta FIX jos, sub degetul
+          mare; pe desktop ramane butonul din toolbar. */}
+      <Button
+        size="lg"
+        className="fixed right-4 bottom-4 z-40 shadow-lg lg:hidden"
+        onClick={() => setWalkInDeschis(true)}
+      >
+        <ZapIcon />
+        Walk-in
+      </Button>
+
       {walkInDeschis && (
         <DialogWalkInHarta restaurantId={restaurant.id} onInchide={() => setWalkInDeschis(false)} />
       )}

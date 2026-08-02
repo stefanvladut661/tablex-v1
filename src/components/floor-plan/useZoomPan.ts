@@ -30,6 +30,15 @@ export function useZoomPan() {
   /** Ultimul punct atins in timpul unei trageri; null cand nu se trage. */
   const ultimulPunct = useRef<Punct | null>(null)
 
+  /**
+   * Pinch-to-zoom (§32.3): pointerii activi, in coordonate de ECRAN. Distanta
+   * dintre degete se masoara pe ecran, nu in spatiul user — acolo scala pe
+   * care tocmai o schimbam ar intra in propria masuratoare si zoom-ul ar fugi.
+   * Doar ancora (mijlocul dintre degete) se converteste in user, la aplicare.
+   */
+  const pointeriActivi = useRef<Map<number, Punct>>(new Map())
+  const distantaPinch = useRef<number | null>(null)
+
   const punctUser = useCallback((clientX: number, clientY: number): Punct | null => {
     const svg = refSvg.current
     const ctm = svg?.getScreenCTM()
@@ -80,18 +89,48 @@ export function useZoomPan() {
   const laPointerDown = useCallback(
     (eveniment: EvenimentPointer<SVGSVGElement>) => {
       if (eveniment.button !== 0 && eveniment.button !== 1) return
-      const punct = punctUser(eveniment.clientX, eveniment.clientY)
-      if (!punct) return
-      ultimulPunct.current = punct
+      pointeriActivi.current.set(eveniment.pointerId, {
+        x: eveniment.clientX,
+        y: eveniment.clientY,
+      })
+
+      // Al doilea deget transforma gestul in pinch; pan-ul se opreste.
+      if (pointeriActivi.current.size === 2) {
+        const [a, b] = [...pointeriActivi.current.values()]
+        distantaPinch.current = Math.hypot(b.x - a.x, b.y - a.y)
+        ultimulPunct.current = null
+      } else {
+        const punct = punctUser(eveniment.clientX, eveniment.clientY)
+        if (punct) ultimulPunct.current = punct
+      }
+
       eveniment.currentTarget.setPointerCapture(eveniment.pointerId)
     },
     [punctUser],
   )
 
   // Pan incremental (delta fata de ultima poziție), ca sa nu fie nevoie de
-  // offsetul de la inceputul tragerii.
+  // offsetul de la inceputul tragerii. Cu doua degete: pinch, nu pan.
   const laPointerMove = useCallback(
     (eveniment: EvenimentPointer<SVGSVGElement>) => {
+      if (pointeriActivi.current.has(eveniment.pointerId)) {
+        pointeriActivi.current.set(eveniment.pointerId, {
+          x: eveniment.clientX,
+          y: eveniment.clientY,
+        })
+      }
+
+      if (pointeriActivi.current.size >= 2 && distantaPinch.current !== null) {
+        const [a, b] = [...pointeriActivi.current.values()]
+        const distanta = Math.hypot(b.x - a.x, b.y - a.y)
+        if (distanta > 0 && distantaPinch.current > 0) {
+          const ancora = punctUser((a.x + b.x) / 2, (a.y + b.y) / 2) ?? undefined
+          scaleaza(distanta / distantaPinch.current, ancora)
+        }
+        distantaPinch.current = distanta
+        return
+      }
+
       const anterior = ultimulPunct.current
       if (!anterior) return
       const acum = punctUser(eveniment.clientX, eveniment.clientY)
@@ -99,15 +138,28 @@ export function useZoomPan() {
       ultimulPunct.current = acum
       setVedere((v) => ({ ...v, x: v.x + (acum.x - anterior.x), y: v.y + (acum.y - anterior.y) }))
     },
-    [punctUser],
+    [punctUser, scaleaza],
   )
 
-  const laPointerUp = useCallback((eveniment: EvenimentPointer<SVGSVGElement>) => {
-    ultimulPunct.current = null
-    if (eveniment.currentTarget.hasPointerCapture(eveniment.pointerId)) {
-      eveniment.currentTarget.releasePointerCapture(eveniment.pointerId)
-    }
-  }, [])
+  const laPointerUp = useCallback(
+    (eveniment: EvenimentPointer<SVGSVGElement>) => {
+      pointeriActivi.current.delete(eveniment.pointerId)
+      if (pointeriActivi.current.size < 2) distantaPinch.current = null
+
+      // A ramas un singur deget: pan-ul continua de unde e el acum.
+      if (pointeriActivi.current.size === 1) {
+        const [ramas] = [...pointeriActivi.current.values()]
+        ultimulPunct.current = punctUser(ramas.x, ramas.y)
+      } else {
+        ultimulPunct.current = null
+      }
+
+      if (eveniment.currentTarget.hasPointerCapture(eveniment.pointerId)) {
+        eveniment.currentTarget.releasePointerCapture(eveniment.pointerId)
+      }
+    },
+    [punctUser],
+  )
 
   const mareste = useCallback(() => scaleaza(PAS), [scaleaza])
   const micsoreaza = useCallback(() => scaleaza(1 / PAS), [scaleaza])
