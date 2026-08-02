@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, ZapIcon } from 'lucide-react'
 
 import { VedereLuna } from '@/components/calendar/VedereLuna'
 import { VedereSaptamana } from '@/components/calendar/VedereSaptamana'
 import { VedereZi } from '@/components/calendar/VedereZi'
 import { DialogRezervare } from '@/components/rezervari/DialogRezervare'
+import { DialogWalkInHarta } from '@/components/rezervari/DialogWalkInHarta'
 import { SheetRezervare } from '@/components/rezervari/SheetRezervare'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
@@ -14,6 +23,7 @@ import { useNotificari } from '@/hooks/useNotificari'
 import { useZone } from '@/hooks/useMese'
 import { useMutatiiRezervari, useRezervari } from '@/hooks/useRezervari'
 import { programZilei } from '@/lib/program'
+import { RUTE } from '@/lib/rute'
 import {
   addDays,
   addMonths,
@@ -55,10 +65,14 @@ export function CalendarPage() {
   const restaurant = profil?.tip === 'admin' ? profil.restaurant : null
   const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
 
+  const navigheaza = useNavigate()
   const [vedere, setVedere] = useState<Vedere>('zi')
   const [zi, setZi] = useState(() => toZonedTime(new Date(), fus))
   const [selectata, setSelectata] = useState<Rezervare | null>(null)
   const [dialog, setDialog] = useState<CerereDialog | null>(null)
+  const [walkInDeschis, setWalkInDeschis] = useState(false)
+  /** §25.5 — filtrul rapid pe zona, comun celor 3 vederi. null = toate. */
+  const [zonaFiltru, setZonaFiltru] = useState<string | null>(null)
 
   const zone = useZone(restaurant?.id)
   const { muta } = useMutatiiRezervari(restaurant?.id)
@@ -75,6 +89,14 @@ export function CalendarPage() {
     () => programZilei(zi, restaurant?.program_standard ?? null, fus),
     [zi, restaurant?.program_standard, fus],
   )
+
+  // §25.5: filtrul pe zona taie lista O SINGURA data, inaintea tuturor
+  // vederilor si a contoarelor — altfel numerele si blocurile ar diverge.
+  const listate = useMemo(() => {
+    const toate = rezervari.data ?? []
+    if (!zonaFiltru) return toate
+    return toate.filter((r) => r.zone_id === zonaFiltru)
+  }, [rezervari.data, zonaFiltru])
 
   if (!restaurant) return null
 
@@ -94,10 +116,15 @@ export function CalendarPage() {
           )}`
         : etichetaZi(zi, fus)
 
-  const total = (rezervari.data ?? []).filter(
+  const total = listate.filter(
     (r) => r.status === 'pending' || r.status === 'confirmata' || r.status === 'sosita',
   )
   const persoane = total.reduce((suma, r) => suma + r.nr_persoane, 0)
+
+  /** §25.4 — clicul pe o zi din Lunar/Saptamanal duce in List View, pe data ei. */
+  function catreListaZilei(ziAleasa: Date) {
+    navigheaza(`${RUTE.appRezervari}?data=${formatFus(ziAleasa, 'yyyy-MM-dd', fus)}`)
+  }
 
   /**
    * Mutarea trece prin acelasi UPDATE ca restul: trigger-ul recalculeaza
@@ -140,6 +167,27 @@ export function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* §25.5 — filtrul pe zona, vizibil in toate cele 3 vederi (doar
+              cand exista mai multe zone; cu una singura ar fi zgomot). */}
+          {(zone.data?.length ?? 0) > 1 && (
+            <Select
+              value={zonaFiltru ?? 'toate'}
+              onValueChange={(valoare) => setZonaFiltru(valoare === 'toate' ? null : valoare)}
+            >
+              <SelectTrigger className="h-8 w-36" aria-label="Filtru pe zona">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="toate">Toate zonele</SelectItem>
+                {zone.data!.map((z) => (
+                  <SelectItem key={z.id} value={z.id}>
+                    {z.nume}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <Tabs value={vedere} onValueChange={(valoare) => setVedere(valoare as Vedere)}>
             <TabsList>
               <TabsTrigger value="zi">Zi</TabsTrigger>
@@ -148,11 +196,9 @@ export function CalendarPage() {
             </TabsList>
           </Tabs>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => deschideDialog(oraImplicita(fus), toZonedTime(new Date(), fus), true)}
-          >
+          {/* §25.6 — butonul master de Walk-In deschide harta in miniatura,
+              nu formularul cu dropdown de mese. */}
+          <Button variant="secondary" size="sm" onClick={() => setWalkInDeschis(true)}>
             <ZapIcon />
             Walk-in
           </Button>
@@ -178,7 +224,7 @@ export function CalendarPage() {
         </p>
       ) : vedere === 'zi' ? (
         <VedereZi
-          rezervari={rezervari.data ?? []}
+          rezervari={listate}
           fus={fus}
           program={program}
           onSelecteaza={setSelectata}
@@ -190,25 +236,20 @@ export function CalendarPage() {
       ) : vedere === 'saptamana' ? (
         <VedereSaptamana
           zile={zileleSaptamanii(zi, fus)}
-          rezervari={rezervari.data ?? []}
+          rezervari={listate}
           fus={fus}
           onSelecteaza={setSelectata}
-          onAlegeZi={(ziAleasa) => {
-            setZi(ziAleasa)
-            setVedere('zi')
-          }}
+          // §25.4: clicul pe zi duce in List View, pe data aleasa.
+          onAlegeZi={catreListaZilei}
           onCreeazaInZi={(ziAleasa) => deschideDialog('19:00', ziAleasa)}
         />
       ) : (
         <VedereLuna
           zile={grilaLunii(zi, fus)}
           luna={zi}
-          rezervari={rezervari.data ?? []}
+          rezervari={listate}
           fus={fus}
-          onAlegeZi={(ziAleasa) => {
-            setZi(ziAleasa)
-            setVedere('zi')
-          }}
+          onAlegeZi={catreListaZilei}
         />
       )}
 
@@ -233,6 +274,10 @@ export function CalendarPage() {
           oraImplicita={dialog.ora}
           walkIn={dialog.walkIn}
         />
+      )}
+
+      {walkInDeschis && (
+        <DialogWalkInHarta restaurantId={restaurant.id} onInchide={() => setWalkInDeschis(false)} />
       )}
     </div>
   )

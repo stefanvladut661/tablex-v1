@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ChevronLeftIcon,
@@ -66,7 +67,16 @@ export function ListaRezervariPage() {
   const cont = profil?.tip === 'admin' ? profil.cont : null
   const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
 
-  const [zi, setZi] = useState(() => toZonedTime(new Date(), fus))
+  // §25.4 — Calendarul trimite aici cu ?data=YYYY-MM-DD; fara parametru, azi.
+  const [parametri] = useSearchParams()
+  const [zi, setZi] = useState(() => {
+    const ceruta = parametri.get('data')
+    if (ceruta && /^\d{4}-\d{2}-\d{2}$/.test(ceruta)) {
+      const data = new Date(`${ceruta}T12:00:00`)
+      if (!Number.isNaN(data.getTime())) return toZonedTime(data, fus)
+    }
+    return toZonedTime(new Date(), fus)
+  })
   const [tab, setTab] = useState<string>('toate')
   const [sortare, setSortare] = useState<Sortare>('ora')
   const [caut, setCaut] = useState('')
