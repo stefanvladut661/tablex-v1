@@ -92,6 +92,14 @@ export function FormularPublic({
 
   const campuriRestaurant = useMemo(() => campuriProprii(campuri), [campuri])
 
+  /**
+   * Campul de sistem Email asculta de Form Builder (§27): vederea publica
+   * filtreaza campurile inactive, iar creeaza_restaurant seamana randul
+   * 'email' pentru fiecare restaurant — deci absenta lui aici inseamna exact
+   * „dezactivat de manager", nu „nu a existat niciodata".
+   */
+  const campEmail = useMemo(() => campuri.find((c) => c.cheie === 'email'), [campuri])
+
   // useWatch, nu watch(): watch() intoarce o functie nememoizabila si
   // dezactiveaza compilarea componentei.
   const dataAleasa = useWatch({ control: form.control, name: 'data' })
@@ -116,6 +124,14 @@ export function FormularPublic({
     const dataOra = new Date(`${valori.data}T${valori.ora}:00`)
     if (Number.isNaN(dataOra.getTime())) {
       form.setError('ora', { message: 'Data sau ora nu sunt valide.' })
+      return
+    }
+
+    // Emailul devine obligatoriu doar daca managerul l-a marcat asa in builder.
+    if (campEmail?.obligatoriu && (valori.email ?? '').trim() === '') {
+      form.setError('email', {
+        message: `${campEmail.eticheta ?? 'Email'} este obligatoriu.`,
+      })
       return
     }
 
@@ -200,13 +216,15 @@ export function FormularPublic({
         />
       </div>
 
-      <CampText
-        eticheta="Email (optional)"
-        type="email"
-        autoComplete="email"
-        eroare={form.formState.errors.email?.message}
-        {...form.register('email')}
-      />
+      {campEmail && (
+        <CampText
+          eticheta={`${campEmail.eticheta ?? 'Email'}${campEmail.obligatoriu ? '' : ' (optional)'}`}
+          type="email"
+          autoComplete="email"
+          eroare={form.formState.errors.email?.message}
+          {...form.register('email')}
+        />
+      )}
 
       {campuriRestaurant.map((camp) => (
         <CampProprii

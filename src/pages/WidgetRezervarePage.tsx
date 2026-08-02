@@ -98,15 +98,28 @@ export function WidgetRezervarePage() {
     >
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">{restaurantData.nume}</h1>
-            {restaurantData.oras && (
-              <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPinIcon className="size-3" />
-                {restaurantData.oras}
-                {restaurantData.tip_locatie ? ` · ${restaurantData.tip_locatie}` : ''}
-              </p>
+          <div className="flex items-center gap-3">
+            {/* Logoul din Form Builder (§27.6) — pana acum aparea doar in
+                previzualizare; pagina publica il ignora. Alt gol, nu decor:
+                clientul care da click dintr-un story trebuie sa recunoasca
+                restaurantul din prima. */}
+            {restaurantData.logo_url && (
+              <img
+                src={restaurantData.logo_url}
+                alt=""
+                className="size-10 rounded-lg object-contain"
+              />
             )}
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight">{restaurantData.nume}</h1>
+              {restaurantData.oras && (
+                <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPinIcon className="size-3" />
+                  {restaurantData.oras}
+                  {restaurantData.tip_locatie ? ` · ${restaurantData.tip_locatie}` : ''}
+                </p>
+              )}
+            </div>
           </div>
           <span className="text-xs text-muted-foreground">
             Rezervari prin Table<span className="text-primary">X</span>
