@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckIcon, Loader2Icon } from 'lucide-react'
+import { CheckIcon, ImageIcon, Loader2Icon } from 'lucide-react'
 
+import { AnuntEveniment } from '@/components/widget/AnuntEveniment'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -22,6 +23,7 @@ import {
   creeazaEveniment,
   setMeseEveniment,
   setPretZona,
+  urcaAfis,
 } from '@/services/evenimente'
 import type { MasaHarta, ZonaHarta } from '@/types/floor-plan'
 
@@ -37,11 +39,13 @@ const PASI = ['Detalii', 'Mese', 'Pret si anunt'] as const
  */
 export function WizardEveniment({
   restaurantId,
+  fus,
   zone,
   mese,
   onInchide,
 }: {
   restaurantId: string
+  fus: string
   zone: ZonaHarta[]
   mese: MasaHarta[]
   onInchide: () => void
@@ -55,15 +59,29 @@ export function WizardEveniment({
   const [zi, setZi] = useState('')
   const [ora, setOra] = useState('20:00')
   const [durata, setDurata] = useState('240')
+  const [afis, setAfis] = useState<File | null>(null)
   const [meseAlese, setMeseAlese] = useState<string[]>([])
   const [preturi, setPreturi] = useState<Record<string, string>>({})
   const [popup, setPopup] = useState(true)
   const [zileInainte, setZileInainte] = useState('7')
 
+  // Preview-ul afisului (§29.2 pasul 1) — un object URL local, revocat la
+  // schimbare si la demontare, ca sa nu ramana blob-uri in memorie.
+  const afisPreview = useMemo(() => (afis ? URL.createObjectURL(afis) : null), [afis])
+  useEffect(() => {
+    return () => {
+      if (afisPreview) URL.revokeObjectURL(afisPreview)
+    }
+  }, [afisPreview])
+
   const creeaza = useMutation({
     mutationFn: async () => {
       const dataOra = new Date(`${zi}T${ora}:00`)
       if (Number.isNaN(dataOra.getTime())) throw new Error('Data sau ora nu sunt valide.')
+
+      // Afisul se urca INAINTE de creare: daca urcarea esueaza, nu ramane un
+      // eveniment fara poza pe care nimeni nu-l mai repara.
+      const afisUrl = afis ? await urcaAfis(restaurantId, afis) : null
 
       const eveniment = await creeazaEveniment({
         restaurant_id: restaurantId,
@@ -71,6 +89,7 @@ export function WizardEveniment({
         descriere: descriere.trim() || null,
         data_ora: dataOra.toISOString(),
         durata_minute: Number(durata) || 240,
+        afis_url: afisUrl,
         popup_activ: popup,
         popup_zile_inainte: Number(zileInainte) || 7,
         status: 'draft',
@@ -159,6 +178,31 @@ export function WizardEveniment({
                 onChange={(e) => setDescriere(e.target.value)}
                 placeholder="Ce vede clientul pe widget."
               />
+            </div>
+
+            {/* Afisul (§29.2 pasul 1): apare pe card, in anunt si pe widget. */}
+            <div className="grid gap-1.5">
+              <Label htmlFor="ev-afis">Afis / poza (optional)</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="ev-afis"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="h-9"
+                  onChange={(e) => setAfis(e.target.files?.[0] ?? null)}
+                />
+                {afisPreview ? (
+                  <img
+                    src={afisPreview}
+                    alt="Previzualizarea afisului"
+                    className="h-14 w-20 rounded-md border border-border object-cover"
+                  />
+                ) : (
+                  <span className="flex h-14 w-20 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground">
+                    <ImageIcon className="size-5" aria-hidden="true" />
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -259,6 +303,32 @@ export function WizardEveniment({
               <p className="text-xs text-muted-foreground">
                 Anuntul apare doar dupa ce publici evenimentul, si doar in fereastra de mai sus.
               </p>
+
+              {/* §29.4 — preview LIVE al anuntului, exact componenta care se
+                  randeaza pe widgetul public. Nu poate minti: e acelasi cod. */}
+              {popup && (
+                <div className="grid gap-1.5">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
+                    Asa il vede clientul
+                  </p>
+                  <AnuntEveniment
+                    fus={fus}
+                    eveniment={{
+                      id: 'preview',
+                      nume: nume.trim() || 'Numele evenimentului',
+                      descriere: descriere.trim() || null,
+                      data_ora: new Date(`${zi || '2026-01-01'}T${ora}:00`).toISOString(),
+                      afis_url: afisPreview,
+                      pret_de_la: (() => {
+                        const valori = Object.values(preturi)
+                          .map((v) => Number(v))
+                          .filter((v) => v > 0)
+                        return valori.length ? Math.min(...valori) : null
+                      })(),
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}

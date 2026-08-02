@@ -58,6 +58,57 @@ export async function stergeEveniment(id: string): Promise<void> {
   if (error) throw error
 }
 
+/**
+ * Afisul evenimentului (§29.1, §29.2 pasul 1). Acelasi bucket public ca
+ * logoul (branding): afisul apare pe widgetul anonim, deci URL-urile semnate
+ * care expira nu sunt o optiune. Politicile de scriere compara primul segment
+ * al caii cu restaurantul contului — public la citire, nu la scriere.
+ */
+export async function urcaAfis(restaurantId: string, fisier: File): Promise<string> {
+  const extensie = fisier.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const cale = `${restaurantId}/afis-${Date.now()}.${extensie}`
+
+  const { error } = await supabase.storage
+    .from('branding')
+    .upload(cale, fisier, { upsert: true, contentType: fisier.type })
+  if (error) throw error
+
+  const { data } = supabase.storage.from('branding').getPublicUrl(cale)
+  return data.publicUrl
+}
+
+export type EvenimentCuMese = Eveniment & {
+  event_tables: Array<{ table_id: string }>
+}
+
+/**
+ * Evenimentele PUBLICATE care ating fereastra data, cu mesele lor — pentru
+ * Mod Eveniment pe harta (§8.5): mesele alocate se coloreaza violet cat timp
+ * evenimentul e in desfasurare.
+ */
+export async function getEvenimenteCuMese(
+  restaurantId: string,
+  deLa: Date,
+  panaLa: Date,
+): Promise<EvenimentCuMese[]> {
+  // data_ora e inceputul; un eveniment inceput inainte de fereastra poate
+  // inca sa o atinga, deci coboram cu o zi si taiem precis in client.
+  const { data, error } = await supabase
+    .from('events')
+    .select('*, event_tables(table_id)')
+    .eq('restaurant_id', restaurantId)
+    .eq('status', 'publicat')
+    .gte('data_ora', new Date(deLa.getTime() - 24 * 60 * 60 * 1000).toISOString())
+    .lte('data_ora', panaLa.toISOString())
+  if (error) throw error
+
+  return (data as EvenimentCuMese[]).filter((eveniment) => {
+    const start = new Date(eveniment.data_ora).getTime()
+    const sfarsit = start + eveniment.durata_minute * 60_000
+    return sfarsit > deLa.getTime() && start < panaLa.getTime()
+  })
+}
+
 /** Mesele alocate evenimentului — pasul 2 din wizard (§29.2). */
 export async function getMeseEveniment(eventId: string): Promise<string[]> {
   const { data, error } = await supabase

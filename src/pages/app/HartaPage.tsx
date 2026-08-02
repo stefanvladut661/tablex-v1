@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ClockIcon } from 'lucide-react'
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { BlocajPlan } from '@/components/BlocajPlan'
 import { BaraOrara } from '@/components/floor-plan/BaraOrara'
@@ -46,6 +46,7 @@ import {
   type IntrareAsteptare,
 } from '@/services/lista-asteptare'
 import { CHEI_MESE } from '@/services/mese'
+import { getEvenimenteCuMese } from '@/services/evenimente'
 import type { Rezervare } from '@/services/rezervari'
 import type { MasaHarta, StatusuriMese } from '@/types/floor-plan'
 
@@ -162,10 +163,34 @@ export function HartaPage() {
 
   const zonaCurenta = zone.data?.find((z) => z.id === zonaId) ?? zone.data?.[0] ?? null
 
-  const { statusuri, rezervarePeMasa } = useMemo(
-    () => statusuriLaMoment(rezervari.data ?? [], oraAfisata, fus),
-    [rezervari.data, oraAfisata, fus],
-  )
+  /**
+   * Mod Eveniment (§8.5): evenimentele PUBLICATE ale zilei, cu mesele lor.
+   * Mesele alocate se coloreaza violet cat timp evenimentul acopera ora
+   * afisata — daca nu sunt deja ocupate de o rezervare, care are prioritate.
+   */
+  const evenimenteZi = useQuery({
+    queryKey: ['evenimente-harta', restaurant?.id ?? '', inceputZi(zi, fus).toISOString()],
+    queryFn: () => getEvenimenteCuMese(restaurant!.id, inceputZi(zi, fus), sfarsitZi(zi, fus)),
+    enabled: Boolean(restaurant),
+    staleTime: 60_000,
+  })
+
+  const { statusuri, rezervarePeMasa } = useMemo(() => {
+    const rezultat = statusuriLaMoment(rezervari.data ?? [], oraAfisata, fus)
+
+    for (const eveniment of evenimenteZi.data ?? []) {
+      const start = oraZecimala(eveniment.data_ora, fus)
+      const sfarsitBrut = start + eveniment.durata_minute / 60
+      if (oraAfisata < start || oraAfisata >= Math.min(sfarsitBrut, 24)) continue
+      for (const { table_id } of eveniment.event_tables) {
+        // Rezervarea de pe masa (biletul platit, prin alocarea lui) castiga:
+        // violet inseamna „pastrata pentru eveniment", nu „cineva sta aici".
+        if (!rezultat.statusuri[table_id]) rezultat.statusuri[table_id] = 'eveniment'
+      }
+    }
+
+    return rezultat
+  }, [rezervari.data, oraAfisata, fus, evenimenteZi.data])
 
   /** Ce arata canvasul ca fiind „de mutat": clientul de pe fiecare masa ocupata. */
   const rezervariPeMese = useMemo(() => {

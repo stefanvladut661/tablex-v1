@@ -1,16 +1,33 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { PlusIcon, QrCodeIcon, TicketIcon } from 'lucide-react'
+import { PencilIcon, PlusIcon, QrCodeIcon, TicketIcon } from 'lucide-react'
 
+import { CodQR } from '@/components/evenimente/CodQR'
 import { ScanerBilet } from '@/components/evenimente/ScanerBilet'
 import { WizardEveniment } from '@/components/evenimente/WizardEveniment'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/hooks/useAuth'
 import { useMese, useZone } from '@/hooks/useMese'
 import { useNotificari } from '@/hooks/useNotificari'
@@ -22,9 +39,13 @@ import {
   getBilete,
   getCapacitate,
   getEvenimente,
+  getMeseEveniment,
   schimbaPlataBilet,
+  urcaAfis,
+  type Bilet,
   type Eveniment,
 } from '@/services/evenimente'
+import type { MasaHarta } from '@/types/floor-plan'
 
 const ETICHETE_STATUS: Record<string, string> = {
   draft: 'Ciorna',
@@ -113,6 +134,7 @@ export function EvenimentePage() {
       {wizard && (
         <WizardEveniment
           restaurantId={restaurant.id}
+          fus={fus}
           zone={zone.data ?? []}
           mese={mese.data ?? []}
           onInchide={() => setWizard(false)}
@@ -126,6 +148,7 @@ export function EvenimentePage() {
           eveniment={selectat}
           fus={fus}
           restaurantId={restaurant.id}
+          mese={mese.data ?? []}
           onInchide={() => setSelectat(null)}
         />
       )}
@@ -154,7 +177,18 @@ function CardEveniment({
   const vandute = (bilete.data ?? []).filter((b) => b.status_plata === 'platit').length
 
   return (
-    <Card className="cursor-pointer transition-colors hover:border-primary" onClick={onDeschide}>
+    <Card
+      className="cursor-pointer overflow-hidden transition-colors hover:border-primary"
+      onClick={onDeschide}
+    >
+      {/* §29.1 — cardul incepe cu afisul, cand exista. */}
+      {eveniment.afis_url && (
+        <img
+          src={eveniment.afis_url}
+          alt=""
+          className="max-h-36 w-full object-cover"
+        />
+      )}
       <CardHeader className="pb-2">
         <CardTitle className="flex items-start justify-between gap-2 text-base">
           <span className="min-w-0 truncate">{eveniment.nume}</span>
@@ -178,27 +212,41 @@ function CardEveniment({
   )
 }
 
-/** Detaliul unui eveniment: publicare, bilete vandute, emitere (§29.5). */
+/** Detaliul unui eveniment: publicare, editare, bilete vandute, emitere (§29.5). */
 function PanouEveniment({
   eveniment,
   fus,
   restaurantId,
+  mese,
   onInchide,
 }: {
   eveniment: Eveniment
   fus: string
   restaurantId: string
+  mese: MasaHarta[]
   onInchide: () => void
 }) {
   const notificari = useNotificari()
   const queryClient = useQueryClient()
   const [nume, setNume] = useState('')
   const [pret, setPret] = useState('')
+  const [masaAleasa, setMasaAleasa] = useState<string | null>(null)
+  const [editare, setEditare] = useState(false)
+  const [qrPentru, setQrPentru] = useState<Bilet | null>(null)
 
   const bilete = useQuery({
     queryKey: CHEI_EVENIMENTE.bilete(eveniment.id),
     queryFn: () => getBilete(eveniment.id),
   })
+
+  // Mesele alocate evenimentului (pasul 2 din wizard): dintre ele se alege
+  // masa biletului. Numerele vin din lista de mese a restaurantului.
+  const meseEveniment = useQuery({
+    queryKey: CHEI_EVENIMENTE.mese(eveniment.id),
+    queryFn: () => getMeseEveniment(eveniment.id),
+  })
+  const numarMasa = (tableId: string | null) =>
+    tableId ? (mese.find((m) => m.id === tableId)?.numar_masa ?? '?') : null
 
   const reincarca = () => {
     void queryClient.invalidateQueries({ queryKey: CHEI_EVENIMENTE.bilete(eveniment.id) })
@@ -221,6 +269,9 @@ function PanouEveniment({
         event_id: eveniment.id,
         client_nume: nume.trim(),
         pret_eur: Number(pret) || 0,
+        // Masa biletului (§18.1): abia cu ea trigger-ul de blocare la plata
+        // are ce bloca. Fara masa, biletul e doar o intrare.
+        table_id: masaAleasa,
       }),
     onSuccess: (bilet) => {
       notificari.succes(`Bilet emis: ${bilet.cod}`, {
@@ -228,6 +279,7 @@ function PanouEveniment({
       })
       setNume('')
       setPret('')
+      setMasaAleasa(null)
       reincarca()
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -246,13 +298,26 @@ function PanouEveniment({
     <Sheet open onOpenChange={(deschis) => !deschis && onInchide()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>{eveniment.nume}</SheetTitle>
+          <SheetTitle className="flex items-center justify-between gap-2">
+            {eveniment.nume}
+            <Button variant="outline" size="xs" onClick={() => setEditare(true)}>
+              <PencilIcon />
+              Editeaza
+            </Button>
+          </SheetTitle>
           <SheetDescription>
             {formatFus(eveniment.data_ora, 'EEEE, d MMMM yyyy · HH:mm', fus)}
           </SheetDescription>
         </SheetHeader>
 
         <div className="grid gap-5 px-4 pb-6">
+          {eveniment.afis_url && (
+            <img
+              src={eveniment.afis_url}
+              alt={`Afisul evenimentului ${eveniment.nume}`}
+              className="max-h-44 w-full rounded-lg border border-border object-cover"
+            />
+          )}
           <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-3">
             <div>
               <p className="text-sm font-medium">
@@ -282,7 +347,7 @@ function PanouEveniment({
               Demonstrativ: plata online se activeaza mai tarziu. Masa se blocheaza cand marchezi
               biletul ca platit.
             </p>
-            <div className="grid gap-2 sm:grid-cols-[1fr_7rem_auto]">
+            <div className="grid gap-2 sm:grid-cols-[1fr_6rem_8rem_auto]">
               <div className="grid gap-1">
                 <Label htmlFor="bilet-nume" className="text-xs">
                   Client
@@ -306,6 +371,27 @@ function PanouEveniment({
                   onChange={(e) => setPret(e.target.value)}
                   className="h-8"
                 />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="bilet-masa" className="text-xs">
+                  Masa
+                </Label>
+                <Select
+                  value={masaAleasa ?? 'fara'}
+                  onValueChange={(valoare) => setMasaAleasa(valoare === 'fara' ? null : valoare)}
+                >
+                  <SelectTrigger id="bilet-masa" className="h-8 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fara">Fara masa</SelectItem>
+                    {(meseEveniment.data ?? []).map((tableId) => (
+                      <SelectItem key={tableId} value={tableId}>
+                        Masa {numarMasa(tableId)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button
                 size="sm"
@@ -336,11 +422,24 @@ function PanouEveniment({
                       <span className="ml-2 font-mono text-xs tracking-wider text-muted-foreground">
                         {bilet.cod}
                       </span>
+                      {bilet.table_id && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          masa {numarMasa(bilet.table_id)}
+                        </span>
+                      )}
                     </span>
                     <span className="flex items-center gap-2">
                       <span className="text-xs tabular-nums text-muted-foreground">
                         {bilet.pret_eur} EUR
                       </span>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Codul QR al biletului ${bilet.cod}`}
+                        onClick={() => setQrPentru(bilet)}
+                      >
+                        <QrCodeIcon />
+                      </Button>
                       {bilet.scanat_la ? (
                         <Badge variant="secondary">Scanat</Badge>
                       ) : bilet.status_plata === 'platit' ? (
@@ -362,7 +461,158 @@ function PanouEveniment({
             )}
           </div>
         </div>
+
+        {/* §29.5 — codul QR al biletului, mare, de aratat sau scanat direct
+            de pe ecranul clientului. Scanerul citeste exact codul asta. */}
+        {qrPentru && (
+          <Dialog open onOpenChange={(deschis) => !deschis && setQrPentru(null)}>
+            <DialogContent className="sm:max-w-xs">
+              <DialogHeader>
+                <DialogTitle>{qrPentru.client_nume}</DialogTitle>
+                <DialogDescription className="font-mono tracking-wider">
+                  {qrPentru.cod}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="justify-self-center rounded-lg border border-border p-3">
+                <CodQR text={qrPentru.cod} />
+              </div>
+              <p className="text-center text-xs text-muted-foreground">
+                {qrPentru.status_plata === 'platit'
+                  ? 'Bilet platit — valid la intrare.'
+                  : 'Biletul NU e platit inca: scanerul il va respinge.'}
+              </p>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {editare && (
+          <DialogEditareEveniment
+            eveniment={eveniment}
+            restaurantId={restaurantId}
+            fus={fus}
+            onInchide={() => setEditare(false)}
+            onSalvat={() => {
+              setEditare(false)
+              reincarca()
+              onInchide()
+            }}
+          />
+        )}
       </SheetContent>
     </Sheet>
+  )
+}
+
+/**
+ * Editarea unui eveniment DUPA creare (§29.7 — si ospatarul poate): serviciul
+ * exista de la inceput, dar nu-l expunea niciun ecran. Mesele si preturile se
+ * schimba tot de aici in versiunile urmatoare; acum se editeaza detaliile.
+ */
+function DialogEditareEveniment({
+  eveniment,
+  restaurantId,
+  fus,
+  onInchide,
+  onSalvat,
+}: {
+  eveniment: Eveniment
+  restaurantId: string
+  fus: string
+  onInchide: () => void
+  onSalvat: () => void
+}) {
+  const notificari = useNotificari()
+  const [nume, setNume] = useState(eveniment.nume)
+  const [descriere, setDescriere] = useState(eveniment.descriere ?? '')
+  // Ziua si ora se arata in fusul restaurantului, nu in UTC-ul din baza —
+  // un slice pe ISO ar muta evenimentul cu diferenta de fus la prima salvare.
+  const [zi, setZi] = useState(() => formatFus(eveniment.data_ora, 'yyyy-MM-dd', fus))
+  const [ora, setOra] = useState(() => formatFus(eveniment.data_ora, 'HH:mm', fus))
+  const [afisNou, setAfisNou] = useState<File | null>(null)
+
+  const salveaza = useMutation({
+    mutationFn: async () => {
+      const dataOra = new Date(`${zi}T${ora}:00`)
+      if (Number.isNaN(dataOra.getTime())) throw new Error('Data sau ora nu sunt valide.')
+
+      const afisUrl = afisNou ? await urcaAfis(restaurantId, afisNou) : undefined
+      await actualizeazaEveniment(eveniment.id, {
+        nume: nume.trim(),
+        descriere: descriere.trim() || null,
+        data_ora: dataOra.toISOString(),
+        ...(afisUrl ? { afis_url: afisUrl } : {}),
+      })
+    },
+    onSuccess: () => {
+      notificari.succes('Evenimentul a fost actualizat.')
+      onSalvat()
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
+
+  return (
+    <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editeaza evenimentul</DialogTitle>
+          <DialogDescription>
+            Schimbarile se vad imediat pe card si, daca e publicat, pe widget.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="edit-nume">Nume</Label>
+            <Input id="edit-nume" value={nume} onChange={(e) => setNume(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="edit-zi">Ziua</Label>
+              <Input id="edit-zi" type="date" value={zi} onChange={(e) => setZi(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="edit-ora">Ora</Label>
+              <Input
+                id="edit-ora"
+                type="time"
+                value={ora}
+                onChange={(e) => setOra(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="edit-descriere">Descriere</Label>
+            <Textarea
+              id="edit-descriere"
+              rows={3}
+              value={descriere}
+              onChange={(e) => setDescriere(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="edit-afis">Afis nou (optional)</Label>
+            <Input
+              id="edit-afis"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="h-9"
+              onChange={(e) => setAfisNou(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onInchide}>
+            Renunta
+          </Button>
+          <Button
+            disabled={salveaza.isPending || nume.trim().length < 2}
+            onClick={() => salveaza.mutate()}
+          >
+            Salveaza
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

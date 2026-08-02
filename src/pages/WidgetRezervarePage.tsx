@@ -6,13 +6,13 @@ import { CheckCircle2Icon, MapPinIcon } from 'lucide-react'
 import { EcranIncarcare } from '@/components/EcranIncarcare'
 import { MentenantaPage } from '@/pages/MentenantaPage'
 import { HartaZona } from '@/components/floor-plan/HartaZona'
+import { AnuntEveniment } from '@/components/widget/AnuntEveniment'
 import { FormularPublic } from '@/components/widget/FormularPublic'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useSetariApp } from '@/hooks/useSetariApp'
 import { RUTE } from '@/lib/rute'
-import { formatFus } from '@/lib/timp'
 import {
   CHEIE_CAMPURI,
   CHEI_WIDGET,
@@ -152,22 +152,12 @@ export function WidgetRezervarePage() {
         ) : (
           <>
             {/* Anuntul de eveniment (§8.5), deasupra formularului: e motivul
-                pentru care restaurantul plateste sa-l anunte. */}
+                pentru care restaurantul plateste sa-l anunte. Aceeasi
+                componenta ca in preview-ul din wizard (§29.4). */}
             {(evenimente.data ?? []).map((eveniment) => (
-              <Card key={eveniment.id} className="mb-4 border-primary">
-                <CardHeader>
-                  <CardTitle className="text-base">{eveniment.nume}</CardTitle>
-                  <CardDescription>
-                    {formatFus(eveniment.data_ora, 'EEEE, d MMMM · HH:mm', fus)}
-                    {eveniment.pret_de_la !== null && ` · bilete de la ${eveniment.pret_de_la} EUR`}
-                  </CardDescription>
-                </CardHeader>
-                {eveniment.descriere && (
-                  <CardContent className="text-sm text-muted-foreground">
-                    {eveniment.descriere}
-                  </CardContent>
-                )}
-              </Card>
+              <div key={eveniment.id} className="mb-4">
+                <AnuntEveniment eveniment={eveniment} fus={fus} />
+              </div>
             ))}
 
           <Card>
