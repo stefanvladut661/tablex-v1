@@ -61,6 +61,21 @@ type Props = {
   /** Cand e activ, un clic pe canvas gol adauga in stratul activ. */
   modAdaugare?: boolean
   onAdauga?: (x: number, y: number) => void
+  /**
+   * Schita originala ca imagine de fundal (§42.5), sub grid si sub straturi:
+   * url semnat + opacitate 0..1. null/undefined = fara fundal. Randare pura —
+   * nu participa la niciun gest.
+   */
+  fundal?: { url: string; opacitate: number } | null
+  /**
+   * Best Guess-ul AI (§9.2.2 pasul 1), desenat fantomatic PESTE straturi,
+   * fara interactiune: operatorul vede estimarea si o preia/ajusteaza din
+   * panoul editorului. Unealta echipei — nu ajunge niciodata la Admin.
+   */
+  overlayAI?: {
+    structura: Element[]
+    mese: Array<{ forma: string; x: number; y: number; latime: number; inaltime: number; capacitate: number }>
+  } | null
   className?: string
 }
 
@@ -106,6 +121,8 @@ export function EditorZona({
   onMutaStructura,
   modAdaugare = false,
   onAdauga,
+  fundal = null,
+  overlayAI = null,
   className,
 }: Props) {
   // Zoom-ul (rotita + butoane) vine din hook; pan-ul NU ii folosim handler-ele:
@@ -482,6 +499,19 @@ export function EditorZona({
             dimensiunile canvasului explicit — "100%" ar insemna viewport-ul,
             nu canvasul, si la pan ar ramane lipit de ecran. */}
         <g transform={`translate(${vedere.x} ${vedere.y}) scale(${vedere.scara})`}>
+        {/* §42.5 — schita originala, sub tot: urmareste zoom-ul si pan-ul. */}
+        {fundal && fundal.opacitate > 0 && (
+          <image
+            href={fundal.url}
+            x={0}
+            y={0}
+            width={zona.canvas_latime}
+            height={zona.canvas_inaltime}
+            opacity={fundal.opacitate}
+            preserveAspectRatio="xMidYMid meet"
+            className="pointer-events-none"
+          />
+        )}
         <rect
           width={zona.canvas_latime}
           height={zona.canvas_inaltime}
@@ -617,6 +647,40 @@ export function EditorZona({
             )
           })}
         </g>
+
+        {/* ── Best Guess-ul AI, fantomatic (§9.2.2 pasul 1) ── */}
+        {overlayAI && (
+          <g className="pointer-events-none" opacity={0.55}>
+            {overlayAI.structura.map((element, indice) => (
+              <ElementStructura key={`ai-s-${indice}`} element={element} />
+            ))}
+            {overlayAI.mese.map((masa, indice) =>
+              masa.forma === 'rotunda' ? (
+                <circle
+                  key={`ai-m-${indice}`}
+                  cx={masa.x + masa.latime / 2}
+                  cy={masa.y + masa.inaltime / 2}
+                  r={Math.min(masa.latime, masa.inaltime) / 2}
+                  className="fill-none stroke-canvas-selectie"
+                  strokeWidth={2.5}
+                  strokeDasharray="6 4"
+                />
+              ) : (
+                <rect
+                  key={`ai-m-${indice}`}
+                  x={masa.x}
+                  y={masa.y}
+                  width={masa.latime}
+                  height={masa.inaltime}
+                  rx={6}
+                  className="fill-none stroke-canvas-selectie"
+                  strokeWidth={2.5}
+                  strokeDasharray="6 4"
+                />
+              ),
+            )}
+          </g>
+        )}
 
         {/* Urma rezervarii trase. `pointer-events-none` e obligatoriu: altfel
             ea insasi ar fi elementul de sub deget la ridicare, iar masa-tinta

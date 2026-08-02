@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { ElementStructura } from '@/types/floor-plan'
 
 /**
  * Generarea Automata AI (§9.2.2 pasul 1, §41.3) — SERVICIU SEPARAT de
@@ -11,6 +12,55 @@ import { supabase } from '@/lib/supabase'
 export type RezultatGenerareAI =
   | { ok: true; elemente: number; mese: number }
   | { ok: false; simulat?: boolean; motiv: string }
+
+export type MasaEstimataAI = {
+  forma: string
+  x: number
+  y: number
+  latime: number
+  inaltime: number
+  capacitate: number
+}
+
+export type RezultatAI = {
+  structura: ElementStructura[]
+  mese: MasaEstimataAI[]
+}
+
+export type CerereStudio = {
+  id: string
+  zone_nume: string
+  schita_image_url: string | null
+  ai_rezultat: RezultatAI | null
+  ai_generat_la: string | null
+}
+
+export const CHEI_STUDIO_AI = {
+  cerere: (restaurantId: string) => ['studio-ai', 'cerere', restaurantId] as const,
+}
+
+/**
+ * Cea mai recenta cerere ACTIVA (cu schita) a restaurantului — pe ea se
+ * ancoreaza fundalul-schita si Best Guess-ul din editor (§42.5). Aici e
+ * SINGURUL loc din client care citeste ai_rezultat.
+ */
+export async function getCerereStudio(restaurantId: string): Promise<CerereStudio | null> {
+  const { data, error } = await supabase
+    .from('floor_plan_requests')
+    .select('id, zone_nume, schita_image_url, ai_rezultat, ai_generat_la')
+    .eq('restaurant_id', restaurantId)
+    .in('status', ['pending', 'in_progress'])
+    .not('schita_image_url', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return {
+    ...data,
+    ai_rezultat: (data.ai_rezultat as unknown as RezultatAI | null) ?? null,
+  }
+}
 
 /** §41.3 — acelasi apel si pentru prima generare, si pentru „Reincearca":
  *  rezultatul anterior se suprascrie complet. */

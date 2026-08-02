@@ -46,6 +46,12 @@ import {
   type Layer1,
   type Masa,
 } from '@/services/editor-plan'
+import { CHEI_FP, urlSchita } from '@/services/floor-plan'
+import {
+  CHEI_STUDIO_AI,
+  genereazaPlanAI,
+  getCerereStudio,
+} from '@/services/studio-ai'
 import { CHEI_SA, getRestaurante } from '@/services/super-admin'
 import type { Enums } from '@/types/database'
 import type { ElementStructura, TipStructura } from '@/types/floor-plan'
@@ -219,6 +225,45 @@ export function EditorPlanPage() {
   })
   const elemente = layer1.data?.elemente ?? []
   const element = structuraSelectata === null ? null : (elemente[structuraSelectata] ?? null)
+
+  /**
+   * §42.5 + §9.2.2 pasul 1 — schita si Best Guess-ul vin de pe cea mai
+   * recenta cerere activa a restaurantului. Slider-ul de opacitate si
+   * toggle-ul de ascundere sunt separate: schita se poate stinge complet
+   * cu un click, nu doar reduce.
+   */
+  const [opacitateSchita, setOpacitateSchita] = useState(45)
+  const [schitaVizibila, setSchitaVizibila] = useState(true)
+  const [arataAI, setArataAI] = useState(true)
+
+  const cerereStudio = useQuery({
+    queryKey: CHEI_STUDIO_AI.cerere(restaurantId),
+    queryFn: () => getCerereStudio(restaurantId),
+    enabled: Boolean(restaurantId),
+  })
+
+  const schitaSemnata = useQuery({
+    queryKey: CHEI_FP.schita(cerereStudio.data?.schita_image_url ?? ''),
+    queryFn: () => urlSchita(cerereStudio.data!.schita_image_url!),
+    enabled: Boolean(cerereStudio.data?.schita_image_url),
+    staleTime: 50 * 60 * 1000,
+    refetchInterval: 50 * 60 * 1000,
+  })
+
+  const genereazaAI = useMutation({
+    mutationFn: () => genereazaPlanAI(cerereStudio.data!.id),
+    onSuccess: (rezultat) => {
+      if (rezultat.ok) {
+        notificari.succes(
+          `Best Guess gata: ${rezultat.elemente} elemente, ${rezultat.mese} mese estimate.`,
+        )
+        void queryClient.invalidateQueries({ queryKey: CHEI_STUDIO_AI.cerere(restaurantId) })
+      } else {
+        notificari.atentie(rezultat.motiv)
+      }
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
 
   function reincarcaMese() {
     void queryClient.invalidateQueries({ queryKey: CHEI_EDITOR.mese(restaurantId) })
@@ -468,6 +513,76 @@ export function EditorPlanPage() {
               </>
             )}
 
+            {/* §42.5 — schita originala: toggle de afisare + opacitate. */}
+            {cerereStudio.data?.schita_image_url && (
+              <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1">
+                <Label htmlFor="schita-vizibila" className="text-xs font-normal">
+                  Schita
+                </Label>
+                <Switch
+                  id="schita-vizibila"
+                  checked={schitaVizibila}
+                  onCheckedChange={setSchitaVizibila}
+                />
+                <input
+                  type="range"
+                  min={10}
+                  max={90}
+                  value={opacitateSchita}
+                  disabled={!schitaVizibila}
+                  onChange={(e) => setOpacitateSchita(Number(e.target.value))}
+                  className="w-20 accent-primary"
+                  aria-label="Opacitatea schitei"
+                />
+              </div>
+            )}
+
+            {/* §9.2.2 pasul 1 + §41.3 — Best Guess-ul: generare/regenerare,
+                afisare fantomatica si preluarea structurii in stratul real. */}
+            {cerereStudio.data?.schita_image_url && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={genereazaAI.isPending}
+                  onClick={() => genereazaAI.mutate()}
+                >
+                  {genereazaAI.isPending
+                    ? 'Genereaza...'
+                    : cerereStudio.data.ai_generat_la
+                      ? 'Reincearca generarea AI'
+                      : 'Genereaza AI'}
+                </Button>
+                {cerereStudio.data.ai_rezultat && (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <Label htmlFor="arata-ai" className="text-xs font-normal">
+                        AI
+                      </Label>
+                      <Switch id="arata-ai" checked={arataAI} onCheckedChange={setArataAI} />
+                    </div>
+                    {strat === 'structura' && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={salveazaStructura.isPending}
+                        onClick={() =>
+                          salveazaStructura.mutate({
+                            elemente: [
+                              ...elemente,
+                              ...(cerereStudio.data!.ai_rezultat!.structura ?? []),
+                            ],
+                          })
+                        }
+                      >
+                        Preia structura AI
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
             <span className="ml-auto text-xs text-muted-foreground tabular-nums">
               {strat === 'mese'
                 ? `${meseZona.length} mese in zona`
@@ -487,6 +602,12 @@ export function EditorPlanPage() {
               stratActiv={strat}
               structura={elemente}
               mese={meseZona}
+              fundal={
+                schitaVizibila && schitaSemnata.data
+                  ? { url: schitaSemnata.data, opacitate: opacitateSchita / 100 }
+                  : null
+              }
+              overlayAI={arataAI ? (cerereStudio.data?.ai_rezultat ?? null) : null}
               masaSelectata={masaSelectata}
               onSelecteazaMasa={setMasaSelectata}
               onMutaMasa={(id, x, y) =>
