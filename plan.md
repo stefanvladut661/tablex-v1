@@ -6,20 +6,21 @@
      consuma_credit legat de fluxuri + reminder 2h pe pg_cron, §20.3 suspendarea in RLS,
      §16.2 notificari din List View, §24.7 confirmari, §22.1 retentie GDPR automata,
      §22.2 export CRM. Analiza pe spec: 12/12 module. -->
-<!-- NEXT_TASK: 1) diacritice, restul fisierelor — reia workflow-ul
-     diacritice-ui-wf_e033da5c-267 dupa 17:10 (limita subagenti); prima transa
-     e comisa; 2) §42.5 — schita ca fundal cu opacitate + desenarea
-     overlay-ului AI in Canvas Builder (pipeline-ul si butonul exista, comis);
-     3) restul minorelor din analiza (empty states cu CTA §24.8, iconita+shake
-     la erori §50.6, istoric vizite cu masa §11, demo interactiv pe landing
-     §51.1, mesaj pret agresiv §0, CUI la signup §52, notificari per
-     utilizator §33). NU Stripe — §14 il exclude din v1.
-     ATENTIE: exista un cont de test auth NECONFIRMAT creat manual
+<!-- NEXT_TASK: au ramas DOAR minore din analiza pe spec, in ordinea valorii:
+     1) §51.1 demo interactiv pe landing (mesele nu sunt clickabile acolo —
+        HartaZona e apelata fara onSelecteazaMasa; interactiunea completa
+        exista doar pe /demo); 2) §24.8 empty states cu ilustratie + CTA;
+     3) §0 mesajul de pret agresiv pe landing; 4) §52 CUI cerut inca de la
+     signup; 5) §33 starea de citit a notificarilor per UTILIZATOR (azi e per
+     restaurant: cine citeste, marcheaza pentru toti — cere coloana user_id).
+     NU Stripe — §14 il exclude din v1.
+     ATENTIE: cont de test auth NECONFIRMAT creat manual
      (savuvladut002+admintest@yahoo.com) + login.json/signup.json netracked
      in radacina — ale utilizatorului, nu se sterg automat. -->
-<!-- LAST_COMMIT: vezi git log; migratii remote pana la widget_restaurant_indisponibil;
-     Edge Functions: trimite-email v4, reseteaza-parola-ospatar v1, genereaza-plan-ai v1
-     (cere ANTHROPIC_API_KEY pentru generarea reala) -->
+<!-- LAST_COMMIT: vezi git log; migratii remote pana la
+     performanta_rls_si_indexuri; Edge Functions: trimite-email v4,
+     reseteaza-parola-ospatar v1, genereaza-plan-ai v1 (cere ANTHROPIC_API_KEY
+     pentru generarea reala) -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
@@ -105,6 +106,37 @@ src/
 - Analiza de acoperire (9/12 module; 3 reiau dupa limita): lipsurile mari
   ramase sunt in NEXT_TASK — cap de lista: Harta Adminului nu incarca Layer 1
   publicat (structura={[]}), desi vederea structura_publica exista.
+
+### Jurnal 2026-08-02, partea a doua — analiza completa (12/12) inchisa
+
+Toate cele 12 module au fost analizate fata de spec, iar lipsurile gasite au
+fost inchise. Ce merita retinut:
+
+- **Layer 1 nu ajungea niciodata in portalul Admin** (`structura={[]}`), desi
+  vederea si datele existau de luni de zile. Cel mai mare gol al analizei, si
+  invizibil din interior: harta „mergea", doar ca fara pereti.
+- **§20.3 era aparat doar in React.** current_restaurant_id() intoarce acum
+  NULL pentru restaurant ne-activ — o singura taietura care inchide toate
+  politicile construite pe el. Propriul rand ramane lizibil prin
+  restaurantul_contului(), ca ecranul de blocaj sa poata spune DE CE.
+- **consuma_credit era un mecanism perfect care nu se invartea niciodata.**
+  Acum e legat de widget (in baza — apelantul e anonim), de accept/respinge si
+  de reminderul de 2h din pg_cron.
+- **A treia oara aceeasi lectie pe drepturi:** `revoke from public` nu inchide
+  nimic pentru anon. `credite_whatsapp` lasa oricui soldul comercial al
+  oricarui restaurant. Daca scrii `security definer`, revoca EXPLICIT de la
+  anon si acorda numai cui trebuie.
+- **Sabloanele WhatsApp sunt chei, nu texte.** La sweep-ul de diacritice,
+  parametrul `sablon` a ramas fara diacritice (dedup-ul din baza se sprijina
+  pe el); doar eticheta butonului le-a primit. Verificat explicit dupa sweep,
+  impreuna cu cheile de cache si zilele din program_standard.
+- **Testele au prins singurul efect secundar** al sweep-ului: erori.test.ts
+  astepta mesajele vechi. Fisierele de test au fost excluse deliberat din
+  sweep, tocmai ca esecul sa fie zgomotos, nu tacut.
+- **Politicile RLS cu `auth.uid()` scris direct** il re-evaluau per rand;
+  `(select auth.uid())` il muta intr-un InitPlan. Semantica identica, plan mai
+  bun. Indexuri pe FK: 11 din 28 raportate — restul refera auth.users din
+  coloane de audit care nu se interogheaza niciodata.
 
 ---
 
