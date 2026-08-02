@@ -6,14 +6,20 @@
      consuma_credit legat de fluxuri + reminder 2h pe pg_cron, §20.3 suspendarea in RLS,
      §16.2 notificari din List View, §24.7 confirmari, §22.1 retentie GDPR automata,
      §22.2 export CRM. Analiza pe spec: 12/12 module. -->
-<!-- NEXT_TASK: din analiza completa, in ordinea valorii: 1) §21.1 email catre Admin la
-     rezervare noua + clopotelul navigheaza (§24.5) + toast/sunet (§24.6); 2) §52 resetare
-     parola Ospatar de catre Manager (Edge Function); 3) PWA + buton Walk-In fix mobil +
-     pinch-to-zoom (§22.3/§32); 4) §7.2 Red Flag la creare + §7.5 actiunea de intarziere;
-     5) §16.4 mesaj dedicat suspendare pe widget + §16.1 email ne-obligatoriu; 6) pipeline
-     AI Best-Guess (§9.2.2/§41.3); 7) diacritice pe toate textele vizibile (regula #1).
-     NU Stripe — §14 il exclude din v1. -->
-<!-- LAST_COMMIT: vezi git log; migratii remote pana la retentie_gdpr_automata -->
+<!-- NEXT_TASK: 1) diacritice, restul fisierelor — reia workflow-ul
+     diacritice-ui-wf_e033da5c-267 dupa 17:10 (limita subagenti); prima transa
+     e comisa; 2) §42.5 — schita ca fundal cu opacitate + desenarea
+     overlay-ului AI in Canvas Builder (pipeline-ul si butonul exista, comis);
+     3) restul minorelor din analiza (empty states cu CTA §24.8, iconita+shake
+     la erori §50.6, istoric vizite cu masa §11, demo interactiv pe landing
+     §51.1, mesaj pret agresiv §0, CUI la signup §52, notificari per
+     utilizator §33). NU Stripe — §14 il exclude din v1.
+     ATENTIE: exista un cont de test auth NECONFIRMAT creat manual
+     (savuvladut002+admintest@yahoo.com) + login.json/signup.json netracked
+     in radacina — ale utilizatorului, nu se sterg automat. -->
+<!-- LAST_COMMIT: vezi git log; migratii remote pana la widget_restaurant_indisponibil;
+     Edge Functions: trimite-email v4, reseteaza-parola-ospatar v1, genereaza-plan-ai v1
+     (cere ANTHROPIC_API_KEY pentru generarea reala) -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 
