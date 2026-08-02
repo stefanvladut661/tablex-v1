@@ -39,8 +39,8 @@ import type { Enums } from '@/types/database'
 
 const ETICHETE_STATUS_MESAJ: Record<Enums<'wa_mesaj_status'>, string> = {
   trimis: 'Trimis',
-  esuat: 'Esuat',
-  fara_credite: 'Fara credite',
+  esuat: 'Eșuat',
+  fara_credite: 'Fără credite',
   simulat: 'Simulat',
 }
 
@@ -71,7 +71,7 @@ function BalantaMeta() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Balanta Meta</CardTitle>
+        <CardTitle className="text-base">Balanța Meta</CardTitle>
         <CardDescription>
           Buget lunar simulat (§14) — consumul e cel real din jurnalul de mai jos.
         </CardDescription>
@@ -89,7 +89,7 @@ function BalantaMeta() {
                   / {BUGET_LUNAR_META_SIMULAT} mesaje
                 </span>
               </span>
-              <span className="text-sm text-muted-foreground tabular-nums">{procent}% ramas</span>
+              <span className="text-sm text-muted-foreground tabular-nums">{procent}% rămas</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-muted">
               <div
@@ -126,7 +126,7 @@ function TemplateManager() {
   const creeaza = useMutation({
     mutationFn: () => creeazaSablonWhatsApp(nume.trim(), continut.trim(), utilizator?.id ?? ''),
     onSuccess: () => {
-      notificari.succes('Sablon salvat.')
+      notificari.succes('Șablon salvat.')
       setNume('')
       setContinut('')
       void invalideaza()
@@ -145,8 +145,8 @@ function TemplateManager() {
       <CardHeader>
         <CardTitle className="text-base">Template Manager</CardTitle>
         <CardDescription>
-          Lista de referinta pentru sabloanele oficiale — se trimit spre aprobare Meta cand se
-          conecteaza integrarea.
+          Listă de referință pentru șabloanele oficiale — se trimit spre aprobare Meta când se
+          conectează integrarea.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -158,7 +158,7 @@ function TemplateManager() {
           }}
         >
           <div className="grid gap-1.5">
-            <Label htmlFor="nume-sablon">Nume sablon</Label>
+            <Label htmlFor="nume-sablon">Nume șablon</Label>
             <Input
               id="nume-sablon"
               value={nume}
@@ -168,13 +168,13 @@ function TemplateManager() {
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="continut-sablon">Continut mesaj</Label>
+            <Label htmlFor="continut-sablon">Conținut mesaj</Label>
             <Textarea
               id="continut-sablon"
               rows={3}
               value={continut}
               onChange={(e) => setContinut(e.target.value)}
-              placeholder="Ex: Rezervarea ta la restaurant a fost confirmata. Te asteptam!"
+              placeholder="Ex: Rezervarea ta la restaurant a fost confirmată. Te așteptăm!"
             />
           </div>
           <Button
@@ -184,14 +184,14 @@ function TemplateManager() {
             disabled={creeaza.isPending || !nume.trim() || !continut.trim()}
           >
             <PlusIcon />
-            Salveaza sablonul
+            Salvează șablonul
           </Button>
         </form>
 
         {sabloane.isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : (sabloane.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">Niciun sablon inca.</p>
+          <p className="text-sm text-muted-foreground">Niciun șablon încă.</p>
         ) : (
           <ul className="divide-y divide-border rounded-lg border border-border">
             {(sabloane.data ?? []).map((sablon) => (
@@ -203,7 +203,7 @@ function TemplateManager() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Sterge sablonul ${sablon.nume}`}
+                  aria-label={`Șterge șablonul ${sablon.nume}`}
                   onClick={() => sterge.mutate(sablon.id)}
                   disabled={sterge.isPending}
                 >
@@ -227,8 +227,8 @@ function SystemLogs() {
       <CardHeader>
         <CardTitle className="text-base">System Logs</CardTitle>
         <CardDescription>
-          Starea tuturor mesajelor din retea, cu erorile lor. In v1 niciun mesaj nu pleaca real
-          (§14) — randurile arata ce S-AR fi trimis.
+          Starea tuturor mesajelor din rețea, cu erorile lor. În v1 niciun mesaj nu pleacă real
+          (§14) — rândurile arată ce S-AR fi trimis.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -236,16 +236,16 @@ function SystemLogs() {
           <Skeleton className="h-48 w-full" />
         ) : (jurnal.data ?? []).length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Niciun mesaj in jurnal. Randurile apar cand restaurantele trimit notificari WhatsApp.
+            Niciun mesaj în jurnal. Rândurile apar când restaurantele trimit notificări WhatsApp.
           </p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-32">Cand</TableHead>
+                  <TableHead className="w-32">Când</TableHead>
                   <TableHead>Restaurant</TableHead>
-                  <TableHead>Sablon</TableHead>
+                  <TableHead>Șablon</TableHead>
                   <TableHead className="w-32">Telefon</TableHead>
                   <TableHead className="w-28">Status</TableHead>
                   <TableHead>Eroare</TableHead>
@@ -258,7 +258,7 @@ function SystemLogs() {
                       {dataOra(mesaj.created_at)}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {mesaj.restaurant?.nume ?? 'Restaurant sters'}
+                      {mesaj.restaurant?.nume ?? 'Restaurant șters'}
                     </TableCell>
                     <TableCell className="text-sm">{mesaj.sablon}</TableCell>
                     <TableCell className="text-xs tabular-nums">{mesaj.telefon}</TableCell>

@@ -49,7 +49,7 @@ export async function actualizeazaEveniment(
   if (error) throw error
   // Un UPDATE respins de RLS raspunde 200 cu zero randuri.
   if (!data?.length) {
-    throw new Error('Evenimentul nu a fost modificat: contul tau nu are acest drept.')
+    throw new Error('Evenimentul nu a fost modificat: contul tău nu are acest drept.')
   }
 }
 
@@ -205,7 +205,7 @@ export async function schimbaPlataBilet(id: string, status: StatusPlata): Promis
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Biletul nu a fost modificat: contul tau nu are acest drept.')
+    throw new Error('Biletul nu a fost modificat: contul tău nu are acest drept.')
   }
 }
 

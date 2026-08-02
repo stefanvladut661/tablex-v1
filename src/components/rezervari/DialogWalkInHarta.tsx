@@ -94,7 +94,7 @@ export function DialogWalkInHarta({
         sursa: 'walk_in',
       }),
     onSuccess: () => {
-      notificari.succes('Walk-in asezat. Masa s-a blocat pe harta.')
+      notificari.succes('Walk-in așezat. Masa s-a blocat pe hartă.')
       void queryClient.invalidateQueries({ queryKey: CHEI_REZERVARI.toate(restaurantId) })
       onInchide()
     },
@@ -109,7 +109,7 @@ export function DialogWalkInHarta({
   function laClickMasa(tableId: string) {
     if (creeaza.isPending) return
     if (!libere.has(tableId)) {
-      notificari.info('Masa e ocupata acum. Alege una verde.')
+      notificari.info('Masa e ocupată acum. Alege una verde.')
       return
     }
     creeaza.mutate(tableId)
@@ -123,7 +123,7 @@ export function DialogWalkInHarta({
         <DialogHeader>
           <DialogTitle>Walk-in</DialogTitle>
           <DialogDescription>
-            Pune numarul de persoane, apoi da click pe masa dorita. Masa se blocheaza instant,
+            Pune numărul de persoane, apoi dă click pe masa dorită. Masa se blochează instant,
             inclusiv pe widgetul public.
           </DialogDescription>
         </DialogHeader>
@@ -143,7 +143,7 @@ export function DialogWalkInHarta({
               />
             </div>
             <div className="grid flex-1 gap-1.5">
-              <Label htmlFor="walkin-nume">Nume (optional)</Label>
+              <Label htmlFor="walkin-nume">Nume (opțional)</Label>
               <Input
                 id="walkin-nume"
                 value={nume}
@@ -158,7 +158,7 @@ export function DialogWalkInHarta({
             <Skeleton className="aspect-[3/2] w-full" />
           ) : !zone.data?.length || meseZona.length === 0 ? (
             <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-              Nu exista mese configurate pe harta. Walk-in-ul se poate inregistra si fara masa,
+              Nu există mese configurate pe hartă. Walk-in-ul se poate înregistra și fără masă,
               din butonul Rezervare.
             </p>
           ) : (
@@ -178,8 +178,8 @@ export function DialogWalkInHarta({
               {/* §25.7 — fara mese libere: mesaj simplu, fara auto-Waitlist. */}
               {nicioLibera && (
                 <p className="rounded-lg border border-status-expirare bg-status-expirare-soft p-3 text-sm">
-                  Nu exista mese libere momentan. Poti adauga clientul in lista de asteptare, din
-                  Harta salii.
+                  Nu există mese libere momentan. Poți adăuga clientul în lista de așteptare, din
+                  Harta sălii.
                 </p>
               )}
 
@@ -195,7 +195,7 @@ export function DialogWalkInHarta({
                   />
                   {creeaza.isPending && (
                     <div className="absolute inset-0 flex items-center justify-center bg-background/60">
-                      <Loader2Icon className="size-6 animate-spin" aria-label="Se aseaza" />
+                      <Loader2Icon className="size-6 animate-spin" aria-label="Se așază" />
                     </div>
                   )}
                 </div>
@@ -205,7 +205,7 @@ export function DialogWalkInHarta({
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={onInchide}>
-              Renunta
+              Renunță
             </Button>
           </div>
         </div>

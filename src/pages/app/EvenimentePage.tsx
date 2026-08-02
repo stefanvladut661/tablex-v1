@@ -48,10 +48,10 @@ import {
 import type { MasaHarta } from '@/types/floor-plan'
 
 const ETICHETE_STATUS: Record<string, string> = {
-  draft: 'Ciorna',
+  draft: 'Ciornă',
   publicat: 'Publicat',
   anulat: 'Anulat',
-  incheiat: 'Incheiat',
+  incheiat: 'Încheiat',
 }
 
 /**
@@ -89,13 +89,13 @@ export function EvenimentePage() {
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Evenimente</h1>
           <p className="text-sm text-muted-foreground">
-            Seri speciale cu bilet pe masa. Locul se blocheaza doar la plata.
+            Seri speciale cu bilet pe masă. Locul se blochează doar la plată.
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setScaner(true)}>
             <QrCodeIcon />
-            Scaneaza bilet
+            Scanează bilet
           </Button>
           <Button size="sm" onClick={() => setWizard(true)}>
             <PlusIcon />
@@ -108,14 +108,14 @@ export function EvenimentePage() {
         <Skeleton className="h-40 w-full" />
       ) : (evenimente.data ?? []).length === 0 ? (
         <div className="grid justify-items-start gap-2 rounded-lg border border-border bg-card p-6">
-          <p className="text-sm font-medium">Niciun eveniment inca.</p>
+          <p className="text-sm font-medium">Niciun eveniment încă.</p>
           <p className="text-sm text-muted-foreground">
-            Un eveniment iti lasa sa vinzi mese pentru o seara anume, cu pret pe zona si bilet cu
+            Un eveniment îți lasă să vinzi mese pentru o seară anume, cu preț pe zonă și bilet cu
             cod la intrare.
           </p>
           <Button size="sm" onClick={() => setWizard(true)}>
             <PlusIcon />
-            Creeaza primul eveniment
+            Creează primul eveniment
           </Button>
         </div>
       ) : (
@@ -204,7 +204,7 @@ function CardEveniment({
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <TicketIcon className="size-3.5" />
           <span className="tabular-nums">
-            {vandute} bilete platite din {capacitate.data ?? 0} locuri
+            {vandute} bilete plătite din {capacitate.data ?? 0} locuri
           </span>
         </p>
       </CardContent>
@@ -275,7 +275,7 @@ function PanouEveniment({
       }),
     onSuccess: (bilet) => {
       notificari.succes(`Bilet emis: ${bilet.cod}`, {
-        descriere: 'Neplatit deocamdata — masa se blocheaza abia la plata.',
+        descriere: 'Neplătit deocamdată — masa se blochează abia la plată.',
       })
       setNume('')
       setPret('')
@@ -288,7 +288,7 @@ function PanouEveniment({
   const plateste = useMutation({
     mutationFn: (id: string) => schimbaPlataBilet(id, 'platit'),
     onSuccess: () => {
-      notificari.succes('Bilet marcat ca platit. Masa e acum blocata.')
+      notificari.succes('Bilet marcat ca plătit. Masa e acum blocată.')
       reincarca()
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -302,7 +302,7 @@ function PanouEveniment({
             {eveniment.nume}
             <Button variant="outline" size="xs" onClick={() => setEditare(true)}>
               <PencilIcon />
-              Editeaza
+              Editează
             </Button>
           </SheetTitle>
           <SheetDescription>
@@ -314,18 +314,18 @@ function PanouEveniment({
           {eveniment.afis_url && (
             <img
               src={eveniment.afis_url}
-              alt={`Afisul evenimentului ${eveniment.nume}`}
+              alt={`Afișul evenimentului ${eveniment.nume}`}
               className="max-h-44 w-full rounded-lg border border-border object-cover"
             />
           )}
           <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-3">
             <div>
               <p className="text-sm font-medium">
-                {eveniment.status === 'publicat' ? 'Publicat' : 'Ciorna'}
+                {eveniment.status === 'publicat' ? 'Publicat' : 'Ciornă'}
               </p>
               <p className="text-xs text-muted-foreground">
                 {eveniment.status === 'publicat'
-                  ? 'Apare pe pagina de rezervari, daca anuntul e pornit.'
+                  ? 'Apare pe pagina de rezervări, dacă anunțul e pornit.'
                   : 'Vizibil doar pentru personal.'}
               </p>
             </div>
@@ -335,7 +335,7 @@ function PanouEveniment({
               disabled={publica.isPending}
               onClick={() => publica.mutate(eveniment.status === 'publicat' ? 'draft' : 'publicat')}
             >
-              {eveniment.status === 'publicat' ? 'Retrage' : 'Publica'}
+              {eveniment.status === 'publicat' ? 'Retrage' : 'Publică'}
             </Button>
           </div>
 
@@ -344,8 +344,8 @@ function PanouEveniment({
           <div className="grid gap-2 rounded-lg border border-dashed border-border p-3">
             <p className="text-sm font-medium">Emite un bilet</p>
             <p className="text-xs text-muted-foreground">
-              Demonstrativ: plata online se activeaza mai tarziu. Masa se blocheaza cand marchezi
-              biletul ca platit.
+              Demonstrativ: plata online se activează mai târziu. Masa se blochează când marchezi
+              biletul ca plătit.
             </p>
             <div className="grid gap-2 sm:grid-cols-[1fr_6rem_8rem_auto]">
               <div className="grid gap-1">
@@ -361,7 +361,7 @@ function PanouEveniment({
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="bilet-pret" className="text-xs">
-                  Pret (EUR)
+                  Preț (EUR)
                 </Label>
                 <Input
                   id="bilet-pret"
@@ -384,7 +384,7 @@ function PanouEveniment({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fara">Fara masa</SelectItem>
+                    <SelectItem value="fara">Fără masă</SelectItem>
                     {(meseEveniment.data ?? []).map((tableId) => (
                       <SelectItem key={tableId} value={tableId}>
                         Masa {numarMasa(tableId)}
@@ -409,7 +409,7 @@ function PanouEveniment({
             {bilete.isLoading ? (
               <Skeleton className="h-24 w-full" />
             ) : (bilete.data ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Niciun bilet emis inca.</p>
+              <p className="text-sm text-muted-foreground">Niciun bilet emis încă.</p>
             ) : (
               <ul className="grid gap-1.5">
                 {(bilete.data ?? []).map((bilet) => (
@@ -443,7 +443,7 @@ function PanouEveniment({
                       {bilet.scanat_la ? (
                         <Badge variant="secondary">Scanat</Badge>
                       ) : bilet.status_plata === 'platit' ? (
-                        <Badge>Platit</Badge>
+                        <Badge>Plătit</Badge>
                       ) : (
                         <Button
                           size="xs"
@@ -451,7 +451,7 @@ function PanouEveniment({
                           disabled={plateste.isPending}
                           onClick={() => plateste.mutate(bilet.id)}
                         >
-                          Marcheaza platit
+                          Marchează plătit
                         </Button>
                       )}
                     </span>
@@ -478,8 +478,8 @@ function PanouEveniment({
               </div>
               <p className="text-center text-xs text-muted-foreground">
                 {qrPentru.status_plata === 'platit'
-                  ? 'Bilet platit — valid la intrare.'
-                  : 'Biletul NU e platit inca: scanerul il va respinge.'}
+                  ? 'Bilet plătit — valid la intrare.'
+                  : 'Biletul NU e plătit încă: scanerul îl va respinge.'}
               </p>
             </DialogContent>
           </Dialog>

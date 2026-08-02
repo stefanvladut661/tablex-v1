@@ -42,7 +42,7 @@ function Blocaj({
         <CardContent className="flex flex-col gap-3">
           {copil}
           <Button variant="outline" onClick={() => void deconectare()}>
-            Iesi din cont
+            Ieși din cont
           </Button>
         </CardContent>
       </Card>
@@ -102,7 +102,7 @@ export function RutaAdmin() {
     return (
       <Blocaj
         titlu="Cont dezactivat"
-        descriere="Accesul tau a fost dezactivat de managerul restaurantului."
+        descriere="Accesul tău a fost dezactivat de managerul restaurantului."
       />
     )
   }
@@ -113,7 +113,7 @@ export function RutaAdmin() {
         titlu={profil.restaurant.status === 'banat' ? 'Cont blocat' : 'Cont suspendat'}
         descriere={
           profil.restaurant.motiv_suspendare ??
-          'Contacteaza echipa TableX pentru reactivarea contului.'
+          'Contactează echipa TableX pentru reactivarea contului.'
         }
       />
     )
@@ -139,7 +139,7 @@ export function RutaSuperAdmin() {
   if (!profil || profil.tip !== 'super_admin') return <Navigate to={RUTE.acasa} replace />
 
   if (!profil.cont.activ) {
-    return <Blocaj titlu="Cont dezactivat" descriere="Contul tau de echipa nu mai este activ." />
+    return <Blocaj titlu="Cont dezactivat" descriere="Contul tău de echipă nu mai este activ." />
   }
 
   return <Outlet />

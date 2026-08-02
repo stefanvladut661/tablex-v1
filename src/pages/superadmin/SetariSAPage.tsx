@@ -51,17 +51,17 @@ const ETICHETE_AUDIT: Record<Enums<'audit_actiune'>, string> = {
   discount: 'Discount',
   manual_floor_plan_unlock: 'Deblocare floor plan',
   schimbare_plan: 'Schimbare plan',
-  nota: 'Nota',
-  schimbare_preturi: 'Schimbare preturi',
-  maintenance_toggle: 'Mentenanta',
+  nota: 'Notă',
+  schimbare_preturi: 'Schimbare prețuri',
+  maintenance_toggle: 'Mentenanță',
 }
 
 const ETICHETE_PRET: Record<string, string> = {
   pret_plan_start: 'Plan Start (lunar)',
   pret_plan_pro: 'Plan Pro (lunar)',
   setup_floor_plan_pret: 'Configurare floor plan',
-  setup_prag_mese: 'Mese incluse in configurare',
-  setup_pret_masa_extra: 'Pret pe masa suplimentara',
+  setup_prag_mese: 'Mese incluse în configurare',
+  setup_pret_masa_extra: 'Preț pe masă suplimentară',
   comision_bilete_procent: 'Comision bilete (%)',
 }
 
@@ -94,7 +94,7 @@ function TabSetariGlobale() {
   const salveaza = useMutation({
     mutationFn: actualizeazaSetariGlobale,
     onSuccess: () => {
-      notificari.succes('Setarile globale au fost salvate.')
+      notificari.succes('Setările globale au fost salvate.')
       setConfirmare(null)
       void queryClient.invalidateQueries({ queryKey: CHEI_SA.setari })
     },
@@ -107,8 +107,8 @@ function TabSetariGlobale() {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Preturi</CardTitle>
-          <CardDescription>Se afiseaza imediat pe pagina publica de prezentare.</CardDescription>
+          <CardTitle className="text-base">Prețuri</CardTitle>
+          <CardDescription>Se afișează imediat pe pagina publică de prezentare.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
           {(Object.keys(ETICHETE_PRET) as CheiePret[]).map((cheie) => (
@@ -136,14 +136,14 @@ function TabSetariGlobale() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Mentenanta</CardTitle>
+          <CardTitle className="text-base">Mentenanță</CardTitle>
           <CardDescription>
-            Cand e pornita, panourile arata mesajul de mai jos in loc de aplicatie.
+            Când e pornită, panourile arată mesajul de mai jos în loc de aplicație.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
-            <Label htmlFor="mentenanta">Mod mentenanta</Label>
+            <Label htmlFor="mentenanta">Mod mentenanță</Label>
             <Switch
               id="mentenanta"
               checked={setari.data.maintenance_mode}
@@ -152,7 +152,7 @@ function TabSetariGlobale() {
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="mesaj">Mesaj afisat</Label>
+            <Label htmlFor="mesaj">Mesaj afișat</Label>
             <Textarea
               id="mesaj"
               rows={3}
@@ -165,7 +165,7 @@ function TabSetariGlobale() {
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="retentie">Retentie implicita (ani)</Label>
+            <Label htmlFor="retentie">Retenție implicită (ani)</Label>
             <Input
               id="retentie"
               type="number"
@@ -180,7 +180,7 @@ function TabSetariGlobale() {
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Se aplica restaurantelor noi; cele existente isi pastreaza setarea.
+              Se aplică restaurantelor noi; cele existente își păstrează setarea.
             </p>
           </div>
         </CardContent>
@@ -190,22 +190,22 @@ function TabSetariGlobale() {
         <Dialog open onOpenChange={(deschis) => !deschis && setConfirmare(null)}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Confirmi noul pret?</DialogTitle>
+              <DialogTitle>Confirmi noul preț?</DialogTitle>
               <DialogDescription>
                 {ETICHETE_PRET[confirmare.cheie]}: {String(setari.data[confirmare.cheie])} →{' '}
-                {confirmare.valoare}. Schimbarea se vede imediat pe pagina publica si intra in
+                {confirmare.valoare}. Schimbarea se vede imediat pe pagina publică și intră în
                 registrul de audit.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setConfirmare(null)}>
-                Renunta
+                Renunță
               </Button>
               <Button
                 disabled={salveaza.isPending}
                 onClick={() => salveaza.mutate({ [confirmare.cheie]: confirmare.valoare })}
               >
-                Confirma
+                Confirmă
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -223,7 +223,7 @@ function TabRegistru() {
   if ((audit.data ?? []).length === 0) {
     return (
       <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-        Nicio intervenție inregistrata.
+        Nicio intervenție înregistrată.
       </p>
     )
   }
@@ -233,7 +233,7 @@ function TabRegistru() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-36">Cand</TableHead>
+            <TableHead className="w-36">Când</TableHead>
             <TableHead className="w-44">Acțiune</TableHead>
             <TableHead>Restaurant</TableHead>
             <TableHead>Autor</TableHead>
@@ -269,12 +269,12 @@ export function SetariSAPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-6">
-      <h1 className="mb-4 text-lg font-semibold tracking-tight">Setari & echipa</h1>
+      <h1 className="mb-4 text-lg font-semibold tracking-tight">Setări & echipă</h1>
 
       <Tabs defaultValue="echipa">
         <TabsList>
           <TabsTrigger value="echipa">Echipa TableX</TabsTrigger>
-          <TabsTrigger value="globale">Setari globale</TabsTrigger>
+          <TabsTrigger value="globale">Setări globale</TabsTrigger>
           <TabsTrigger value="registru">Registru</TabsTrigger>
         </TabsList>
 

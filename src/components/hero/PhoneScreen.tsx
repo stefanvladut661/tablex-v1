@@ -75,7 +75,7 @@ export function PhoneScreen() {
 
         {/* Titlul */}
         <Aparitie la={e.titlu} className="px-1">
-          <p className="text-[13px] font-semibold text-foreground">Rezervarile de diseara</p>
+          <p className="text-[13px] font-semibold text-foreground">Rezervările de diseară</p>
           <p className="font-mono text-[10px] tracking-[0.06em] text-muted-foreground uppercase">
             18 mese · 46 locuri
           </p>
@@ -105,9 +105,9 @@ export function PhoneScreen() {
 
         {/* Randul "Upcoming" + pill de status */}
         <Aparitie la={e.upcoming} className="flex items-center justify-between px-1">
-          <span className="text-[11px] font-medium text-muted-foreground">Urmeaza</span>
+          <span className="text-[11px] font-medium text-muted-foreground">Urmează</span>
           <span className="rounded-full bg-accent px-2 py-0.5 font-mono text-[9px] font-medium tracking-[0.06em] text-accent-foreground uppercase">
-            In grafic
+            În grafic
           </span>
         </Aparitie>
 

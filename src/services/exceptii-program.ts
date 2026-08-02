@@ -76,6 +76,6 @@ export async function stergeExceptie(id: string): Promise<void> {
   // zero randuri. Fara verificarea asta, un ospatar care apeleaza direct API-ul
   // ar vedea "sters" pentru ceva ce a ramas pe loc. (Lectia din Faza 3.)
   if (!data?.length) {
-    throw new Error('Excepția nu a fost stearsa: doar managerul poate schimba programul.')
+    throw new Error('Excepția nu a fost ștearsă: doar managerul poate schimba programul.')
   }
 }

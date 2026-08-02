@@ -43,8 +43,8 @@ const schema = z.object({
   slug: z
     .string()
     .trim()
-    .refine(slugValid, 'Adresa poate avea 3–50 caractere: litere mici, cifre si cratime.'),
-  tipLocatie: z.string().min(1, 'Alege tipul locatiei.'),
+    .refine(slugValid, 'Adresa poate avea 3–50 caractere: litere mici, cifre și cratime.'),
+  tipLocatie: z.string().min(1, 'Alege tipul locației.'),
   oras: z.string().trim().max(120).optional(),
   adresa: z.string().trim().max(240).optional(),
   telefon: telefonSchema,
@@ -58,7 +58,7 @@ type FormOnboarding = z.infer<typeof schema>
 /** Campurile care trebuie sa fie valide ca sa poti trece de primul pas. */
 const CAMPURI_PAS_1 = ['nume', 'slug', 'tipLocatie', 'oras', 'adresa', 'telefon', 'numeFirma', 'cui'] as const
 
-const PASI = ['Datele locatiei', 'Planul', 'Activare'] as const
+const PASI = ['Datele locației', 'Planul', 'Activare'] as const
 
 function euro(valoare: number | string | null | undefined): string {
   const numar = Number(valoare ?? 0)
@@ -134,7 +134,7 @@ export function OnboardingPage() {
     const valid = await form.trigger([...CAMPURI_PAS_1])
     if (!valid) return
     if (verificare.data === false) {
-      form.setError('slug', { message: 'Adresa este deja folosita. Alege alta.' })
+      form.setError('slug', { message: 'Adresa este deja folosită. Alege alta.' })
       return
     }
     setPas(1)
@@ -156,7 +156,7 @@ export function OnboardingPage() {
       })
       await reincarcaProfil()
       notificari.succes('Restaurantul a fost creat.', {
-        descriere: 'Poti invita personalul din secțiunea Echipa.',
+        descriere: 'Poți invita personalul din secțiunea Echipa.',
       })
       navigate(RUTE.app, { replace: true })
     } catch (eroare) {
@@ -165,7 +165,7 @@ export function OnboardingPage() {
       const mesaj = eroare instanceof Error ? eroare.message : ''
       if (mesaj.includes('nu este disponibila')) {
         setPas(0)
-        form.setError('slug', { message: 'Adresa tocmai a fost ocupata. Alege alta.' })
+        form.setError('slug', { message: 'Adresa tocmai a fost ocupată. Alege alta.' })
       }
       notificari.eroare(eroare)
     }
@@ -197,7 +197,7 @@ export function OnboardingPage() {
           <span className="text-lg font-semibold tracking-tight">
             Table<span className="text-primary">X</span>
           </span>
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight">Configureaza restaurantul</h1>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight">Configurează restaurantul</h1>
           <ol className="mt-4 flex items-center justify-center gap-2 text-xs">
             {PASI.map((eticheta, i) => (
               <li key={eticheta} className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export function OnboardingPage() {
                 <CardHeader>
                   <CardTitle className="text-base">Identitate</CardTitle>
                   <CardDescription>
-                    Numele si adresa publica la care clientii pot rezerva.
+                    Numele și adresa publică la care clienții pot rezerva.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
@@ -246,7 +246,7 @@ export function OnboardingPage() {
                   />
 
                   <div className="grid gap-1.5">
-                    <Label htmlFor="slug">Adresa publica</Label>
+                    <Label htmlFor="slug">Adresa publică</Label>
                     <div className="flex items-center gap-2">
                       <span className="shrink-0 text-sm text-muted-foreground">tablex.ro/r/</span>
                       <div className="relative flex-1">
@@ -277,17 +277,17 @@ export function OnboardingPage() {
                       </p>
                     ) : stareSlug === 'ocupat' ? (
                       <p className="text-xs font-medium text-destructive">
-                        Adresa este deja folosita sau rezervata de sistem.
+                        Adresa este deja folosită sau rezervată de sistem.
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        Litere mici, cifre si cratime. Se genereaza automat din nume.
+                        Litere mici, cifre și cratime. Se generează automat din nume.
                       </p>
                     )}
                   </div>
 
                   <div className="grid gap-1.5">
-                    <Label htmlFor="tipLocatie">Tip locatie</Label>
+                    <Label htmlFor="tipLocatie">Tip locație</Label>
                     <Controller
                       control={form.control}
                       name="tipLocatie"
@@ -310,7 +310,7 @@ export function OnboardingPage() {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <CampText
-                      eticheta="Oras"
+                      eticheta="Oraș"
                       eroare={form.formState.errors.oras?.message}
                       {...form.register('oras')}
                     />
@@ -325,7 +325,7 @@ export function OnboardingPage() {
 
                   <CampText
                     eticheta="Adresa"
-                    ajutor="Optional. Apare in widgetul public."
+                    ajutor="Opțional. Apare în widgetul public."
                     eroare={form.formState.errors.adresa?.message}
                     {...form.register('adresa')}
                   />
@@ -335,11 +335,11 @@ export function OnboardingPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Date de facturare</CardTitle>
-                  <CardDescription>Apar pe factura, cand se activeaza plata.</CardDescription>
+                  <CardDescription>Apar pe factură, când se activează plata.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
                   <CampText
-                    eticheta="Denumire firma"
+                    eticheta="Denumire firmă"
                     eroare={form.formState.errors.numeFirma?.message}
                     {...form.register('numeFirma')}
                   />
@@ -353,12 +353,12 @@ export function OnboardingPage() {
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-muted-foreground">
-                  Ai primit o invitatie de la un restaurant? Deschide linkul din email in loc sa
+                  Ai primit o invitație de la un restaurant? Deschide linkul din email în loc să
                   creezi un cont nou.
                 </p>
                 {/* type=button: pasul 1 nu trimite formularul, doar valideaza. */}
                 <Button type="button" onClick={() => void mergiLaPlan()}>
-                  Continua
+                  Continuă
                 </Button>
               </div>
             </>
@@ -371,7 +371,7 @@ export function OnboardingPage() {
                 <CardHeader>
                   <CardTitle className="text-base">Alege planul</CardTitle>
                   <CardDescription>
-                    Il poti schimba oricand din Setari, fara penalizare si fara contract.
+                    Îl poți schimba oricând din Setări, fără penalizare și fără contract.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -397,11 +397,11 @@ export function OnboardingPage() {
                               </span>
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              Registru de rezervari, calendar, widget public, walk-in, lista de
-                              asteptare si CRM. Rezervari si utilizatori nelimitati.
+                              Registru de rezervări, calendar, widget public, walk-in, lista de
+                              așteptare și CRM. Rezervări și utilizatori nelimitați.
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              Fara harta 2D a salii.
+                              Fără harta 2D a sălii.
                             </span>
                           </span>
                         </Label>
@@ -418,12 +418,12 @@ export function OnboardingPage() {
                               </span>
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              Tot din Start, plus harta 2D interactiva a salii: status live pe
-                              mese, mutarea rezervarilor intre mese, unirea meselor pentru grupuri.
+                              Tot din Start, plus harta 2D interactivă a sălii: status live pe
+                              mese, mutarea rezervărilor între mese, unirea meselor pentru grupuri.
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              Plus o taxa unica de configurare a planului, desenat de echipa
-                              noastra din schita ta.
+                              Plus o taxă unică de configurare a planului, desenat de echipa
+                              noastră din schița ta.
                             </span>
                           </span>
                         </Label>
@@ -436,10 +436,10 @@ export function OnboardingPage() {
               <div className="flex items-center justify-between gap-3">
                 <Button type="button" variant="ghost" onClick={() => setPas(0)}>
                   <ArrowLeftIcon />
-                  Inapoi
+                  Înapoi
                 </Button>
                 <Button type="button" onClick={() => setPas(2)}>
-                  Continua
+                  Continuă
                 </Button>
               </div>
             </>
@@ -450,7 +450,7 @@ export function OnboardingPage() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Ce vei plati</CardTitle>
+                  <CardTitle className="text-base">Ce vei plăti</CardTitle>
                   <CardDescription>
                     {form.getValues('nume')} · tablex.ro/r/{form.getValues('slug')}
                   </CardDescription>
@@ -469,12 +469,12 @@ export function OnboardingPage() {
                   {planAles === 'pro_floor' && (
                     <div className="grid gap-2 rounded-lg border border-border p-3">
                       <div className="flex items-center justify-between gap-3 text-sm">
-                        <span>Configurare harta 2D (o singura data)</span>
+                        <span>Configurare hartă 2D (o singură dată)</span>
                         <span className="font-medium tabular-nums">{euro(setupTotal)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Label htmlFor="mese-estimate" className="text-xs text-muted-foreground">
-                          Cate mese ai, aproximativ?
+                          Câte mese ai, aproximativ?
                         </Label>
                         <Input
                           id="mese-estimate"
@@ -487,10 +487,10 @@ export function OnboardingPage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {euro(pretSetup)} acopera pana la {pragMese} de mese, indiferent de cate
-                        zone ai. Peste, {euro(pretMasaExtra)} pentru fiecare masa in plus. Numarul
-                        exact se stabileste dupa ce vedem planul salii — estimarea de aici nu se
-                        salveaza nicaieri.
+                        {euro(pretSetup)} acoperă până la {pragMese} de mese, indiferent de câte
+                        zone ai. Peste, {euro(pretMasaExtra)} pentru fiecare masă în plus. Numărul
+                        exact se stabilește după ce vedem planul sălii — estimarea de aici nu se
+                        salvează nicăieri.
                       </p>
                     </div>
                   )}
@@ -506,15 +506,15 @@ export function OnboardingPage() {
                 </CardHeader>
                 <CardContent className="grid gap-3">
                   <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center">
-                    <p className="text-sm font-medium">Plata online se activeaza in curand</p>
+                    <p className="text-sm font-medium">Plata online se activează în curând</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Deocamdata contul se deschide fara card. Te contactam pentru facturare
-                      inainte de prima plata; pana atunci ai acces complet la planul ales.
+                      Deocamdată contul se deschide fără card. Te contactăm pentru facturare
+                      înainte de prima plată; până atunci ai acces complet la planul ales.
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Fara contract pe termen lung si fara comision pe rezervare. Poti schimba planul
-                    sau renunta oricand.
+                    Fără contract pe termen lung și fără comision pe rezervare. Poți schimba planul
+                    sau renunța oricând.
                   </p>
                 </CardContent>
               </Card>
@@ -522,11 +522,11 @@ export function OnboardingPage() {
               <div className="flex items-center justify-between gap-3">
                 <Button type="button" variant="ghost" onClick={() => setPas(1)}>
                   <ArrowLeftIcon />
-                  Inapoi
+                  Înapoi
                 </Button>
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting && <Loader2Icon className="animate-spin" />}
-                  Activeaza contul
+                  Activează contul
                 </Button>
               </div>
             </>
