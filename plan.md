@@ -1,13 +1,19 @@
 # TableX.ro v1 - Plan de Dezvoltare & Checkpoint
 
-<!-- LAST_COMPLETED: Super-Admin Command Center complet (§9, §38-§47): sidebar 7 sectiuni,
-     Overview, Finance DEMO, Communications, Support&Ticketing, roluri interne impuse in baza -->
-<!-- NEXT_TASK: lipsurile gasite de analiza pe spec (vezi lista de mai jos, sesiunea
-     2026-08-02): 1) Harta Adminului nu incarca Layer 1 publicat; 2) vizual Evenimente
-     (afis/QR/Mod Eveniment); 3) widget public (email toggle + logo); 4) Calendar §25.4-25.6;
-     5) consuma_credit neconectat la fluxuri; 6) §20.3 suspendarea neimpusa in RLS;
-     7) pipeline AI Best-Guess. NU Stripe — §14 il exclude din v1. -->
-<!-- LAST_COMMIT: vezi git log; migratiile pana la drepturi_functii_echipa aplicate remote -->
+<!-- LAST_COMPLETED: Command Center complet (§9); valul 2 de lipsuri inchis: Layer 1 pe
+     harta Adminului + zoom, vizual Evenimente (afis/QR/violet/editare), widget (email
+     toggle + logo + AnuntEveniment partajat), Calendar §25.4-25.6 (walk-in pe harta),
+     consuma_credit legat de fluxuri + reminder 2h pe pg_cron, §20.3 suspendarea in RLS,
+     §16.2 notificari din List View, §24.7 confirmari, §22.1 retentie GDPR automata,
+     §22.2 export CRM. Analiza pe spec: 12/12 module. -->
+<!-- NEXT_TASK: din analiza completa, in ordinea valorii: 1) §21.1 email catre Admin la
+     rezervare noua + clopotelul navigheaza (§24.5) + toast/sunet (§24.6); 2) §52 resetare
+     parola Ospatar de catre Manager (Edge Function); 3) PWA + buton Walk-In fix mobil +
+     pinch-to-zoom (§22.3/§32); 4) §7.2 Red Flag la creare + §7.5 actiunea de intarziere;
+     5) §16.4 mesaj dedicat suspendare pe widget + §16.1 email ne-obligatoriu; 6) pipeline
+     AI Best-Guess (§9.2.2/§41.3); 7) diacritice pe toate textele vizibile (regula #1).
+     NU Stripe — §14 il exclude din v1. -->
+<!-- LAST_COMMIT: vezi git log; migratii remote pana la retentie_gdpr_automata -->
 <!-- GITHUB_REPO: https://github.com/stefanvladut661/tablex-v1.git -->
 <!-- BRANCH: main (NU master) -->
 

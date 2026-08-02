@@ -55,7 +55,7 @@ finalul fiecarei sesiuni, nu inainte.
 
 ## Abateri asumate fata de spec
 
-Doua, amandoua deliberate — daca le schimbi, schimba si randurile astea:
+Toate deliberate — daca schimbi una, schimba si randul ei de aici:
 
 - **Rutele sunt `/app/...`, fara slug**, desi §4 cere `/app/[slug]`. Un cont
   apartine unui singur restaurant (§20.1), deci slug-ul in URL ar fi decorativ,
@@ -63,6 +63,18 @@ Doua, amandoua deliberate — daca le schimbi, schimba si randurile astea:
 - **Sidebar-ul are 8 intrari, nu 7** (§24.1): Clienti (CRM, §11) e a opta.
   Spec-ul cere CRM-ul ca modul, dar nu-l listeaza in sidebar; e folosit zilnic,
   la telefon, iar ascunderea lui ar fi un regres.
+- **Ospatarul NU muta mesele**, desi matricea §31 ii da „acces complet" pe
+  Floor Plan. El foloseste harta (rezervari, walk-in, bara orara), dar mobila
+  o rearanjeaza doar managerul — impus si de RLS pe `tables`. Un deget
+  alunecat pe tableta, in sala plina, nu are voie sa strice planul.
+- **rezerva_public are rate-limiting** (5 cereri/24h per telefon), desi §16.3
+  cere explicit „nimic anti-spam in v1". API-ul e public si anonim; fara
+  limita, un script poate umple sala cu cereri false intr-un minut.
+- **Design: accent albastru royal, titluri Plus Jakarta Sans, colturi
+  rounded-lg/xl si carduri flat cu ring**, fata de §3 (verde smarald) si §50
+  (Inter peste tot, rounded-md, umbre subtile). Alegeri de directie vizuala
+  facute la constructia landing-ului, comentate in `src/index.css`; schimba
+  tokenii de acolo daca vrei alinierea la litera spec-ului.
 
 ## Cum se verifica o functionalitate
 
