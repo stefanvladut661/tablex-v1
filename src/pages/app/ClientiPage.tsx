@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangleIcon, MergeIcon, SearchIcon } from 'lucide-react'
+import { AlertTriangleIcon, DownloadIcon, MergeIcon, SearchIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/hooks/useAuth'
 import { useNotificari } from '@/hooks/useNotificari'
+import { construiesteCsv, descarcaCsv } from '@/lib/csv'
 import { ETICHETE_STATUS_REZERVARE, ETICHETE_SURSA_REZERVARE } from '@/lib/etichete'
 import { formatFus } from '@/lib/timp'
 import {
@@ -117,9 +118,26 @@ export function ClientiPage() {
       (client) =>
         (client.nume ?? '').toLowerCase().includes(termen) ||
         client.telefon.includes(termen) ||
-        (client.email ?? '').toLowerCase().includes(termen),
+        (client.email ?? '').toLowerCase().includes(termen) ||
+        // §11 cere cautarea si dupa tag — „vip", „alergie" etc.
+        client.taguri.some((tag) => tag.toLowerCase().includes(termen)),
     )
   }, [clienti.data, caut])
+
+  /** §22.2 — exportul CRM, cu filtrul de cautare aplicat, ca in List View. */
+  function exporta() {
+    const csv = construiesteCsv(filtrati, [
+      { titlu: 'Nume', valoare: (c) => c.nume },
+      { titlu: 'Telefon', valoare: (c) => c.telefon },
+      { titlu: 'Email', valoare: (c) => c.email },
+      { titlu: 'Vizite', valoare: (c) => c.nr_vizite },
+      { titlu: 'Neprezentari', valoare: (c) => c.nr_no_show },
+      { titlu: 'Ultima vizita', valoare: (c) => c.data_ultima_vizita },
+      { titlu: 'Taguri', valoare: (c) => c.taguri.join(', ') },
+      { titlu: 'Note', valoare: (c) => c.note },
+    ])
+    descarcaCsv(`clienti-${formatFus(new Date(), 'yyyy-MM-dd', fus)}.csv`, csv)
+  }
 
   return (
     <div className="grid gap-4">
@@ -130,15 +148,26 @@ export function ClientiPage() {
             Fisele apar singure din rezervari, cu telefonul drept cheie.
           </p>
         </div>
-        <div className="relative">
-          <SearchIcon className="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={caut}
-            onChange={(e) => setCaut(e.target.value)}
-            placeholder="Nume, telefon, email"
-            className="h-9 w-64 pl-7"
-            aria-label="Caut clienti"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <SearchIcon className="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={caut}
+              onChange={(e) => setCaut(e.target.value)}
+              placeholder="Nume, telefon, email, tag"
+              className="h-9 w-64 pl-7"
+              aria-label="Caut clienti"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={filtrati.length === 0}
+            onClick={exporta}
+          >
+            <DownloadIcon />
+            Export CSV
+          </Button>
         </div>
       </div>
 
