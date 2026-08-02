@@ -3,7 +3,6 @@
 // Sursa: schema publica a proiectului Supabase (migratiile din supabase/migrations).
 // Regenerare: npx supabase gen types typescript --project-id <ref> > src/types/database.ts
 // ═══════════════════════════════════════════════════════════════════════
-
 export type Json =
   | string
   | number
@@ -1767,6 +1766,7 @@ export type Database = {
           created_at: string
           eroare: string | null
           id: string
+          reservation_id: string | null
           restaurant_id: string
           sablon: string
           status: Database["public"]["Enums"]["wa_mesaj_status"]
@@ -1777,6 +1777,7 @@ export type Database = {
           created_at?: string
           eroare?: string | null
           id?: string
+          reservation_id?: string | null
           restaurant_id: string
           sablon: string
           status?: Database["public"]["Enums"]["wa_mesaj_status"]
@@ -1787,12 +1788,20 @@ export type Database = {
           created_at?: string
           eroare?: string | null
           id?: string
+          reservation_id?: string | null
           restaurant_id?: string
           sablon?: string
           status?: Database["public"]["Enums"]["wa_mesaj_status"]
           telefon?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "whatsapp_mesaje_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "whatsapp_mesaje_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -2159,7 +2168,22 @@ export type Database = {
       are_floor_plan: { Args: never; Returns: boolean }
       capacitate_eveniment: { Args: { p_event_id: string }; Returns: number }
       consuma_credit: {
-        Args: { p_continut?: string; p_sablon: string; p_telefon: string }
+        Args: {
+          p_continut?: string
+          p_reservation_id?: string
+          p_sablon: string
+          p_telefon: string
+        }
+        Returns: boolean
+      }
+      consuma_credit_intern: {
+        Args: {
+          p_continut?: string
+          p_reservation_id?: string
+          p_restaurant_id: string
+          p_sablon: string
+          p_telefon: string
+        }
         Returns: boolean
       }
       contopeste_clienti: {
@@ -2281,6 +2305,7 @@ export type Database = {
         Returns: Json
       }
       slug_disponibil: { Args: { p_slug: string }; Returns: boolean }
+      trimite_remindere_whatsapp: { Args: never; Returns: number }
       uneste_mese: { Args: { p_table_ids: string[] }; Returns: string }
       verifica_conflicte_buffer: {
         Args: { p_buffer_nou: number; p_restaurant_id: string }

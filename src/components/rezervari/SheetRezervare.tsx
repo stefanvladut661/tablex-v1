@@ -24,6 +24,7 @@ import { ETICHETE_SURSA_REZERVARE } from '@/lib/etichete'
 import { formatFus, ora } from '@/lib/timp'
 import { trimiteEmail, type TipEmail } from '@/services/email'
 import type { Rezervare, StatusRezervare } from '@/services/rezervari'
+import { trimiteWhatsAppSimulat } from '@/services/whatsapp'
 
 type Props = {
   rezervare: Rezervare | null
@@ -40,11 +41,21 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
    * emailTip declanseaza si un email catre client, DUPA ce schimbarea de status
    * a reusit. Trimiterea nu poate anula schimbarea: rezervarea e deja
    * confirmata sau respinsa in baza.
+   *
+   * §16.2: acceptarea si respingerea incearca AMBELE canale — email (daca
+   * exista) si WhatsApp. Mesajul WhatsApp consuma 1 credit si pleaca doar
+   * daca restaurantul are credite; fara ele, doar jurnalul consemneaza esecul.
    */
-  function schimba(status: StatusRezervare, mesaj: string, emailTip?: TipEmail) {
+  function schimba(
+    status: StatusRezervare,
+    mesaj: string,
+    emailTip?: TipEmail,
+    whatsappSablon?: string,
+  ) {
     if (!rezervare) return
     const id = rezervare.id
     const areEmail = Boolean(rezervare.email)
+    const telefon = rezervare.telefon
 
     schimbaStatus.mutate(
       { id, status },
@@ -53,6 +64,9 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
           notificari.succes(mesaj)
           onInchide()
           if (emailTip && areEmail) void trimiteEmail(emailTip, id)
+          if (whatsappSablon && telefon) {
+            void trimiteWhatsAppSimulat(telefon, whatsappSablon, undefined, id)
+          }
         },
         onError: (eroare) => notificari.eroare(eroare),
       },
@@ -186,7 +200,14 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       disabled={inLucru}
-                      onClick={() => schimba('confirmata', 'Rezervare confirmata.', 'rezervare_confirmata')}
+                      onClick={() =>
+                        schimba(
+                          'confirmata',
+                          'Rezervare confirmata.',
+                          'rezervare_confirmata',
+                          'Confirmare Rezervare',
+                        )
+                      }
                     >
                       <CheckIcon />
                       Confirma
@@ -194,7 +215,14 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                     <Button
                       variant="outline"
                       disabled={inLucru}
-                      onClick={() => schimba('respinsa', 'Rezervare respinsa.', 'rezervare_respinsa')}
+                      onClick={() =>
+                        schimba(
+                          'respinsa',
+                          'Rezervare respinsa.',
+                          'rezervare_respinsa',
+                          'Rezervare Respinsa',
+                        )
+                      }
                     >
                       <BanIcon />
                       Respinge

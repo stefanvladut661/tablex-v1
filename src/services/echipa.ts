@@ -102,3 +102,19 @@ export async function schimbaRolMembru(id: string, rol: Enums<'admin_rol'>): Pro
   if (error) throw error
   await confirmaModificare(data, 'Schimbarea rolului')
 }
+
+/**
+ * Stergerea unui cont de Ospatar (§30.3). Definitiv, spre deosebire de
+ * dezactivare: randul dispare din admin_users, iar contul nu mai apartine
+ * restaurantului. Interfata o ofera doar pentru Ospatar; propriul cont e
+ * aparat si in baza (migratia protejeaza_contul_propriu).
+ */
+export async function stergeMembru(id: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('admin_users')
+    .delete()
+    .eq('id', id)
+    .select('id')
+  if (error) throw error
+  await confirmaModificare(data, 'Stergerea contului')
+}

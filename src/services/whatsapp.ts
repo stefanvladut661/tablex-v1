@@ -55,6 +55,33 @@ export async function reincarcaCredite(packageId: string): Promise<number> {
   return data ?? 0
 }
 
+/**
+ * Incearca un mesaj WhatsApp (§16.2, §21.1): consuma 1 credit si scrie in
+ * jurnal — trimiterea reala ramane interzisa in v1 (§14). Best-effort ca
+ * emailul: un mesaj care nu pleaca nu anuleaza actiunea care l-a declansat,
+ * de aceea functia nu arunca niciodata.
+ */
+export async function trimiteWhatsAppSimulat(
+  telefon: string,
+  sablon: string,
+  continut?: string,
+  reservationId?: string,
+): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('consuma_credit', {
+      p_telefon: telefon,
+      p_sablon: sablon,
+      p_continut: continut,
+      p_reservation_id: reservationId,
+    })
+    if (error) throw error
+    return data ?? false
+  } catch (eroare) {
+    console.warn('Mesajul WhatsApp nu a fost consemnat:', eroare)
+    return false
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Communications — partea echipei TableX (§9.2.5, §45)
 // ═══════════════════════════════════════════════════════════════════════════

@@ -8,6 +8,7 @@ import {
   invitaMembru,
   schimbaRolMembru,
   seteazaActivMembru,
+  stergeMembru,
   type DateInvitatie,
 } from '@/services/echipa'
 import type { Enums } from '@/types/database'
@@ -54,6 +55,10 @@ export function useMutatiiEchipa(restaurantId: string | undefined) {
     schimbaRol: useMutation({
       mutationFn: ({ id, rol }: { id: string; rol: Enums<'admin_rol'> }) =>
         schimbaRolMembru(id, rol),
+      onSuccess: invalideazaMembri,
+    }),
+    sterge: useMutation({
+      mutationFn: stergeMembru,
       onSuccess: invalideazaMembri,
     }),
   }

@@ -1,13 +1,22 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller } from 'react-hook-form'
-import { CopyIcon, Loader2Icon, UserPlusIcon } from 'lucide-react'
+import { CopyIcon, Loader2Icon, Trash2Icon, UserPlusIcon } from 'lucide-react'
 import { z } from 'zod'
 
 import { CampText } from '@/components/formular/CampText'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -57,7 +66,8 @@ export function EchipaPage() {
   const restaurantId = profil?.tip === 'admin' ? profil.restaurant.id : undefined
   const membri = useMembriEchipa(restaurantId)
   const invitatii = useInvitatii(restaurantId)
-  const { invita, anuleaza, comutaActiv, schimbaRol } = useMutatiiEchipa(restaurantId)
+  const { invita, anuleaza, comutaActiv, schimbaRol, sterge } = useMutatiiEchipa(restaurantId)
+  const [deSters, setDeSters] = useState<{ id: string; nume: string } | null>(null)
 
   const form = useForm<FormInvitatie>({
     resolver: zodResolver(schemaInvitatie),
@@ -238,17 +248,37 @@ export function EchipaPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Switch
-                            checked={membru.activ}
-                            disabled={esteEu}
-                            aria-label={`Acces pentru ${membru.email}`}
-                            onCheckedChange={(activ) =>
-                              comutaActiv.mutate(
-                                { id: membru.id, activ },
-                                { onError: (eroare) => notificari.eroare(eroare) },
-                              )
-                            }
-                          />
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              checked={membru.activ}
+                              disabled={esteEu}
+                              aria-label={`Acces pentru ${membru.email}`}
+                              onCheckedChange={(activ) =>
+                                comutaActiv.mutate(
+                                  { id: membru.id, activ },
+                                  { onError: (eroare) => notificari.eroare(eroare) },
+                                )
+                              }
+                            />
+                            {/* §30.3 — stergerea DEFINITIVA, doar pentru Ospatar:
+                                managerii se dezactiveaza, nu se sterg, iar
+                                propriul cont e aparat si de baza. */}
+                            {!esteEu && membru.rol === 'ospatar' && (
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Sterge contul ${membru.email}`}
+                                onClick={() =>
+                                  setDeSters({
+                                    id: membru.id,
+                                    nume: membru.nume ?? membru.email ?? 'acest cont',
+                                  })
+                                }
+                              >
+                                <Trash2Icon />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -326,6 +356,41 @@ export function EchipaPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmarea standard (§24.7) inainte de o actiune definitiva. */}
+      {deSters && (
+        <Dialog open onOpenChange={(deschis) => !deschis && setDeSters(null)}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Stergi contul {deSters.nume}?</DialogTitle>
+              <DialogDescription>
+                Definitiv: ospatarul nu se mai poate autentifica, iar contul dispare din echipa.
+                Daca vrei doar o pauza, foloseste comutatorul de acces.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeSters(null)}>
+                Renunta
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={sterge.isPending}
+                onClick={() =>
+                  sterge.mutate(deSters.id, {
+                    onSuccess: () => {
+                      notificari.succes('Contul a fost sters.')
+                      setDeSters(null)
+                    },
+                    onError: (eroare) => notificari.eroare(eroare),
+                  })
+                }
+              >
+                Sterge contul
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
