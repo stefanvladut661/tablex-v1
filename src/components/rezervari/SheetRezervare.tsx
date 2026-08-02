@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   BanIcon,
   CheckIcon,
@@ -11,6 +12,14 @@ import {
 
 import { BadgeStatus } from '@/components/rezervari/BadgeStatus'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Sheet,
   SheetContent,
@@ -37,6 +46,14 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
   const { schimbaStatus } = useMutatiiRezervari(restaurantId)
   const notificari = useNotificari()
 
+  /** §24.7 — respingerea si anularea sunt distructive: cer confirmare. */
+  const [deConfirmat, setDeConfirmat] = useState<{
+    status: StatusRezervare
+    mesaj: string
+    emailTip?: TipEmail
+    whatsappSablon?: string
+  } | null>(null)
+
   /**
    * emailTip declanseaza si un email catre client, DUPA ce schimbarea de status
    * a reusit. Trimiterea nu poate anula schimbarea: rezervarea e deja
@@ -46,7 +63,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
    * exista) si WhatsApp. Mesajul WhatsApp consuma 1 credit si pleaca doar
    * daca restaurantul are credite; fara ele, doar jurnalul consemneaza esecul.
    */
-  function schimba(
+  function executa(
     status: StatusRezervare,
     mesaj: string,
     emailTip?: TipEmail,
@@ -71,6 +88,19 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
         onError: (eroare) => notificari.eroare(eroare),
       },
     )
+  }
+
+  function schimba(
+    status: StatusRezervare,
+    mesaj: string,
+    emailTip?: TipEmail,
+    whatsappSablon?: string,
+  ) {
+    if (status === 'respinsa' || status === 'anulata') {
+      setDeConfirmat({ status, mesaj, emailTip, whatsappSablon })
+      return
+    }
+    executa(status, mesaj, emailTip, whatsappSablon)
   }
 
   const inLucru = schimbaStatus.isPending
@@ -263,6 +293,44 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                 )}
               </div>
             </div>
+
+            {deConfirmat && (
+              <Dialog open onOpenChange={(deschis) => !deschis && setDeConfirmat(null)}>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {deConfirmat.status === 'respinsa' ? 'Respingi' : 'Anulezi'} rezervarea?
+                    </DialogTitle>
+                    <DialogDescription>
+                      {rezervare.client_nume} · {rezervare.nr_persoane} persoane ·{' '}
+                      {ora(rezervare.data_ora, fus)}
+                      {deConfirmat.status === 'respinsa' &&
+                        ' — clientul primeste anuntul pe email si WhatsApp, daca exista.'}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setDeConfirmat(null)}>
+                      Renunta
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      disabled={schimbaStatus.isPending}
+                      onClick={() => {
+                        executa(
+                          deConfirmat.status,
+                          deConfirmat.mesaj,
+                          deConfirmat.emailTip,
+                          deConfirmat.whatsappSablon,
+                        )
+                        setDeConfirmat(null)
+                      }}
+                    >
+                      {deConfirmat.status === 'respinsa' ? 'Respinge' : 'Anuleaza rezervarea'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </>
         )}
       </SheetContent>

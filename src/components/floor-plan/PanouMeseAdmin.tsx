@@ -5,6 +5,14 @@ import { LinkIcon, PlusIcon, Trash2Icon, UnlinkIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -62,6 +70,8 @@ export function PanouMeseAdmin({
   const notificari = useNotificari()
   const queryClient = useQueryClient()
   const [deUnit, setDeUnit] = useState<string[]>([])
+  /** §24.7 — stergerea mesei e distructiva: cere confirmare explicita. */
+  const [confirmaStergere, setConfirmaStergere] = useState(false)
 
   const meseInZona = mese.length
 
@@ -353,11 +363,40 @@ export function PanouMeseAdmin({
               size="xs"
               className="justify-self-start text-destructive"
               disabled={sterge.isPending}
-              onClick={() => sterge.mutate()}
+              onClick={() => setConfirmaStergere(true)}
             >
               <Trash2Icon className="size-3.5" />
               Sterge masa
             </Button>
+
+            {confirmaStergere && (
+              <Dialog open onOpenChange={(deschis) => !deschis && setConfirmaStergere(false)}>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Stergi masa {masa.numar_masa}?</DialogTitle>
+                    <DialogDescription>
+                      Masa dispare de pe plan. Baza refuza oricum stergerea daca masa are
+                      rezervari viitoare.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setConfirmaStergere(false)}>
+                      Renunta
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      disabled={sterge.isPending}
+                      onClick={() => {
+                        sterge.mutate()
+                        setConfirmaStergere(false)
+                      }}
+                    >
+                      Sterge masa
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </>
         )}
       </CardContent>

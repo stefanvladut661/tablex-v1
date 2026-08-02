@@ -15,6 +15,14 @@ import { DialogEditareRezervare } from '@/components/rezervari/DialogEditareReze
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
@@ -43,7 +51,9 @@ import {
   salveazaCampuriAscunse,
   type CampCard,
 } from '@/services/preferinte'
+import { trimiteEmail } from '@/services/email'
 import type { Rezervare, StatusRezervare } from '@/services/rezervari'
+import { trimiteWhatsAppSimulat } from '@/services/whatsapp'
 
 /** Tab-urile din §26.7. „Toate" e in plus: la o zi plina, filtrul e util. */
 type TabLista = { cheie: string; eticheta: string; statusuri: StatusRezervare[] | null }
@@ -81,6 +91,11 @@ export function ListaRezervariPage() {
   const [sortare, setSortare] = useState<Sortare>('ora')
   const [caut, setCaut] = useState('')
   const [deEditat, setDeEditat] = useState<Rezervare | null>(null)
+  const [deConfirmat, setDeConfirmat] = useState<{
+    rezervare: Rezervare
+    status: StatusRezervare
+    mesaj: string
+  } | null>(null)
   const [ascunseLocal, setAscunseLocal] = useState<Set<CampCard> | null>(null)
 
   const [deLa, panaLa] = useMemo(() => [inceputZi(zi, fus), sfarsitZi(zi, fus)], [zi, fus])
@@ -149,14 +164,52 @@ export function ListaRezervariPage() {
     descarcaCsv(`rezervari-${formatFus(zi, 'yyyy-MM-dd', fus)}-${tab}.csv`, csv)
   }
 
-  function schimba(rezervare: Rezervare, status: StatusRezervare, mesaj: string) {
+  /**
+   * §16.2: acceptarea si respingerea anunta clientul pe AMBELE canale — email
+   * daca exista, WhatsApp pe credite — exact ca din SheetRezervare. Butoanele
+   * rapide de pe carduri sunt calea principala de tratare a cererilor, deci
+   * lipsa notificarii de aici era o gaura, nu un detaliu.
+   */
+  function executa(rezervare: Rezervare, status: StatusRezervare, mesaj: string) {
     schimbaStatus.mutate(
       { id: rezervare.id, status },
       {
-        onSuccess: () => notificari.succes(mesaj),
+        onSuccess: () => {
+          notificari.succes(mesaj)
+          if (status === 'confirmata') {
+            if (rezervare.email) void trimiteEmail('rezervare_confirmata', rezervare.id)
+            if (rezervare.telefon) {
+              void trimiteWhatsAppSimulat(
+                rezervare.telefon,
+                'Confirmare Rezervare',
+                undefined,
+                rezervare.id,
+              )
+            }
+          } else if (status === 'respinsa') {
+            if (rezervare.email) void trimiteEmail('rezervare_respinsa', rezervare.id)
+            if (rezervare.telefon) {
+              void trimiteWhatsAppSimulat(
+                rezervare.telefon,
+                'Rezervare Respinsa',
+                undefined,
+                rezervare.id,
+              )
+            }
+          }
+        },
         onError: (eroare) => notificari.eroare(eroare),
       },
     )
+  }
+
+  /** §24.7 — respingerea si anularea sunt distructive: cer confirmare. */
+  function schimba(rezervare: Rezervare, status: StatusRezervare, mesaj: string) {
+    if (status === 'respinsa' || status === 'anulata') {
+      setDeConfirmat({ rezervare, status, mesaj })
+      return
+    }
+    executa(rezervare, status, mesaj)
   }
 
   function salveazaNote(rezervare: Rezervare, note: string | null) {
@@ -327,6 +380,39 @@ export function ListaRezervariPage() {
             />
           ))}
         </ul>
+      )}
+
+      {deConfirmat && (
+        <Dialog open onOpenChange={(deschis) => !deschis && setDeConfirmat(null)}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>
+                {deConfirmat.status === 'respinsa' ? 'Respingi' : 'Anulezi'} rezervarea?
+              </DialogTitle>
+              <DialogDescription>
+                {deConfirmat.rezervare.client_nume} · {deConfirmat.rezervare.nr_persoane} persoane ·{' '}
+                {ora(deConfirmat.rezervare.data_ora, fus)}
+                {deConfirmat.status === 'respinsa' &&
+                  ' — clientul primeste anuntul pe email si WhatsApp, daca exista.'}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeConfirmat(null)}>
+                Renunta
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={schimbaStatus.isPending}
+                onClick={() => {
+                  executa(deConfirmat.rezervare, deConfirmat.status, deConfirmat.mesaj)
+                  setDeConfirmat(null)
+                }}
+              >
+                {deConfirmat.status === 'respinsa' ? 'Respinge' : 'Anuleaza rezervarea'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {deEditat && (
