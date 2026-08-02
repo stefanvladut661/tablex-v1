@@ -1900,6 +1900,7 @@ export type Database = {
           restaurant_id: string
           schita_url: string | null
           updated_at: string
+          zoom_implicit: number
         }
         Insert: {
           activa?: boolean
@@ -1913,6 +1914,7 @@ export type Database = {
           restaurant_id: string
           schita_url?: string | null
           updated_at?: string
+          zoom_implicit?: number
         }
         Update: {
           activa?: boolean
@@ -1926,6 +1928,7 @@ export type Database = {
           restaurant_id?: string
           schita_url?: string | null
           updated_at?: string
+          zoom_implicit?: number
         }
         Relationships: [
           {
@@ -2151,6 +2154,7 @@ export type Database = {
           nume: string | null
           ordine_afisare: number | null
           restaurant_id: string | null
+          zoom_implicit: number | null
         }
         Relationships: [
           {

@@ -23,9 +23,25 @@ function limiteaza(scara: number) {
  * actualizate atomic dintr-un singur updater functional — altfel zoom-ul cu
  * ancora ar citi un offset invechit.
  */
-export function useZoomPan() {
+/**
+ * @param scaraInitiala Incadrarea cu care porneste harta. Vine din
+ *   `zones.zoom_implicit`, fixata de echipa TableX — restul aplicatiei o
+ *   afiseaza, nu o schimba.
+ * @param interactiv Cand e fals, gesturile de zoom/pan sunt inerte: harta
+ *   ramane exact la incadrarea primita. Doar editorul echipei o porneste.
+ */
+export function useZoomPan(scaraInitiala = 1, interactiv = true) {
   const refSvg = useRef<SVGSVGElement | null>(null)
-  const [vedere, setVedere] = useState<Vedere>({ scara: 1, x: 0, y: 0 })
+  const [vedere, setVedere] = useState<Vedere>({
+    scara: limiteaza(scaraInitiala),
+    x: 0,
+    y: 0,
+  })
+
+  // Cand echipa schimba incadrarea salvata, harta o preia fara remontare.
+  useEffect(() => {
+    setVedere({ scara: limiteaza(scaraInitiala), x: 0, y: 0 })
+  }, [scaraInitiala])
 
   /** Ultimul punct atins in timpul unei trageri; null cand nu se trage. */
   const ultimulPunct = useRef<Punct | null>(null)
@@ -49,6 +65,7 @@ export function useZoomPan() {
 
   /** Scaleaza pastrand fix punctul-ancora (implicit: centrul viewBox-ului). */
   const scaleaza = useCallback((factor: number, ancora?: Punct) => {
+    if (!interactiv) return
     const svg = refSvg.current
     const centru =
       ancora ??
@@ -66,13 +83,13 @@ export function useZoomPan() {
         y: centru.y - (centru.y - v.y) * raport,
       }
     })
-  }, [])
+  }, [interactiv])
 
   // preventDefault pe wheel cere un listener ne-pasiv, deci nu poate fi
   // atasat prin onWheel din React.
   useEffect(() => {
     const svg = refSvg.current
-    if (!svg) return
+    if (!svg || !interactiv) return
 
     function laWheel(eveniment: WheelEvent) {
       eveniment.preventDefault()
@@ -84,10 +101,11 @@ export function useZoomPan() {
 
     svg.addEventListener('wheel', laWheel, { passive: false })
     return () => svg.removeEventListener('wheel', laWheel)
-  }, [punctUser, scaleaza])
+  }, [punctUser, scaleaza, interactiv])
 
   const laPointerDown = useCallback(
     (eveniment: EvenimentPointer<SVGSVGElement>) => {
+      if (!interactiv) return
       if (eveniment.button !== 0 && eveniment.button !== 1) return
       pointeriActivi.current.set(eveniment.pointerId, {
         x: eveniment.clientX,
@@ -113,6 +131,7 @@ export function useZoomPan() {
   // offsetul de la inceputul tragerii. Cu doua degete: pinch, nu pan.
   const laPointerMove = useCallback(
     (eveniment: EvenimentPointer<SVGSVGElement>) => {
+      if (!interactiv) return
       if (pointeriActivi.current.has(eveniment.pointerId)) {
         pointeriActivi.current.set(eveniment.pointerId, {
           x: eveniment.clientX,
@@ -138,7 +157,7 @@ export function useZoomPan() {
       ultimulPunct.current = acum
       setVedere((v) => ({ ...v, x: v.x + (acum.x - anterior.x), y: v.y + (acum.y - anterior.y) }))
     },
-    [punctUser, scaleaza],
+    [punctUser, scaleaza, interactiv],
   )
 
   const laPointerUp = useCallback(
@@ -163,7 +182,11 @@ export function useZoomPan() {
 
   const mareste = useCallback(() => scaleaza(PAS), [scaleaza])
   const micsoreaza = useCallback(() => scaleaza(1 / PAS), [scaleaza])
-  const reseteaza = useCallback(() => setVedere({ scara: 1, x: 0, y: 0 }), [])
+  /** Revine la incadrarea SALVATA, nu la 1: aia e „normalul" planului. */
+  const reseteaza = useCallback(
+    () => setVedere({ scara: limiteaza(scaraInitiala), x: 0, y: 0 }),
+    [scaraInitiala],
+  )
 
   /**
    * Pan cu delta explicita, in coordonatele viewBox-ului — pentru gazde care

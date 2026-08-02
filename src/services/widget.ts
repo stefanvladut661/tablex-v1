@@ -75,6 +75,9 @@ export async function getSalaPublica(restaurantId: string): Promise<SalaPublica>
     canvas_latime: z.canvas_latime!,
     canvas_inaltime: z.canvas_inaltime!,
     grid_marime: z.grid_marime!,
+    // Incadrarea fixata de echipa: clientul vede planul exact asa cum a fost
+    // asezat, nu cum nimereste el sa-l traga.
+    zoom_implicit: z.zoom_implicit ?? 1,
   }))
 
   const meseCurate: MasaPublica[] = (mese.data ?? []).map((m) => ({

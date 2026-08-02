@@ -583,6 +583,36 @@ export function EditorPlanPage() {
               </div>
             )}
 
+            {/* Incadrarea planului: se seteaza AICI si se aplica pentru
+                Admin, ospatar si widgetul public. Zoom-ul din canvas ramane
+                unealta de lucru a echipei; asta e valoarea publicata. */}
+            {zonaCurenta && (
+              <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1">
+                <Label htmlFor="zoom-implicit" className="text-xs font-normal">
+                  Încadrare
+                </Label>
+                <input
+                  id="zoom-implicit"
+                  type="range"
+                  min={40}
+                  max={400}
+                  step={5}
+                  value={Math.round((zonaCurenta.zoom_implicit ?? 1) * 100)}
+                  onChange={(e) =>
+                    salveazaZona.mutate({
+                      id: zonaCurenta.id,
+                      modificari: { zoom_implicit: Number(e.target.value) / 100 },
+                    })
+                  }
+                  className="w-24 accent-primary"
+                  aria-label="Încadrarea cu care restaurantul vede planul"
+                />
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {Math.round((zonaCurenta.zoom_implicit ?? 1) * 100)}%
+                </span>
+              </div>
+            )}
+
             <span className="ml-auto text-xs text-muted-foreground tabular-nums">
               {strat === 'mese'
                 ? `${meseZona.length} mese în zonă`
@@ -600,6 +630,9 @@ export function EditorPlanPage() {
             <EditorZona
               zona={zonaCurenta}
               stratActiv={strat}
+              // Singurul loc din aplicatie unde zoom-ul e interactiv: aici se
+              // stabileste incadrarea pe care o vad apoi toti ceilalti.
+              permiteZoom
               structura={elemente}
               mese={meseZona}
               fundal={

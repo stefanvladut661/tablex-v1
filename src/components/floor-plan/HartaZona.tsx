@@ -27,6 +27,14 @@ type Props = {
   arataGrid?: boolean
   /** Strange vederea pe continut, ca o sala cu putine mese sa nu para goala. */
   incadrareAutomata?: boolean
+  /**
+   * Zoom-ul interactiv (rotita, pinch, butoane) e OPRIT implicit.
+   * Incadrarea planului o fixeaza echipa TableX din Canvas Builder
+   * (`zones.zoom_implicit`) si toata lumea vede acelasi lucru: doi ospatari
+   * care se uita la aceeasi sala nu trebuie sa vada doua planuri diferite.
+   * Doar editorul echipei porneste steagul asta.
+   */
+  permiteZoom?: boolean
   className?: string
 }
 
@@ -39,9 +47,16 @@ export function HartaZona({
   onSelecteazaMasa,
   arataGrid = true,
   incadrareAutomata = true,
+  permiteZoom = false,
   className,
 }: Props) {
-  const { refSvg, vedere, mareste, micsoreaza, reseteaza, handlers } = useZoomPan()
+  // `zoom_implicit` lipseste din tipul ZonaHarta pe caile care nu-l aduc
+  // (demo, date de test): acolo ramane 1, adica planul asa cum e desenat.
+  const zoomSalvat = (zona as { zoom_implicit?: number }).zoom_implicit ?? 1
+  const { refSvg, vedere, mareste, micsoreaza, reseteaza, handlers } = useZoomPan(
+    zoomSalvat,
+    permiteZoom,
+  )
   const idGrid = useId()
 
   const interactiva = Boolean(onSelecteazaMasa)
@@ -150,17 +165,21 @@ export function HartaZona({
         </g>
       </svg>
 
-      <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
-        <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mărește">
-          <PlusIcon />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micșorează">
-          <MinusIcon />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Încadrează harta">
-          <MaximizeIcon />
-        </Button>
-      </div>
+      {/* Comenzile de zoom apar doar unde zoom-ul e permis — altfel ar fi
+          butoane care nu fac nimic, mai rele decat cele care lipsesc. */}
+      {permiteZoom && (
+        <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
+          <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mărește">
+            <PlusIcon />
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micșorează">
+            <MinusIcon />
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Încadrează harta">
+            <MaximizeIcon />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -55,7 +55,14 @@ export type MasaHarta = Pick<
 export type ZonaHarta = Pick<
   Tables<'zones'>,
   'id' | 'nume' | 'canvas_latime' | 'canvas_inaltime' | 'grid_marime'
->
+> & {
+  /**
+   * Incadrarea fixata de echipa TableX (§9.2.2). Optionala in tip fiindca
+   * datele demo si zonele vechi nu o poarta — atunci planul se afiseaza la
+   * scara 1, adica exact cum a fost desenat.
+   */
+  zoom_implicit?: number
+}
 
 export const ETICHETE_STATUS: Record<StatusMasa, string> = {
   liber: 'Libera',

@@ -62,6 +62,13 @@ type Props = {
   modAdaugare?: boolean
   onAdauga?: (x: number, y: number) => void
   /**
+   * Zoom-ul interactiv, OPRIT implicit. Adminul si ospatarul vad planul la
+   * incadrarea fixata de echipa (`zones.zoom_implicit`) — aceeasi pentru toti,
+   * ca doua tablete din aceeasi sala sa nu arate doua planuri diferite.
+   * Doar Canvas Builder-ul echipei porneste steagul.
+   */
+  permiteZoom?: boolean
+  /**
    * Schita originala ca imagine de fundal (§42.5), sub grid si sub straturi:
    * url semnat + opacitate 0..1. null/undefined = fara fundal. Randare pura —
    * nu participa la niciun gest.
@@ -121,6 +128,7 @@ export function EditorZona({
   onMutaStructura,
   modAdaugare = false,
   onAdauga,
+  permiteZoom = false,
   fundal = null,
   overlayAI = null,
   className,
@@ -128,7 +136,11 @@ export function EditorZona({
   // Zoom-ul (rotita + butoane) vine din hook; pan-ul NU ii folosim handler-ele:
   // pointerdown-ul e deja impartit intre tragerea meselor si a rezervarilor,
   // asa ca vederea se trage doar cand gestul porneste pe canvas gol.
-  const { refSvg, vedere, mareste, micsoreaza, reseteaza, deplaseaza } = useZoomPan()
+  const zoomSalvat = (zona as { zoom_implicit?: number }).zoom_implicit ?? 1
+  const { refSvg, vedere, mareste, micsoreaza, reseteaza, deplaseaza } = useZoomPan(
+    zoomSalvat,
+    permiteZoom,
+  )
   const idGrid = useId()
 
   // Sursa de adevar a gestului e ref-ul, nu starea: la o tragere scurta, cu un
@@ -245,7 +257,7 @@ export function EditorZona({
       // Canvas gol: gestul devine tragerea vederii. Deselectarea se muta pe
       // pointerup si se face doar daca vederea NU s-a miscat — un clic curat
       // ramane clic, o tragere ramane pan.
-      const punctVedere = laViewBox(eveniment)
+      const punctVedere = permiteZoom ? laViewBox(eveniment) : null
       if (punctVedere) {
         refPan.current = {
           pointerId: eveniment.pointerId,
@@ -707,19 +719,22 @@ export function EditorZona({
         </g>
       </svg>
 
-      {/* Aceleasi comenzi de zoom ca pe viewer (HartaZona): rotita face
-          acelasi lucru, butoanele raman pentru tableta (§32). */}
-      <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
-        <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mărește">
-          <PlusIcon />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micșorează">
-          <MinusIcon />
-        </Button>
-        <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Încadrează harta">
-          <MaximizeIcon />
-        </Button>
-      </div>
+      {/* Comenzile de zoom apar doar in Canvas Builder-ul echipei: pentru
+          Admin si ospatar incadrarea e fixata, deci butoanele n-ar avea ce
+          face (§32 ramane valabil pe tableta ECHIPEI). */}
+      {permiteZoom && (
+        <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
+          <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mărește">
+            <PlusIcon />
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micșorează">
+            <MinusIcon />
+          </Button>
+          <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Încadrează harta">
+            <MaximizeIcon />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
