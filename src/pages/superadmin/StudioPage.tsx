@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileTextIcon, LayoutGridIcon, SearchIcon } from 'lucide-react'
+import { FileTextIcon, LayoutGridIcon, SearchIcon, SparklesIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { genereazaPlanAI } from '@/services/studio-ai'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -107,6 +108,26 @@ function CoadaCereri() {
     onError: (eroare) => notificari.eroare(eroare),
   })
 
+  /**
+   * §9.2.2 pasul 1 + §41.3 — Best Guess-ul AI. Acelasi buton si pentru
+   * regenerare: rezultatul anterior se suprascrie complet. Rezultatul e
+   * INTERN echipei; Adminul nu il vede niciodata.
+   */
+  const genereaza = useMutation({
+    mutationFn: genereazaPlanAI,
+    onSuccess: (rezultat) => {
+      if (rezultat.ok) {
+        notificari.succes(
+          `Best Guess gata: ${rezultat.elemente} elemente de structura, ${rezultat.mese} mese.`,
+          { descriere: 'Deschide editorul si finiseaza peste schita.' },
+        )
+      } else {
+        notificari.atentie(rezultat.motiv)
+      }
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
+
   if (cereri.isLoading) return <Skeleton className="h-48 w-full" />
 
   if ((cereri.data ?? []).length === 0) {
@@ -162,6 +183,19 @@ function CoadaCereri() {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap justify-end gap-1">
+                    {cerere.schita_image_url && (
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        disabled={genereaza.isPending}
+                        onClick={() => genereaza.mutate(cerere.id)}
+                      >
+                        <SparklesIcon />
+                        {genereaza.isPending && genereaza.variables === cerere.id
+                          ? 'Genereaza...'
+                          : 'Genereaza AI'}
+                      </Button>
+                    )}
                     <Button variant="outline" size="xs" asChild>
                       <Link to={RUTE.superadminEditor(cerere.restaurant_id)}>
                         <LayoutGridIcon />
