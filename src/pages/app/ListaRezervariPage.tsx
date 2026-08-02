@@ -2,16 +2,19 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  CalendarOffIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   DownloadIcon,
   EyeIcon,
   SearchIcon,
   SettingsIcon,
+  ZapIcon,
 } from 'lucide-react'
 
 import { CardRezervare } from '@/components/rezervari/CardRezervare'
 import { DialogEditareRezervare } from '@/components/rezervari/DialogEditareRezervare'
+import { DialogWalkInHarta } from '@/components/rezervari/DialogWalkInHarta'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -97,6 +100,7 @@ export function ListaRezervariPage() {
     mesaj: string
   } | null>(null)
   const [ascunseLocal, setAscunseLocal] = useState<Set<CampCard> | null>(null)
+  const [walkInDeschis, setWalkInDeschis] = useState(false)
 
   const [deLa, panaLa] = useMemo(() => [inceputZi(zi, fus), sfarsitZi(zi, fus)], [zi, fus])
   const rezervari = useRezervari(restaurant?.id, deLa, panaLa)
@@ -357,12 +361,35 @@ export function ListaRezervariPage() {
           </Button>
         </div>
       ) : filtrate.length === 0 ? (
-        <div className="grid justify-items-start gap-2 rounded-lg border border-border bg-card p-6">
+        /* §24.8 — empty state cu icon si CTA relevant contextului: cand ziua
+           e goala, ce vrea personalul e sa aseze pe cineva, nu sa citeasca
+           un text. Filtrele au alt raspuns: le stergi, nu adaugi. */
+        <div className="grid justify-items-center gap-3 rounded-lg border border-border bg-card p-10 text-center">
+          <CalendarOffIcon className="size-8 text-muted-foreground" aria-hidden="true" />
           <p className="text-sm text-muted-foreground">
             {caut || tab !== 'toate'
               ? 'Nicio rezervare pentru filtrele alese.'
-              : 'Nicio rezervare în ziua asta.'}
+              : 'Nicio rezervare în ziua asta. Sala e liberă.'}
           </p>
+          {caut || tab !== 'toate' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCaut('')
+                setTab('toate')
+              }}
+            >
+              Șterge filtrele
+            </Button>
+          ) : (
+            !readOnly && (
+              <Button size="sm" onClick={() => setWalkInDeschis(true)}>
+                <ZapIcon />
+                Adaugă un walk-in
+              </Button>
+            )
+          )}
         </div>
       ) : (
         <ul className="grid gap-2">
@@ -413,6 +440,13 @@ export function ListaRezervariPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {walkInDeschis && restaurant && (
+        <DialogWalkInHarta
+          restaurantId={restaurant.id}
+          onInchide={() => setWalkInDeschis(false)}
+        />
       )}
 
       {deEditat && (

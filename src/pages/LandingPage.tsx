@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import {
   ArrowRightIcon,
@@ -40,6 +40,7 @@ import { StepsSection, type PasFlux } from '@/components/ui/steps-section'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 import { useSetariApp } from '@/hooks/useSetariApp'
 import { MESE_DEMO, STRUCTURA_DEMO, ZONE_DEMO, statusuriLaOra } from '@/lib/harta-demo'
+import { ETICHETE_STATUS } from '@/types/floor-plan'
 import { RUTE } from '@/lib/rute'
 
 /** Preturile din app_settings sunt numerice, fara moneda. Un singur loc. */
@@ -303,6 +304,14 @@ export function LandingPage() {
   // Ora de varf: harta arata interesant, cu toate cele cinci statusuri.
   const statusuri = useMemo(() => statusuriLaOra(19.5, zona.id), [zona.id])
 
+  /**
+   * §51.1 — demonstratia de pe landing e INTERACTIVA: clicul pe o masa arata
+   * ce ar vedea personalul. Fara date reale; e chiar componenta din aplicatie,
+   * nu o captura, deci ce se vede aici e ce primesti.
+   */
+  const [masaAleasa, setMasaAleasa] = useState<string | null>(null)
+  const detaliiMasa = mese.find((m) => m.id === masaAleasa) ?? null
+
   return (
     <div className="min-h-svh bg-background">
       <Navbar />
@@ -393,8 +402,29 @@ export function LandingPage() {
             mese={mese}
             statusuri={statusuri}
             arataGrid={false}
+            masaSelectata={masaAleasa}
+            onSelecteazaMasa={(id) => setMasaAleasa((curent) => (curent === id ? null : id))}
             className="mt-3 aspect-[3/2] w-full"
           />
+
+          {/* Tooltip-ul cerut de §51.1: apare la clic si spune exact ce vede
+              personalul in sala — numar, capacitate, stare la ora afisata. */}
+          <p
+            className="mt-3 text-center text-sm text-muted-foreground"
+            aria-live="polite"
+          >
+            {detaliiMasa ? (
+              <>
+                <span className="font-medium text-foreground">
+                  Masa {detaliiMasa.numar_masa}
+                </span>{' '}
+                · {detaliiMasa.capacitate} locuri ·{' '}
+                {ETICHETE_STATUS[statusuri[detaliiMasa.id] ?? 'liber']} la 19:30
+              </>
+            ) : (
+              'Dă click pe o masă ca să vezi ce arată personalului.'
+            )}
+          </p>
 
           <div className="mt-6 flex justify-center">
             <Button asChild size="lg" variant="outline" className={PILULA}>
@@ -454,7 +484,7 @@ export function LandingPage() {
                 Preț fix pe lună, <span className="text-primary">fără comision</span>
               </>
             }
-            subtitlu="Două planuri, facturate lunar. Fără contract pe termen lung — poți schimba planul oricând."
+            subtitlu="Două planuri, facturate lunar, de până la 10 ori mai ieftine decât platformele care îți iau comision din fiecare rezervare. Fără contract pe termen lung — poți schimba planul oricând."
           />
           <div className="mt-10 flex justify-center">
             <Preturi />
