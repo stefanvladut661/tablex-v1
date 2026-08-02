@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller } from 'react-hook-form'
-import { CopyIcon, Loader2Icon, Trash2Icon, UserPlusIcon } from 'lucide-react'
+import { CopyIcon, KeyRoundIcon, Loader2Icon, Trash2Icon, UserPlusIcon } from 'lucide-react'
 import { z } from 'zod'
 
 import { CampText } from '@/components/formular/CampText'
@@ -39,6 +39,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useInvitatii, useMembriEchipa, useMutatiiEchipa } from '@/hooks/useEchipa'
 import { useNotificari } from '@/hooks/useNotificari'
 import { ETICHETE_ROL_ADMIN, ETICHETE_STATUS_INVITATIE } from '@/lib/etichete'
+import { reseteazaParolaOspatar } from '@/services/echipa'
 import { trimiteEmail } from '@/services/email'
 import { RUTE } from '@/lib/rute'
 import { emailSchema } from '@/lib/validari'
@@ -68,6 +69,9 @@ export function EchipaPage() {
   const invitatii = useInvitatii(restaurantId)
   const { invita, anuleaza, comutaActiv, schimbaRol, sterge } = useMutatiiEchipa(restaurantId)
   const [deSters, setDeSters] = useState<{ id: string; nume: string } | null>(null)
+  /** §49.8 — parola generata se arata O data, apoi dispare cu dialogul. */
+  const [parolaNoua, setParolaNoua] = useState<{ ospatar: string; parola: string } | null>(null)
+  const [resetInLucru, setResetInLucru] = useState<string | null>(null)
 
   const form = useForm<FormInvitatie>({
     resolver: zodResolver(schemaInvitatie),
@@ -260,6 +264,41 @@ export function EchipaPage() {
                                 )
                               }
                             />
+                            {/* §49.8 — parola noua se genereaza pe server si se
+                                arata o singura data; managerul i-o dicteaza. */}
+                            {!esteEu && membru.rol === 'ospatar' && (
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Reseteaza parola pentru ${membru.email}`}
+                                disabled={resetInLucru === membru.id}
+                                onClick={async () => {
+                                  setResetInLucru(membru.id)
+                                  try {
+                                    const rezultat = await reseteazaParolaOspatar(membru.id)
+                                    setParolaNoua({
+                                      ospatar:
+                                        rezultat.ospatar ??
+                                        membru.nume ??
+                                        membru.email ??
+                                        'ospatar',
+                                      parola: rezultat.parola,
+                                    })
+                                  } catch (eroare) {
+                                    notificari.eroare(eroare)
+                                  } finally {
+                                    setResetInLucru(null)
+                                  }
+                                }}
+                              >
+                                {resetInLucru === membru.id ? (
+                                  <Loader2Icon className="animate-spin" />
+                                ) : (
+                                  <KeyRoundIcon />
+                                )}
+                              </Button>
+                            )}
+
                             {/* §30.3 — stergerea DEFINITIVA, doar pentru Ospatar:
                                 managerii se dezactiveaza, nu se sterg, iar
                                 propriul cont e aparat si de baza. */}
@@ -356,6 +395,39 @@ export function EchipaPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* §49.8 — parola noua, o singura data. Inchiderea o pierde definitiv:
+          nu o pastram nicaieri, nici in stare dupa dialog, nici in loguri. */}
+      {parolaNoua && (
+        <Dialog open onOpenChange={(deschis) => !deschis && setParolaNoua(null)}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Parola noua pentru {parolaNoua.ospatar}</DialogTitle>
+              <DialogDescription>
+                Dicteaza-i-o sau copiaz-o acum — nu se mai poate afisa din nou. Ospatarul si-o
+                poate schimba apoi din contul lui.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+              <code className="font-mono text-lg tracking-wider">{parolaNoua.parola}</code>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Copiaza parola"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(parolaNoua.parola)
+                  notificari.succes('Parola copiata.')
+                }}
+              >
+                <CopyIcon />
+              </Button>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setParolaNoua(null)}>Am notat-o</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Confirmarea standard (§24.7) inainte de o actiune definitiva. */}
       {deSters && (

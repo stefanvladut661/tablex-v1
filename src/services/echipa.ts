@@ -104,6 +104,23 @@ export async function schimbaRolMembru(id: string, rol: Enums<'admin_rol'>): Pro
 }
 
 /**
+ * Resetarea parolei unui Ospatar de catre Manager (§49.8, §52). Trece printr-o
+ * Edge Function: schimbarea parolei ALTUI cont cere service_role, care nu are
+ * ce cauta in browser. Functia verifica relatia manager→ospatar in baza si
+ * intoarce parola generata O SINGURA data.
+ */
+export async function reseteazaParolaOspatar(
+  adminUserId: string,
+): Promise<{ parola: string; ospatar: string | null }> {
+  const { data, error } = await supabase.functions.invoke('reseteaza-parola-ospatar', {
+    body: { admin_user_id: adminUserId },
+  })
+  if (error) throw new Error('Resetarea parolei a esuat. Incearca din nou.')
+  if (!data?.ok) throw new Error(data?.eroare ?? 'Resetarea parolei a esuat.')
+  return { parola: data.parola as string, ospatar: (data.ospatar as string | null) ?? null }
+}
+
+/**
  * Stergerea unui cont de Ospatar (§30.3). Definitiv, spre deosebire de
  * dezactivare: randul dispare din admin_users, iar contul nu mai apartine
  * restaurantului. Interfata o ofera doar pentru Ospatar; propriul cont e
