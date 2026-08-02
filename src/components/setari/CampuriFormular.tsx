@@ -142,9 +142,11 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
                     <Switch
                       id={`oblig-${camp.id}`}
                       checked={camp.obligatoriu}
-                      // Fara nume, telefon si numar de persoane nu exista
-                      // rezervare — baza le cere oricum.
-                      disabled={nedispensabil}
+                      // §16.1: obligativitatea campurilor de SISTEM nu se
+                      // editeaza deloc — nume/telefon/persoane le cere oricum
+                      // baza, iar Emailul ramane optional prin spec (telefonul
+                      // e singurul contact obligatoriu).
+                      disabled={camp.sistem || nedispensabil}
                       onCheckedChange={(valoare) =>
                         salveaza.mutate({ id: camp.id, modificari: { obligatoriu: valoare } })
                       }

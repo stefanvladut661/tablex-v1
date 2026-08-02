@@ -26,6 +26,20 @@ export async function getRestaurantPublic(slug: string): Promise<RestaurantPubli
 }
 
 /**
+ * §16.4 — restaurantul exista, dar e suspendat/banat? Vederea divulga doar
+ * slug-ul, exact cat sa putem arata alt mesaj decat la un slug inexistent.
+ */
+export async function esteIndisponibil(slug: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('restaurante_indisponibile')
+    .select('slug')
+    .eq('slug', slug)
+    .maybeSingle()
+  if (error) throw error
+  return Boolean(data)
+}
+
+/**
  * MasaHarta descrie doar ce e nevoie pentru randare; gruparea pe zone e
  * treaba apelantului, deci adaugam zone_id aici si nu in tipul hartii.
  */

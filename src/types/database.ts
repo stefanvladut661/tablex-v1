@@ -2048,6 +2048,18 @@ export type Database = {
           },
         ]
       }
+      restaurante_indisponibile: {
+        Row: {
+          slug: string | null
+        }
+        Insert: {
+          slug?: string | null
+        }
+        Update: {
+          slug?: string | null
+        }
+        Relationships: []
+      }
       restaurante_publice: {
         Row: {
           aprobare_automata: boolean | null
@@ -2165,6 +2177,7 @@ export type Database = {
         Args: { p_restaurant_id: string }
         Returns: undefined
       }
+      anunta_mese_in_expirare: { Args: never; Returns: number }
       are_floor_plan: { Args: never; Returns: boolean }
       capacitate_eveniment: { Args: { p_event_id: string }; Returns: number }
       consuma_credit: {
@@ -2285,6 +2298,7 @@ export type Database = {
         }[]
       }
       reincarca_credite: { Args: { p_package_id: string }; Returns: number }
+      restaurantul_contului: { Args: never; Returns: string }
       restaureaza_versiune_plan: {
         Args: { p_project_id: string }
         Returns: number
@@ -2304,6 +2318,7 @@ export type Database = {
         }
         Returns: Json
       }
+      ruleaza_retentia_gdpr: { Args: never; Returns: number }
       slug_disponibil: { Args: { p_slug: string }; Returns: boolean }
       trimite_remindere_whatsapp: { Args: never; Returns: number }
       uneste_mese: { Args: { p_table_ids: string[] }; Returns: string }

@@ -16,6 +16,7 @@ import { RUTE } from '@/lib/rute'
 import {
   CHEIE_CAMPURI,
   CHEI_WIDGET,
+  esteIndisponibil,
   getCampuriFormular,
   getEvenimenteWidget,
   getRestaurantPublic,
@@ -57,6 +58,15 @@ export function WidgetRezervarePage() {
     queryFn: () => getCampuriFormular(restaurant.data!.id!),
     enabled: Boolean(restaurant.data?.id),
   })
+
+  // §16.4 — vederea publica ascunde restaurantele suspendate, deci „negasit"
+  // poate insemna doua lucruri. Intrebam separat, DOAR cand n-am gasit nimic.
+  const indisponibil = useQuery({
+    queryKey: ['widget', 'indisponibil', slug],
+    queryFn: () => esteIndisponibil(slug),
+    enabled: slug.length > 0 && restaurant.isFetched && !restaurant.data,
+  })
+
   const fus = restaurant.data?.fus_orar ?? 'Europe/Bucharest'
   if (restaurant.isLoading) return <EcranIncarcare />
 
@@ -72,6 +82,25 @@ export function WidgetRezervarePage() {
   if (setari.data?.maintenance_mode === true) return <MentenantaPage />
 
   if (!restaurant.data) {
+    if (indisponibil.isLoading) return <EcranIncarcare />
+
+    // §16.4 — suspendat NU e totuna cu inexistent: mesaj dedicat, fara motiv
+    // si fara detalii. Cererile existente raman in baza; doar cele noi sunt
+    // blocate (rezerva_public cere oricum status activ).
+    if (indisponibil.data) {
+      return (
+        <div className="flex min-h-svh flex-col items-center justify-center gap-3 bg-background px-6 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Acest restaurant nu este disponibil momentan
+          </h1>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Rezervarile online sunt oprite temporar. Revino mai tarziu sau contacteaza
+            restaurantul telefonic.
+          </p>
+        </div>
+      )
+    }
+
     return (
       <div className="flex min-h-svh flex-col items-center justify-center gap-3 bg-background px-6 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Restaurantul nu a fost gasit</h1>
