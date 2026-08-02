@@ -25,6 +25,12 @@ export type DateInregistrare = {
   numeRestaurant: string
   telefon?: string
   /**
+   * CUI-ul firmei, cerut inca de la signup (§52). Nu se scrie nicaieri acum:
+   * calatoreste prin user_metadata pana la onboarding, unde intra pe
+   * restaurant odata cu restul datelor de firma.
+   */
+  cui?: string
+  /**
    * Calea la care duce linkul din emailul de confirmare. Implicit /app, dar
    * cine vine dintr-o invitatie trebuie sa se intoarca la ea — altfel ajunge
    * in onboarding si i se cere sa-si creeze un restaurant pe care nu-l vrea.

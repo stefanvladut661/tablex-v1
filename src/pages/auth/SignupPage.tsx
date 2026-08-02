@@ -25,6 +25,13 @@ function schemaPentru(dinInvitatie: boolean) {
     .object({
       numePersoana: numeSchema,
       numeRestaurant: dinInvitatie ? z.string().optional() : numeSchema,
+      // CUI-ul e optional, dar daca e scris trebuie sa arate a CUI romanesc.
+      cui: z
+        .string()
+        .trim()
+        .regex(/^(RO)?\d{2,10}$/i, 'CUI-ul are 2-10 cifre, optional cu RO in fata.')
+        .optional()
+        .or(z.literal('')),
       email: emailSchema,
       telefon: telefonSchema,
       parola: parolaSchema,
@@ -56,6 +63,7 @@ export function SignupPage() {
     defaultValues: {
       numePersoana: '',
       numeRestaurant: '',
+      cui: '',
       email: '',
       telefon: '',
       parola: '',
@@ -72,6 +80,7 @@ export function SignupPage() {
         numePersoana: valori.numePersoana,
         numeRestaurant: valori.numeRestaurant ?? '',
         telefon: valori.telefon,
+        cui: valori.cui?.trim() || undefined,
         // Linkul din emailul de confirmare se intoarce la invitatie, nu in
         // /app — altfel cel invitat ajunge in onboarding, unde i se cere sa-si
         // creeze un restaurant pe care nu-l vrea.
@@ -108,12 +117,25 @@ export function SignupPage() {
           {...form.register('numePersoana')}
         />
         {!dinInvitatie && (
-          <CampText
-            eticheta="Numele restaurantului"
-            autoComplete="organization"
-            eroare={form.formState.errors.numeRestaurant?.message}
-            {...form.register('numeRestaurant')}
-          />
+          <>
+            <CampText
+              eticheta="Numele restaurantului"
+              autoComplete="organization"
+              eroare={form.formState.errors.numeRestaurant?.message}
+              {...form.register('numeRestaurant')}
+            />
+            {/* §52 — CUI-ul se cere de AICI, nu abia la onboarding. Ramane
+                optional: cine se inregistreaza seara, de pe telefon, nu are
+                mereu certificatul la indemana; il poate completa in Setari. */}
+            <CampText
+              eticheta="CUI (opțional)"
+              autoComplete="off"
+              placeholder="RO12345678"
+              ajutor="Apare pe facturi. Îl poți completa și mai târziu, din Setări."
+              eroare={form.formState.errors.cui?.message}
+              {...form.register('cui')}
+            />
+          </>
         )}
         <CampText
           eticheta="Email"

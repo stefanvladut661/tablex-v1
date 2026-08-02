@@ -142,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nume: date.numePersoana,
           nume_restaurant: date.numeRestaurant,
           telefon: date.telefon ?? null,
+          cui: date.cui ?? null,
         },
       },
     })

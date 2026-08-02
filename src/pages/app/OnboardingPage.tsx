@@ -97,6 +97,8 @@ export function OnboardingPage() {
     nume?: string
     nume_restaurant?: string
     telefon?: string
+    /** §52 — CUI-ul cerut la signup; aici doar il preluam, nu-l recerem. */
+    cui?: string
   }
 
   const form = useForm<FormOnboarding>({
@@ -109,7 +111,7 @@ export function OnboardingPage() {
       adresa: '',
       telefon: metadate.telefon ?? '',
       numeFirma: '',
-      cui: '',
+      cui: metadate.cui ?? '',
       plan: 'start',
     },
   })
