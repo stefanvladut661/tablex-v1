@@ -39,7 +39,7 @@ export async function intervine(
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Modificarea nu a fost aplicata: contul tau nu are acest drept.')
+    throw new Error('Modificarea nu a fost aplicată: contul tău nu are acest drept.')
   }
 }
 
@@ -205,7 +205,7 @@ export async function actualizeazaSetariGlobale(
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Setarile globale se schimba doar de rolul super_admin.')
+    throw new Error('Setările globale se schimbă doar de rolul super_admin.')
   }
 }
 
@@ -264,7 +264,7 @@ export async function invitaInEchipa(
 /** Un UPDATE respins de RLS raspunde 200 cu zero randuri, nu cu eroare. */
 async function confirmaScriere(randuri: Array<{ id: string }> | null, actiune: string) {
   if (!randuri?.length) {
-    throw new Error(`${actiune} nu a fost aplicata: doar rolul super_admin poate face asta.`)
+    throw new Error(`${actiune} nu a fost aplicată: doar rolul super_admin poate face asta.`)
   }
 }
 
@@ -275,7 +275,7 @@ export async function anuleazaInvitatiaEchipa(id: string): Promise<void> {
     .eq('id', id)
     .select('id')
   if (error) throw error
-  await confirmaScriere(data, 'Anularea invitatiei')
+  await confirmaScriere(data, 'Anularea invitației')
 }
 
 /**

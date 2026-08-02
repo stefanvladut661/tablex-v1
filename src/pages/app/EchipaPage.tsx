@@ -88,11 +88,11 @@ export function EchipaPage() {
     // Verificari de bun-sens inainte de a lovi constrangerile din DB, ca
     // mesajul sa fie clar in loc de o eroare de unicitate.
     if ((membri.data ?? []).some((m) => (m.email ?? '').toLowerCase() === email)) {
-      form.setError('email', { message: 'Persoana face deja parte din echipa.' })
+      form.setError('email', { message: 'Persoana face deja parte din echipă.' })
       return
     }
     if (invitatiiActive.some((i) => i.email.toLowerCase() === email)) {
-      form.setError('email', { message: 'Exista deja o invitatie activa pentru acest email.' })
+      form.setError('email', { message: 'Există deja o invitație activă pentru acest email.' })
       return
     }
 
@@ -109,13 +109,13 @@ export function EchipaPage() {
       // trimite el. Invitatia exista in ambele cazuri.
       const rezultatEmail = await trimiteEmail('invitatie', invitatie.id)
       if (rezultatEmail.trimis) {
-        notificari.succes('Invitatie trimisa pe email.', { descriere: invitatie.email })
+        notificari.succes('Invitație trimisă pe email.', { descriere: invitatie.email })
       } else {
         await copiazaLink(
           invitatie.token,
           rezultatEmail.simulat
-            ? 'Invitatie creata. Emailul automat nu e configurat, deci linkul e in clipboard.'
-            : 'Invitatie creata. Linkul e in clipboard.',
+            ? 'Invitație creată. Emailul automat nu e configurat, deci linkul e în clipboard.'
+            : 'Invitație creată. Linkul e în clipboard.',
         )
       }
     } catch (eroare) {
@@ -130,7 +130,7 @@ export function EchipaPage() {
       notificari.succes(mesaj, { descriere: 'Trimite-l persoanei invitate.' })
     } catch {
       // Clipboard-ul poate fi blocat (permisiuni, http). Aratam linkul.
-      notificari.info('Copiaza manual linkul', { descriere: link, durata: 15_000 })
+      notificari.info('Copiază manual linkul', { descriere: link, durata: 15_000 })
     }
   }
 
@@ -140,10 +140,10 @@ export function EchipaPage() {
         <h1 className="text-lg font-semibold tracking-tight">Echipa</h1>
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Invita o persoana</CardTitle>
+            <CardTitle className="text-base">Invită o persoană</CardTitle>
             <CardDescription>
-              Se creeaza un link unic, valabil 7 zile, legat de adresa de email. Persoana isi
-              seteaza singura parola.
+              Se creează un link unic, valabil 7 zile, legat de adresa de email. Persoana își
+              setează singură parola.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -172,7 +172,7 @@ export function EchipaPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ospatar">Ospatar</SelectItem>
+                        <SelectItem value="ospatar">Ospătar</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                       </SelectContent>
                     </Select>
@@ -181,7 +181,7 @@ export function EchipaPage() {
               </div>
               <Button type="submit" disabled={invita.isPending}>
                 {invita.isPending ? <Loader2Icon className="animate-spin" /> : <UserPlusIcon />}
-                Invita
+                Invită
               </Button>
             </form>
           </CardContent>
@@ -191,7 +191,7 @@ export function EchipaPage() {
           <CardHeader>
             <CardTitle className="text-base">Membri</CardTitle>
             <CardDescription>
-              Ospatarii nu au acces la setari, facturare sau gestiunea echipei.
+              Ospătarii nu au acces la setări, facturare sau gestiunea echipei.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -204,7 +204,7 @@ export function EchipaPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Persoana</TableHead>
+                    <TableHead>Persoană</TableHead>
                     <TableHead className="w-40">Rol</TableHead>
                     <TableHead className="w-28">Activ</TableHead>
                   </TableRow>
@@ -216,7 +216,7 @@ export function EchipaPage() {
                       <TableRow key={membru.id}>
                         <TableCell>
                           <div className="font-medium">
-                            {membru.nume ?? membru.email ?? 'Fara nume'}
+                            {membru.nume ?? membru.email ?? 'Fără nume'}
                             {esteEu && (
                               <Badge variant="secondary" className="ml-2">
                                 tu
@@ -245,7 +245,7 @@ export function EchipaPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="ospatar">Ospatar</SelectItem>
+                                <SelectItem value="ospatar">Ospătar</SelectItem>
                                 <SelectItem value="manager">Manager</SelectItem>
                               </SelectContent>
                             </Select>
@@ -270,7 +270,7 @@ export function EchipaPage() {
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={`Reseteaza parola pentru ${membru.email}`}
+                                aria-label={`Resetează parola pentru ${membru.email}`}
                                 disabled={resetInLucru === membru.id}
                                 onClick={async () => {
                                   setResetInLucru(membru.id)
@@ -281,7 +281,7 @@ export function EchipaPage() {
                                         rezultat.ospatar ??
                                         membru.nume ??
                                         membru.email ??
-                                        'ospatar',
+                                        'ospătar',
                                       parola: rezultat.parola,
                                     })
                                   } catch (eroare) {
@@ -306,7 +306,7 @@ export function EchipaPage() {
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={`Sterge contul ${membru.email}`}
+                                aria-label={`Șterge contul ${membru.email}`}
                                 onClick={() =>
                                   setDeSters({
                                     id: membru.id,
@@ -330,16 +330,16 @@ export function EchipaPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Invitatii</CardTitle>
+            <CardTitle className="text-base">Invitații</CardTitle>
             <CardDescription>
-              Emailurile automate vin intr-o etapa urmatoare; pana atunci trimite linkul tu.
+              Emailurile automate vin într-o etapă următoare; până atunci trimite linkul tu.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {invitatii.isLoading ? (
               <Skeleton className="h-9 w-full" />
             ) : (invitatii.data ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nicio invitatie trimisa.</p>
+              <p className="text-sm text-muted-foreground">Nicio invitație trimisă.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -347,7 +347,7 @@ export function EchipaPage() {
                     <TableHead>Email</TableHead>
                     <TableHead className="w-28">Rol</TableHead>
                     <TableHead className="w-32">Status</TableHead>
-                    <TableHead className="w-28">Expira</TableHead>
+                    <TableHead className="w-28">Expiră</TableHead>
                     <TableHead className="w-32" />
                   </TableRow>
                 </TableHeader>
@@ -370,7 +370,7 @@ export function EchipaPage() {
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              aria-label="Copiaza linkul"
+                              aria-label="Copiază linkul"
                               onClick={() => void copiazaLink(invitatie.token)}
                             >
                               <CopyIcon />
@@ -382,7 +382,7 @@ export function EchipaPage() {
                                 anuleaza.mutate(invitatie.id, { onError: (eroare) => notificari.eroare(eroare) })
                               }
                             >
-                              Anuleaza
+                              Anulează
                             </Button>
                           </div>
                         )}
@@ -402,9 +402,9 @@ export function EchipaPage() {
         <Dialog open onOpenChange={(deschis) => !deschis && setParolaNoua(null)}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Parola noua pentru {parolaNoua.ospatar}</DialogTitle>
+              <DialogTitle>Parolă nouă pentru {parolaNoua.ospatar}</DialogTitle>
               <DialogDescription>
-                Dicteaza-i-o sau copiaz-o acum — nu se mai poate afisa din nou. Ospatarul si-o
+                Dictează-i-o sau copiaz-o acum — nu se mai poate afișa din nou. Ospătarul și-o
                 poate schimba apoi din contul lui.
               </DialogDescription>
             </DialogHeader>
@@ -413,10 +413,10 @@ export function EchipaPage() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Copiaza parola"
+                aria-label="Copiază parola"
                 onClick={() => {
                   void navigator.clipboard?.writeText(parolaNoua.parola)
-                  notificari.succes('Parola copiata.')
+                  notificari.succes('Parolă copiată.')
                 }}
               >
                 <CopyIcon />
@@ -434,15 +434,15 @@ export function EchipaPage() {
         <Dialog open onOpenChange={(deschis) => !deschis && setDeSters(null)}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Stergi contul {deSters.nume}?</DialogTitle>
+              <DialogTitle>Ștergi contul {deSters.nume}?</DialogTitle>
               <DialogDescription>
-                Definitiv: ospatarul nu se mai poate autentifica, iar contul dispare din echipa.
-                Daca vrei doar o pauza, foloseste comutatorul de acces.
+                Definitiv: ospătarul nu se mai poate autentifica, iar contul dispare din echipă.
+                Dacă vrei doar o pauză, folosește comutatorul de acces.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeSters(null)}>
-                Renunta
+                Renunță
               </Button>
               <Button
                 variant="destructive"
@@ -450,14 +450,14 @@ export function EchipaPage() {
                 onClick={() =>
                   sterge.mutate(deSters.id, {
                     onSuccess: () => {
-                      notificari.succes('Contul a fost sters.')
+                      notificari.succes('Contul a fost șters.')
                       setDeSters(null)
                     },
                     onError: (eroare) => notificari.eroare(eroare),
                   })
                 }
               >
-                Sterge contul
+                Șterge contul
               </Button>
             </DialogFooter>
           </DialogContent>

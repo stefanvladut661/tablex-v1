@@ -33,7 +33,7 @@ import { getClientDupaTelefon } from '@/services/clienti'
 import type { Zona } from '@/services/mese'
 
 const DURATE = [
-  { valoare: '0', eticheta: 'Implicita (setarea restaurantului)' },
+  { valoare: '0', eticheta: 'Implicită (setarea restaurantului)' },
   { valoare: '90', eticheta: '1 h 30' },
   { valoare: '120', eticheta: '2 h' },
   { valoare: '150', eticheta: '2 h 30' },
@@ -55,11 +55,11 @@ function schemaPentru(walkIn: boolean) {
     telefon: walkIn
       ? z.string().refine(
           (valoare) => valoare.trim() === '' || telefonSchema.safeParse(valoare).success,
-          'Numarul de telefon nu pare valid (ex: 0722123456).',
+          'Numărul de telefon nu pare valid (ex: 0722123456).',
         )
       : telefonSchema,
-    nrPersoane: z.number().int().min(1, 'Minim 1 persoana.').max(200),
-    oraText: z.string().regex(/^\d{2}:\d{2}$/, 'Format ora: HH:MM'),
+    nrPersoane: z.number().int().min(1, 'Minim 1 persoană.').max(200),
+    oraText: z.string().regex(/^\d{2}:\d{2}$/, 'Format oră: HH:MM'),
     durata: z.string(),
     zoneId: z.string(),
     tableId: z.string(),
@@ -175,7 +175,7 @@ export function DialogRezervare({
         sursa: walkIn ? 'walk_in' : 'manual',
         noteInterne: valori.noteInterne || null,
       })
-      notificari.succes(walkIn ? 'Walk-in inregistrat.' : 'Rezervare creata.')
+      notificari.succes(walkIn ? 'Walk-in înregistrat.' : 'Rezervare creată.')
       form.reset()
       onDeschisChange(false)
       // Dupa inchidere, ca apelantul sa poata declansa propriile lui efecte
@@ -190,10 +190,10 @@ export function DialogRezervare({
     <Dialog open={deschis} onOpenChange={onDeschisChange}>
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{walkIn ? 'Walk-in' : 'Rezervare noua'}</DialogTitle>
+          <DialogTitle>{walkIn ? 'Walk-in' : 'Rezervare nouă'}</DialogTitle>
           <DialogDescription>
             {walkIn
-              ? 'Client sosit fara rezervare. Se inregistreaza direct ca sosit.'
+              ? 'Client sosit fără rezervare. Se înregistrează direct ca sosit.'
               : formatFus(zi, 'EEEE, d MMMM yyyy', fus)}
           </DialogDescription>
         </DialogHeader>
@@ -207,13 +207,13 @@ export function DialogRezervare({
               {...form.register('clientNume')}
             />
             <CampText
-              eticheta={walkIn ? 'Telefon (optional)' : 'Telefon'}
+              eticheta={walkIn ? 'Telefon (opțional)' : 'Telefon'}
               type="tel"
               placeholder="0722123456"
               ajutor={
                 walkIn
-                  ? 'Fara numar, oaspetele nu intra in CRM — nu inventa unul.'
-                  : 'Identifica unic clientul in CRM.'
+                  ? 'Fără număr, oaspetele nu intră în CRM — nu inventa unul.'
+                  : 'Identifică unic clientul în CRM.'
               }
               eroare={form.formState.errors.telefon?.message}
               {...form.register('telefon')}
@@ -224,9 +224,9 @@ export function DialogRezervare({
             <p className="flex items-start gap-2 rounded-md border border-status-ocupat bg-status-ocupat-soft px-3 py-2 text-sm">
               <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
               <span>
-                <strong>{fisaClient.data?.nume ?? 'Acest numar'}</strong> are{' '}
-                <span className="tabular-nums">{fisaClient.data?.nr_no_show}</span> neprezentari.
-                Poti crea rezervarea oricum — decizia e a ta.
+                <strong>{fisaClient.data?.nume ?? 'Acest număr'}</strong> are{' '}
+                <span className="tabular-nums">{fisaClient.data?.nr_no_show}</span> neprezentări.
+                Poți crea rezervarea oricum — decizia e a ta.
               </span>
             </p>
           )}
@@ -241,13 +241,13 @@ export function DialogRezervare({
               {...form.register('nrPersoane', { valueAsNumber: true })}
             />
             <CampText
-              eticheta="Ora"
+              eticheta="Oră"
               type="time"
               eroare={form.formState.errors.oraText?.message}
               {...form.register('oraText')}
             />
             <div className="grid gap-1.5">
-              <Label htmlFor="durata">Durata</Label>
+              <Label htmlFor="durata">Durată</Label>
               <Controller
                 control={form.control}
                 name="durata"
@@ -271,7 +271,7 @@ export function DialogRezervare({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="zona">Zona</Label>
+              <Label htmlFor="zona">Zonă</Label>
               <Controller
                 control={form.control}
                 name="zoneId"
@@ -300,7 +300,7 @@ export function DialogRezervare({
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="masa">Masa</Label>
+              <Label htmlFor="masa">Masă</Label>
               <Controller
                 control={form.control}
                 name="tableId"
@@ -310,11 +310,11 @@ export function DialogRezervare({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={FARA_MASA}>Fara masa (se aloca ulterior)</SelectItem>
+                      <SelectItem value={FARA_MASA}>Fără masă (se alocă ulterior)</SelectItem>
                       {(disponibilitate.data ?? []).map((masa) => (
                         <SelectItem key={masa.table_id} value={masa.table_id} disabled={!masa.libera}>
                           Masa {masa.numar_masa} · {masa.capacitate} loc.
-                          {masa.libera ? '' : ' — ocupata'}
+                          {masa.libera ? '' : ' — ocupată'}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -323,8 +323,8 @@ export function DialogRezervare({
               />
               <p className="text-xs text-muted-foreground">
                 {disponibilitate.isFetching
-                  ? 'Se verifica disponibilitatea...'
-                  : `${(disponibilitate.data ?? []).filter((m) => m.libera).length} mese libere la ora aleasa`}
+                  ? 'Se verifică disponibilitatea...'
+                  : `${(disponibilitate.data ?? []).filter((m) => m.libera).length} mese libere la ora aleasă`}
               </p>
             </div>
           </div>
@@ -341,11 +341,11 @@ export function DialogRezervare({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onDeschisChange(false)}>
-              Renunta
+              Renunță
             </Button>
             <Button type="submit" disabled={creeaza.isPending}>
               {creeaza.isPending && <Loader2Icon className="animate-spin" />}
-              {walkIn ? 'Inregistreaza walk-in' : 'Creeaza rezervarea'}
+              {walkIn ? 'Înregistrează walk-in' : 'Creează rezervarea'}
             </Button>
           </DialogFooter>
         </form>

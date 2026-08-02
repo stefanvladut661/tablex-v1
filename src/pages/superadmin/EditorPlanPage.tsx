@@ -57,9 +57,9 @@ import type { Enums } from '@/types/database'
 import type { ElementStructura, TipStructura } from '@/types/floor-plan'
 
 const ETICHETE_FORMA: Record<Enums<'masa_forma'>, string> = {
-  rotunda: 'Rotunda',
-  patrata: 'Patrata',
-  dreptunghiulara: 'Dreptunghiulara',
+  rotunda: 'Rotundă',
+  patrata: 'Pătrată',
+  dreptunghiulara: 'Dreptunghiulară',
 }
 
 /**
@@ -73,14 +73,14 @@ const SABLOANE_STRUCTURA: Record<
   { eticheta: string; latime: number; inaltime: number; text?: string }
 > = {
   perete: { eticheta: 'Perete', latime: 400, inaltime: 20 },
-  usa: { eticheta: 'Usa', latime: 80, inaltime: 20 },
+  usa: { eticheta: 'Ușă', latime: 80, inaltime: 20 },
   intrare: { eticheta: 'Intrare', latime: 120, inaltime: 40, text: 'Intrare' },
   bar: { eticheta: 'Bar', latime: 300, inaltime: 80, text: 'Bar' },
   dj: { eticheta: 'DJ', latime: 120, inaltime: 100, text: 'DJ' },
-  vip: { eticheta: 'Zona VIP', latime: 260, inaltime: 200, text: 'VIP' },
-  bucatarie: { eticheta: 'Bucatarie', latime: 240, inaltime: 180, text: 'Bucatarie' },
-  planta: { eticheta: 'Planta', latime: 60, inaltime: 60 },
-  piscina: { eticheta: 'Piscina', latime: 320, inaltime: 200, text: 'Piscina' },
+  vip: { eticheta: 'Zonă VIP', latime: 260, inaltime: 200, text: 'VIP' },
+  bucatarie: { eticheta: 'Bucătărie', latime: 240, inaltime: 180, text: 'Bucătărie' },
+  planta: { eticheta: 'Plantă', latime: 60, inaltime: 60 },
+  piscina: { eticheta: 'Piscină', latime: 320, inaltime: 200, text: 'Piscină' },
 }
 
 const TIPURI_STRUCTURA = Object.keys(SABLOANE_STRUCTURA) as TipStructura[]
@@ -100,9 +100,9 @@ function DialogZonaNoua({
     <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Zona noua</DialogTitle>
+          <DialogTitle>Zonă nouă</DialogTitle>
           <DialogDescription>
-            Numele apare in panoul restaurantului si in widgetul public.
+            Numele apare în panoul restaurantului și în widgetul public.
           </DialogDescription>
         </DialogHeader>
 
@@ -119,17 +119,17 @@ function DialogZonaNoua({
             autoFocus
             value={nume}
             onChange={(e) => setNume(e.target.value)}
-            placeholder="Salon interior, Terasa, Etaj 1..."
+            placeholder="Salon interior, Terasă, Etaj 1..."
             className="h-9"
           />
         </form>
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button disabled={inLucru || nume.trim().length < 2} onClick={() => onCreeaza(nume.trim())}>
-            Creeaza
+            Creează
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -159,10 +159,10 @@ function DialogStergere({
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button variant="destructive" disabled={inLucru} onClick={onConfirma}>
-            Sterge
+            Șterge
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -275,7 +275,7 @@ export function EditorPlanPage() {
   const zonaNoua = useMutation({
     mutationFn: (nume: string) => creeazaZona(restaurantId, nume),
     onSuccess: (zona) => {
-      notificari.succes(`Zona „${zona.nume}" a fost creata.`)
+      notificari.succes(`Zona „${zona.nume}" a fost creată.`)
       setZonaActiva(zona.id)
       setDialogZonaNoua(false)
       reincarcaZone()
@@ -293,7 +293,7 @@ export function EditorPlanPage() {
   const eliminaZona = useMutation({
     mutationFn: stergeZona,
     onSuccess: () => {
-      notificari.succes('Zona a fost stearsa.')
+      notificari.succes('Zona a fost ștearsă.')
       setZonaActiva(null)
       setMasaSelectata(null)
       setStergere(null)
@@ -371,7 +371,7 @@ export function EditorPlanPage() {
   const revino = useMutation({
     mutationFn: restaureazaVersiune,
     onSuccess: (versiuneNoua) => {
-      notificari.succes(`Planul a revenit la versiunea aleasa (acum versiunea ${versiuneNoua}).`)
+      notificari.succes(`Planul a revenit la versiunea aleasă (acum versiunea ${versiuneNoua}).`)
       // Continutul stratului s-a schimbat in baza, nu in cache: il recitim.
       void queryClient.invalidateQueries({ queryKey: CHEI_EDITOR.layer1(zonaCurenta!.id) })
       void queryClient.invalidateQueries({ queryKey: CHEIE_ISTORIC(zonaCurenta!.id) })
@@ -382,7 +382,7 @@ export function EditorPlanPage() {
   const eliminaMasa = useMutation({
     mutationFn: stergeMasa,
     onSuccess: () => {
-      notificari.succes('Masa a fost stearsa.')
+      notificari.succes('Masa a fost ștearsă.')
       setMasaSelectata(null)
       setStergere(null)
       reincarcaMese()
@@ -405,7 +405,7 @@ export function EditorPlanPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link to={RUTE.superadmin}>
                 <ArrowLeftIcon />
-                Inapoi
+                Înapoi
               </Link>
             </Button>
             <div>
@@ -413,7 +413,7 @@ export function EditorPlanPage() {
                 Editor plan · {restaurant?.nume ?? 'Restaurant'}
               </p>
               <p className="text-xs text-muted-foreground">
-                Modificarile se salveaza imediat, la fiecare acțiune.
+                Modificările se salvează imediat, la fiecare acțiune.
               </p>
             </div>
           </div>
@@ -438,7 +438,7 @@ export function EditorPlanPage() {
                 {(zone.data ?? []).map((z) => (
                   <SelectItem key={z.id} value={z.id}>
                     {z.nume}
-                    {z.activa ? '' : ' (dezactivata)'}
+                    {z.activa ? '' : ' (dezactivată)'}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -446,7 +446,7 @@ export function EditorPlanPage() {
 
             <Button variant="outline" size="sm" onClick={() => setDialogZonaNoua(true)}>
               <PlusIcon />
-              Zona noua
+              Zonă nouă
             </Button>
 
             {zonaCurenta && (
@@ -455,7 +455,7 @@ export function EditorPlanPage() {
                   {(
                     [
                       ['mese', 'Mese'],
-                      ['structura', 'Structura'],
+                      ['structura', 'Structură'],
                     ] as const
                   ).map(([valoare, eticheta]) => (
                     <button
@@ -484,7 +484,7 @@ export function EditorPlanPage() {
                     value={tipDeAsezat}
                     onValueChange={(tip) => setTipDeAsezat(tip as TipStructura)}
                   >
-                    <SelectTrigger className="h-8 w-40" aria-label="Tipul elementului de asezat">
+                    <SelectTrigger className="h-8 w-40" aria-label="Tipul elementului de așezat">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -505,10 +505,10 @@ export function EditorPlanPage() {
                 >
                   <PlusIcon />
                   {modAdaugare
-                    ? 'Click pe plan ca sa asezi'
+                    ? 'Click pe plan ca să așezi'
                     : strat === 'mese'
-                      ? 'Adauga mese'
-                      : 'Adauga elemente'}
+                      ? 'Adaugă mese'
+                      : 'Adaugă elemente'}
                 </Button>
               </>
             )}
@@ -517,7 +517,7 @@ export function EditorPlanPage() {
             {cerereStudio.data?.schita_image_url && (
               <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1">
                 <Label htmlFor="schita-vizibila" className="text-xs font-normal">
-                  Schita
+                  Schiță
                 </Label>
                 <Switch
                   id="schita-vizibila"
@@ -532,7 +532,7 @@ export function EditorPlanPage() {
                   disabled={!schitaVizibila}
                   onChange={(e) => setOpacitateSchita(Number(e.target.value))}
                   className="w-20 accent-primary"
-                  aria-label="Opacitatea schitei"
+                  aria-label="Opacitatea schiței"
                 />
               </div>
             )}
@@ -548,10 +548,10 @@ export function EditorPlanPage() {
                   onClick={() => genereazaAI.mutate()}
                 >
                   {genereazaAI.isPending
-                    ? 'Genereaza...'
+                    ? 'Generează...'
                     : cerereStudio.data.ai_generat_la
-                      ? 'Reincearca generarea AI'
-                      : 'Genereaza AI'}
+                      ? 'Reîncearcă generarea AI'
+                      : 'Generează AI'}
                 </Button>
                 {cerereStudio.data.ai_rezultat && (
                   <>
@@ -585,7 +585,7 @@ export function EditorPlanPage() {
 
             <span className="ml-auto text-xs text-muted-foreground tabular-nums">
               {strat === 'mese'
-                ? `${meseZona.length} mese in zona`
+                ? `${meseZona.length} mese în zonă`
                 : `${elemente.length} elemente de structura`}
             </span>
           </div>
@@ -594,7 +594,7 @@ export function EditorPlanPage() {
             <Skeleton className="aspect-[3/2] w-full" />
           ) : !zonaCurenta ? (
             <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-              Restaurantul nu are nicio zona. Creeaza prima zona ca sa poti aseza mese.
+              Restaurantul nu are nicio zonă. Creează prima zonă ca să poți așeza mese.
             </p>
           ) : (
             <EditorZona
@@ -643,8 +643,8 @@ export function EditorPlanPage() {
           )}
 
           <p className="text-xs text-muted-foreground">
-            Trage o masa cu mouse-ul ca sa o muti; se aliniaza singura la grid. Cu masa
-            selectata, sagetile o muta cu un pas de grid, iar Shift + sageti cu un pixel.
+            Trage o masă cu mouse-ul ca să o muți; se aliniază singură la grid. Cu masa
+            selectată, săgețile o mută cu un pas de grid, iar Shift + săgeți cu un pixel.
           </p>
         </div>
 
@@ -653,7 +653,7 @@ export function EditorPlanPage() {
           {zonaCurenta && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Zona</CardTitle>
+                <CardTitle className="text-base">Zonă</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-3">
                 <div className="grid gap-1.5">
@@ -674,8 +674,8 @@ export function EditorPlanPage() {
                 <div className="grid grid-cols-2 gap-2">
                   {(
                     [
-                      ['canvas_latime', 'Latime'],
-                      ['canvas_inaltime', 'Inaltime'],
+                      ['canvas_latime', 'Lățime'],
+                      ['canvas_inaltime', 'Înălțime'],
                     ] as const
                   ).map(([cheie, eticheta]) => (
                     <div key={cheie} className="grid gap-1.5">
@@ -726,7 +726,7 @@ export function EditorPlanPage() {
 
                 <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
                   <Label htmlFor="zona-activa" className="text-sm">
-                    Zona activa
+                    Zonă activă
                   </Label>
                   <Switch
                     id="zona-activa"
@@ -746,7 +746,7 @@ export function EditorPlanPage() {
                   }
                 >
                   <Trash2Icon />
-                  Sterge zona
+                  Șterge zona
                 </Button>
               </CardContent>
             </Card>
@@ -765,7 +765,7 @@ export function EditorPlanPage() {
           {strat === 'structura' && zonaCurenta && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Stratul de structura</CardTitle>
+                <CardTitle className="text-base">Stratul de structură</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-3">
                 <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
@@ -789,7 +789,7 @@ export function EditorPlanPage() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Structura ajunge in widgetul public doar daca e si vizibila, si publicata —
+                  Structura ajunge în widgetul public doar dacă e și vizibilă, și publicată —
                   vederea structura_publica cere ambele. Mesele nu depind de asta.
                 </p>
 
@@ -798,8 +798,8 @@ export function EditorPlanPage() {
                   <p className="text-sm font-medium">Versiuni publicate</p>
                   {(istoric.data ?? []).length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      Inca nicio versiune. Fiecare publicare a structurii lasa un instantaneu
-                      aici, ca o greseala sa nu fie definitiva.
+                      Încă nicio versiune. Fiecare publicare a structurii lasă un instantaneu
+                      aici, ca o greșeală să nu fie definitivă.
                     </p>
                   ) : (
                     <ul className="grid max-h-56 gap-1 overflow-y-auto">
@@ -836,8 +836,8 @@ export function EditorPlanPage() {
                     </ul>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Revenirea nu sterge nimic: scrie versiunea aleasa ca versiune noua, deci se
-                    poate reveni si din ea.
+                    Revenirea nu șterge nimic: scrie versiunea aleasă ca versiune nouă, deci se
+                    poate reveni și din ea.
                   </p>
                 </div>
               </CardContent>
@@ -877,11 +877,11 @@ export function EditorPlanPage() {
 
       {stergere && (
         <DialogStergere
-          titlu={stergere.tip === 'zona' ? `Stergi zona „${stergere.nume}"?` : `Stergi masa ${stergere.nume}?`}
+          titlu={stergere.tip === 'zona' ? `Ștergi zona „${stergere.nume}"?` : `Ștergi masa ${stergere.nume}?`}
           descriere={
             stergere.tip === 'zona'
-              ? 'Se sterg si toate mesele din ea. Daca zona are rezervari viitoare, baza de date refuza stergerea — dezactiveaz-o in loc.'
-              : 'Daca masa are rezervari viitoare, baza de date refuza stergerea — dezactiveaz-o in loc.'
+              ? 'Se șterg și toate mesele din ea. Dacă zona are rezervări viitoare, baza de date refuză ștergerea — dezactiveaz-o în loc.'
+              : 'Dacă masa are rezervări viitoare, baza de date refuză ștergerea — dezactiveaz-o în loc.'
           }
           inLucru={eliminaZona.isPending || eliminaMasa.isPending}
           onInchide={() => setStergere(null)}
@@ -916,7 +916,7 @@ function PanouMasa({
       <CardContent className="grid gap-3">
         <div className="grid grid-cols-2 gap-2">
           <div className="grid gap-1.5">
-            <Label htmlFor="numar">Numar</Label>
+            <Label htmlFor="numar">Număr</Label>
             <Input
               id="numar"
               key={`numar-${masa.id}`}
@@ -949,7 +949,7 @@ function PanouMasa({
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="forma">Forma</Label>
+          <Label htmlFor="forma">Formă</Label>
           <Select
             value={masa.forma}
             onValueChange={(forma) => salveaza({ forma: forma as Enums<'masa_forma'> })}
@@ -970,9 +970,9 @@ function PanouMasa({
         <div className="grid grid-cols-3 gap-2">
           {(
             [
-              ['latime', 'Latime'],
-              ['inaltime', 'Inaltime'],
-              ['rotatie', 'Rotatie'],
+              ['latime', 'Lățime'],
+              ['inaltime', 'Înălțime'],
+              ['rotatie', 'Rotație'],
             ] as const
           ).map(([cheie, eticheta]) => (
             <div key={cheie} className="grid gap-1.5">
@@ -998,7 +998,7 @@ function PanouMasa({
 
         <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
           <Label htmlFor="masa-activa" className="text-sm">
-            Masa activa
+            Masă activă
           </Label>
           <Switch
             id="masa-activa"
@@ -1008,8 +1008,8 @@ function PanouMasa({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          O masa cu rezervari viitoare nu poate fi stearsa — dezactiveaz-o, ca sa nu ramana
-          rezervari fara masa. Regula e impusa de baza de date.
+          O masă cu rezervări viitoare nu poate fi ștearsă — dezactiveaz-o, ca să nu rămână
+          rezervări fără masă. Regula e impusă de baza de date.
         </p>
 
         <Button
@@ -1019,7 +1019,7 @@ function PanouMasa({
           onClick={onCereStergere}
         >
           <Trash2Icon />
-          Sterge masa
+          Șterge masa
         </Button>
       </CardContent>
     </Card>
@@ -1054,9 +1054,9 @@ function PanouStructura({
         <div className="grid grid-cols-3 gap-2">
           {(
             [
-              ['latime', 'Latime'],
-              ['inaltime', 'Inaltime'],
-              ['rotatie', 'Rotatie'],
+              ['latime', 'Lățime'],
+              ['inaltime', 'Înălțime'],
+              ['rotatie', 'Rotație'],
             ] as const
           ).map(([camp, eticheta]) => (
             <div key={camp} className="grid gap-1.5">
@@ -1081,7 +1081,7 @@ function PanouStructura({
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="str-eticheta">Eticheta</Label>
+          <Label htmlFor="str-eticheta">Etichetă</Label>
           <Input
             id="str-eticheta"
             key={`eticheta-${cheie}`}
@@ -1113,13 +1113,13 @@ function PanouStructura({
             }}
           />
           <p className="text-xs text-muted-foreground">
-            Mai mare = desenat deasupra. Util ca o planta sa stea peste bar.
+            Mai mare = desenat deasupra. Util ca o plantă să stea peste bar.
           </p>
         </div>
 
         <Button variant="destructive" size="xs" className="justify-self-start" onClick={onSterge}>
           <Trash2Icon />
-          Sterge elementul
+          Șterge elementul
         </Button>
       </CardContent>
     </Card>

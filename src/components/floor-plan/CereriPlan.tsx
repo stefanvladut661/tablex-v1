@@ -49,8 +49,8 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
       return creeazaCerere({ restaurantId, zoneNume, descriere, schitaCale })
     },
     onSuccess: () => {
-      notificari.succes('Cerere trimisa echipei TableX.', {
-        descriere: 'Primesti o notificare cand planul e publicat.',
+      notificari.succes('Cerere trimisă echipei TableX.', {
+        descriere: 'Primești o notificare când planul e publicat.',
       })
       setZoneNume('')
       setDescriere('')
@@ -67,10 +67,10 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Plan 2D al salii</CardTitle>
+        <CardTitle className="text-base">Plan 2D al sălii</CardTitle>
         <CardDescription>
-          Trimite numele zonei, o descriere si, daca ai, o schita sau o poza a salii. Echipa TableX
-          construieste harta si o publica in contul tau.
+          Trimite numele zonei, o descriere și, dacă ai, o schiță sau o poză a sălii. Echipa TableX
+          construiește harta și o publică în contul tău.
         </CardDescription>
       </CardHeader>
 
@@ -89,7 +89,7 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
               id="zona-cerere"
               value={zoneNume}
               onChange={(e) => setZoneNume(e.target.value)}
-              placeholder="Salon interior, Terasa, Etaj 1..."
+              placeholder="Salon interior, Terasă, Etaj 1..."
               className="h-9"
             />
           </div>
@@ -101,12 +101,12 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
               rows={3}
               value={descriere}
               onChange={(e) => setDescriere(e.target.value)}
-              placeholder="Cate mese, ce forme, unde sunt barul si intrarea, ce e fix si ce se poate muta."
+              placeholder="Câte mese, ce forme, unde sunt barul și intrarea, ce e fix și ce se poate muta."
             />
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="schita-cerere">Schita sau poza salii (optional)</Label>
+            <Label htmlFor="schita-cerere">Schiță sau poză a sălii (opțional)</Label>
             <Input
               id="schita-cerere"
               type="file"
@@ -115,7 +115,7 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
               onChange={(e) => setSchita(e.target.files?.[0] ?? null)}
             />
             <p className="text-xs text-muted-foreground">
-              PNG, JPG, WEBP sau PDF, pana la 5 MB. Limitele sunt impuse pe server.
+              PNG, JPG, WEBP sau PDF, până la 5 MB. Limitele sunt impuse pe server.
             </p>
           </div>
 
@@ -131,7 +131,7 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
 
         {inAsteptare.length > 0 && (
           <p className="text-xs text-muted-foreground">
-            Ai {inAsteptare.length} {inAsteptare.length === 1 ? 'cerere' : 'cereri'} in lucru.
+            Ai {inAsteptare.length} {inAsteptare.length === 1 ? 'cerere' : 'cereri'} în lucru.
           </p>
         )}
 
@@ -145,8 +145,8 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
                     <p className="truncate text-xs text-muted-foreground">{cerere.descriere}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    trimisa {new Date(cerere.created_at).toLocaleDateString('ro-RO')}
-                    {cerere.schita_image_url ? ' · cu schita' : ''}
+                    trimisă {new Date(cerere.created_at).toLocaleDateString('ro-RO')}
+                    {cerere.schita_image_url ? ' · cu schiță' : ''}
                   </p>
                 </div>
                 <span

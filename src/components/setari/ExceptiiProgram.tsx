@@ -53,7 +53,7 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
   const salveaza = useMutation({
     mutationFn: salveazaExceptie,
     onSuccess: () => {
-      notificari.succes('Excepție salvata.')
+      notificari.succes('Excepție salvată.')
       setData('')
       setMotiv('')
       reincarca()
@@ -64,7 +64,7 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
   const sterge = useMutation({
     mutationFn: stergeExceptie,
     onSuccess: () => {
-      notificari.succes('Excepție stearsa.')
+      notificari.succes('Excepție ștearsă.')
       reincarca()
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -90,8 +90,8 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
       <CardHeader>
         <CardTitle className="text-base">Zile speciale</CardTitle>
         <CardDescription>
-          Sarbatori, vacanta sau un orar diferit intr-o zi anume. Au prioritate fata de programul
-          saptamanal, iar widgetul refuza rezervarile pe baza lor.
+          Sărbători, vacanță sau un orar diferit într-o zi anume. Au prioritate față de programul
+          săptămânal, iar widgetul refuză rezervările pe baza lor.
         </CardDescription>
       </CardHeader>
 
@@ -125,12 +125,12 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="exceptie-motiv">Motiv (optional)</Label>
+              <Label htmlFor="exceptie-motiv">Motiv (opțional)</Label>
               <Input
                 id="exceptie-motiv"
                 value={motiv}
                 onChange={(e) => setMotiv(e.target.value)}
-                placeholder="Craciun, inventar, eveniment privat..."
+                placeholder="Crăciun, inventar, eveniment privat..."
                 className="h-9"
               />
             </div>
@@ -139,7 +139,7 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
               <Label htmlFor="exceptie-inchis" className="font-normal">
-                Inchis toata ziua
+                Închis toată ziua
               </Label>
               <Switch id="exceptie-inchis" checked={inchis} onCheckedChange={setInchis} />
             </div>
@@ -157,7 +157,7 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="exceptie-pana-la">Pana la</Label>
+                  <Label htmlFor="exceptie-pana-la">Până la</Label>
                   <Input
                     id="exceptie-pana-la"
                     type="time"
@@ -171,17 +171,17 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
 
             <Button type="submit" size="sm" disabled={!potSalva}>
               <PlusIcon />
-              Adauga
+              Adaugă
             </Button>
           </div>
 
           {!oreValide && (
             <p className="text-xs text-destructive">
-              Ora de inchidere trebuie sa fie dupa cea de deschidere.
+              Ora de închidere trebuie să fie după cea de deschidere.
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            O a doua excepție pentru aceeasi zi o inlocuieste pe prima.
+            O a doua excepție pentru aceeași zi o înlocuiește pe prima.
           </p>
         </form>
 
@@ -189,13 +189,13 @@ export function ExceptiiProgram({ restaurantId, fus }: { restaurantId: string; f
           <Skeleton className="h-24 w-full" />
         ) : viitoare.length === 0 && trecute.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nicio zi speciala. Programul saptamanal se aplica in fiecare zi.
+            Nicio zi specială. Programul săptămânal se aplică în fiecare zi.
           </p>
         ) : (
           <div className="grid gap-3">
             {viitoare.length > 0 && (
               <ListaExceptii
-                titlu="Urmeaza"
+                titlu="Urmează"
                 exceptii={viitoare}
                 fus={fus}
                 onSterge={(id) => sterge.mutate(id)}
@@ -254,7 +254,7 @@ function ListaExceptii({
               </span>
               <span className="ml-2 text-muted-foreground">
                 {exceptie.inchis
-                  ? 'Inchis'
+                  ? 'Închis'
                   : `${exceptie.ora_deschidere?.slice(0, 5)}–${exceptie.ora_inchidere?.slice(0, 5)}`}
               </span>
               {exceptie.motiv && (
@@ -264,7 +264,7 @@ function ListaExceptii({
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label={`Sterge excepția din ${exceptie.data}`}
+              aria-label={`Șterge excepția din ${exceptie.data}`}
               onClick={() => onSterge(exceptie.id)}
             >
               <Trash2Icon />

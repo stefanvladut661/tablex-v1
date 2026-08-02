@@ -20,9 +20,9 @@ import { useDelayScurs } from './useParallax'
 
 const LINKURI = [
   { text: 'Produs', href: '#functionalitati' },
-  { text: 'Planul salii', href: '#harta' },
-  { text: 'Preturi', href: '#preturi' },
-  { text: 'Clienti', href: '#clienti' },
+  { text: 'Planul sălii', href: '#harta' },
+  { text: 'Prețuri', href: '#preturi' },
+  { text: 'Clienți', href: '#clienti' },
 ] as const
 
 
@@ -80,7 +80,7 @@ export function Navbar() {
           </Link>
         </motion.span>
 
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Principala">
+        <nav className="hidden items-center gap-6 md:flex" aria-label="Principală">
           {LINKURI.map(({ text, href }, i) => (
             <motion.a
               key={href}
@@ -95,7 +95,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <motion.span {...aparitieSpring(TIMELINE.nav.actiuni)}>
-            <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comuta tema">
+            <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comută tema">
               {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
             </Button>
           </motion.span>
@@ -124,7 +124,7 @@ export function Navbar() {
                   to={RUTE.signup}
                   className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[15px] font-medium tracking-[-0.01em] text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
                 >
-                  Incepe acum
+                  Începe acum
                 </Link>
               </motion.span>
             </>

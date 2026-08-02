@@ -80,7 +80,7 @@ export function ListaAsteptarePage() {
   const adauga = useMutation({
     mutationFn: adaugaInAsteptare,
     onSuccess: () => {
-      notificari.succes('Adaugat in lista de asteptare.')
+      notificari.succes('Adăugat în lista de așteptare.')
       setNume('')
       setTelefon('')
       setNrPersoane('2')
@@ -110,17 +110,17 @@ export function ListaAsteptarePage() {
   return (
     <div className="grid gap-4">
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">Lista de asteptare</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Lista de așteptare</h1>
         <p className="text-sm text-muted-foreground">
-          Oaspetii veniti fara rezervare, cand nu e masa libera.
+          Oaspeții veniți fără rezervare, când nu e masă liberă.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Adauga in lista</CardTitle>
+          <CardTitle className="text-base">Adaugă în listă</CardTitle>
           <CardDescription>
-            Telefonul e optional — cine il lasa poate fi anuntat cand se elibereaza o masa.
+            Telefonul e opțional — cine îl lasă poate fi anunțat când se eliberează o masă.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -155,7 +155,7 @@ export function ListaAsteptarePage() {
                 type="tel"
                 value={telefon}
                 onChange={(e) => setTelefon(e.target.value)}
-                placeholder="optional"
+                placeholder="opțional"
                 className="h-9"
               />
             </div>
@@ -172,7 +172,7 @@ export function ListaAsteptarePage() {
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="asteptare-zona">Zona preferata</Label>
+              <Label htmlFor="asteptare-zona">Zona preferată</Label>
               <Select value={zoneId} onValueChange={setZoneId}>
                 <SelectTrigger id="asteptare-zona" className="h-9">
                   <SelectValue />
@@ -189,7 +189,7 @@ export function ListaAsteptarePage() {
             </div>
             <Button type="submit" disabled={!potAdauga}>
               <PlusIcon />
-              Adauga
+              Adaugă
             </Button>
           </form>
         </CardContent>
@@ -199,7 +199,7 @@ export function ListaAsteptarePage() {
         <Skeleton className="h-48 w-full" />
       ) : intrari.length === 0 ? (
         <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-          Nimeni in asteptare.
+          Nimeni în așteptare.
         </p>
       ) : (
         <ul className="grid gap-2">
@@ -225,10 +225,10 @@ export function ListaAsteptarePage() {
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {intrare.telefon ?? 'fara telefon'}
+                    {intrare.telefon ?? 'fără telefon'}
                     {' · '}
                     <span className={peste ? 'font-medium text-destructive' : undefined}>
-                      asteapta de {asteapta} min
+                      așteaptă de {asteapta} min
                     </span>
                     {intrare.timp_asteptare_estimat_min !== null &&
                       ` (estimat ${intrare.timp_asteptare_estimat_min} min)`}
@@ -255,7 +255,7 @@ export function ListaAsteptarePage() {
                     <ArrowDownIcon />
                   </Button>
                   <Button size="xs" onClick={() => setDeAsezat(intrare)}>
-                    Asaza
+                    Așază
                   </Button>
                   <Button
                     variant="outline"
@@ -273,8 +273,8 @@ export function ListaAsteptarePage() {
 
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <ClockIcon className="size-3.5" />
-        „Asaza" deschide walk-in-ul precompletat: oaspetele trebuie sa ajunga si in rezervari,
-        altfel masa lui apare libera pe harta.
+        „Așază" deschide walk-in-ul precompletat: oaspetele trebuie să ajungă și în rezervări,
+        altfel masa lui apare liberă pe hartă.
       </p>
 
       {deAsezat && (

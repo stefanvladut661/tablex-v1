@@ -37,7 +37,7 @@ export function ParolaNouaPage() {
     defaultValues: { parola: '', confirmare: '' },
   })
 
-  if (incarcare) return <EcranIncarcare mesaj="Se verifica linkul..." />
+  if (incarcare) return <EcranIncarcare mesaj="Se verifică linkul..." />
 
   if (!esteAutentificat) {
     return (
@@ -51,7 +51,7 @@ export function ParolaNouaPage() {
         }
       >
         <p className="text-sm text-muted-foreground">
-          Din motive de securitate, linkurile de resetare sunt valabile o singura data.
+          Din motive de securitate, linkurile de resetare sunt valabile o singură dată.
         </p>
       </CadruAuth>
     )
@@ -60,7 +60,7 @@ export function ParolaNouaPage() {
   async function trimite(valori: FormParolaNoua) {
     try {
       await seteazaParolaNoua(valori.parola)
-      notificari.succes('Parola a fost schimbata.')
+      notificari.succes('Parola a fost schimbată.')
       navigate(ruteDupaLogin(profil?.tip ?? null), { replace: true })
     } catch (eroare) {
       notificari.eroare(eroare)
@@ -68,10 +68,10 @@ export function ParolaNouaPage() {
   }
 
   return (
-    <CadruAuth titlu="Parola noua" descriere="Alege o parola pe care nu ai mai folosit-o.">
+    <CadruAuth titlu="Parolă nouă" descriere="Alege o parolă pe care nu ai mai folosit-o.">
       <form className="grid gap-4" onSubmit={form.handleSubmit(trimite)} noValidate>
         <CampText
-          eticheta="Parola noua"
+          eticheta="Parolă nouă"
           type="password"
           autoComplete="new-password"
           ajutor="Minim 8 caractere."
@@ -79,7 +79,7 @@ export function ParolaNouaPage() {
           {...form.register('parola')}
         />
         <CampText
-          eticheta="Confirma parola"
+          eticheta="Confirmă parola"
           type="password"
           autoComplete="new-password"
           eroare={form.formState.errors.confirmare?.message}
@@ -87,7 +87,7 @@ export function ParolaNouaPage() {
         />
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Loader2Icon className="animate-spin" />}
-          Salveaza parola
+          Salvează parola
         </Button>
       </form>
     </CadruAuth>

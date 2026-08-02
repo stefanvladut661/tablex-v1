@@ -50,7 +50,7 @@ export async function getMeseEditor(restaurantId: string): Promise<Masa[]> {
  */
 function verificaAplicat(randuri: unknown[] | null, ce: string): void {
   if (!randuri?.length) {
-    throw new Error(`${ce} nu a fost aplicata: contul tau nu are acest drept.`)
+    throw new Error(`${ce} nu a fost aplicată: contul tău nu are acest drept.`)
   }
 }
 
@@ -145,7 +145,7 @@ export async function creeazaMasa(masa: MasaNoua): Promise<Masa> {
     if (error.code !== '23505') throw error
   }
 
-  throw new Error('Nu am putut aloca un numar liber pentru masa noua. Incearca din nou.')
+  throw new Error('Nu am putut aloca un număr liber pentru masa nouă. Încearcă din nou.')
 }
 
 export async function actualizeazaMasa(
@@ -264,7 +264,7 @@ export async function salveazaLayer1(salvare: SalvareLayer1): Promise<NonNullabl
   // intre timp. In ambele cazuri NU am salvat, si utilizatorul trebuie sa afle.
   if (!data?.length) {
     throw new Error(
-      'Planul a fost modificat intre timp de altcineva. Reincarca pagina inainte sa salvezi din nou.',
+      'Planul a fost modificat între timp de altcineva. Reîncarcă pagina înainte să salvezi din nou.',
     )
   }
 

@@ -110,7 +110,7 @@ export function ClopotelNotificari({ restaurantId, fus }: { restaurantId: string
       }}
     >
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className="relative" aria-label="Notificari">
+        <Button variant="ghost" size="icon-sm" className="relative" aria-label="Notificări">
           <BellIcon />
           {necitite.length > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-status-ocupat text-[10px] font-semibold text-status-ocupat-foreground tabular-nums">
@@ -122,7 +122,7 @@ export function ClopotelNotificari({ restaurantId, fus }: { restaurantId: string
 
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-          <span className="text-sm font-medium">Notificari</span>
+          <span className="text-sm font-medium">Notificări</span>
           {necitite.length > 0 && (
             <Button
               variant="ghost"
@@ -131,14 +131,14 @@ export function ClopotelNotificari({ restaurantId, fus }: { restaurantId: string
               disabled={citesteToate.isPending}
             >
               <CheckCheckIcon />
-              Marcheaza tot
+              Marchează tot
             </Button>
           )}
         </div>
 
         <ScrollArea className="max-h-80">
           {lista.isLoading ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Se incarca...</p>
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Se încarcă...</p>
           ) : (lista.data ?? []).length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               Nicio notificare. Cererile din widgetul public apar aici.

@@ -111,7 +111,7 @@ export function DialogEditareRezervare({
 
     muta.mutate(modificari, {
       onSuccess: () => {
-        notificari.succes('Rezervarea a fost actualizata.')
+        notificari.succes('Rezervarea a fost actualizată.')
         onInchide()
       },
       // Conflictul de masa (23P01) ajunge aici tradus de lib/erori.ts. Nu
@@ -124,10 +124,10 @@ export function DialogEditareRezervare({
     <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Modifica rezervarea lui {rezervare.client_nume}</DialogTitle>
+          <DialogTitle>Modifică rezervarea lui {rezervare.client_nume}</DialogTitle>
           <DialogDescription>
-            Telefonul nu se schimba de aici: el leaga rezervarea de fisa clientului. Daca numarul
-            e gresit, contopeste fisele din Clienti.
+            Telefonul nu se schimbă de aici: el leagă rezervarea de fișa clientului. Dacă numărul
+            e greșit, contopește fișele din Clienți.
           </DialogDescription>
         </DialogHeader>
 
@@ -169,7 +169,7 @@ export function DialogEditareRezervare({
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="edit-durata">Durata (min)</Label>
+              <Label htmlFor="edit-durata">Durată (min)</Label>
               <Input
                 id="edit-durata"
                 type="number"
@@ -183,18 +183,18 @@ export function DialogEditareRezervare({
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="edit-masa">Masa</Label>
+            <Label htmlFor="edit-masa">Masă</Label>
             <Select value={tableId} onValueChange={setTableId}>
               <SelectTrigger id="edit-masa" className="h-9">
                 <SelectValue placeholder="Alege masa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={FARA_MASA}>Fara masa alocata</SelectItem>
+                <SelectItem value={FARA_MASA}>Fără masă alocată</SelectItem>
                 {meseLibere.map((masa) => (
                   <SelectItem key={masa.table_id} value={masa.table_id} disabled={!masa.libera}>
                     Masa {masa.numar_masa} · {masa.capacitate} loc.
-                    {!masa.libera ? ' — ocupata' : ''}
-                    {masa.capacitate < Number(nrPersoane) ? ' — sub numarul de persoane' : ''}
+                    {!masa.libera ? ' — ocupată' : ''}
+                    {masa.capacitate < Number(nrPersoane) ? ' — sub numărul de persoane' : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -202,12 +202,12 @@ export function DialogEditareRezervare({
             {mese.isFetching ? (
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Loader2Icon className="size-3 animate-spin" />
-                Recalculez mesele libere pentru ora aleasa...
+                Recalculez mesele libere pentru ora aleasă...
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Lista tine cont de ora si de durata de mai sus, plus buffer-ul dintre rezervari.
-                Masa ei de acum ramane disponibila.
+                Lista ține cont de ora și de durata de mai sus, plus buffer-ul dintre rezervări.
+                Masa ei de acum rămâne disponibilă.
               </p>
             )}
           </div>
@@ -226,11 +226,11 @@ export function DialogEditareRezervare({
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide} disabled={inLucru}>
-            Renunta
+            Renunță
           </Button>
           <Button onClick={salveaza} disabled={inLucru}>
             {inLucru && <Loader2Icon className="animate-spin" />}
-            Salveaza
+            Salvează
           </Button>
         </DialogFooter>
       </DialogContent>

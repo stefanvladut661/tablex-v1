@@ -9,12 +9,12 @@ export type ModificariRestaurant = TablesUpdate<'restaurants'>
  */
 export const ZILE_PROGRAM = [
   { cheie: 'luni', eticheta: 'Luni' },
-  { cheie: 'marti', eticheta: 'Marti' },
+  { cheie: 'marti', eticheta: 'Marți' },
   { cheie: 'miercuri', eticheta: 'Miercuri' },
   { cheie: 'joi', eticheta: 'Joi' },
   { cheie: 'vineri', eticheta: 'Vineri' },
-  { cheie: 'sambata', eticheta: 'Sambata' },
-  { cheie: 'duminica', eticheta: 'Duminica' },
+  { cheie: 'sambata', eticheta: 'Sâmbătă' },
+  { cheie: 'duminica', eticheta: 'Duminică' },
 ] as const
 
 export type CheieZi = (typeof ZILE_PROGRAM)[number]['cheie']
@@ -64,7 +64,7 @@ export async function actualizeazaRestaurant(
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Setarile nu au fost salvate: doar managerul poate schimba configurarea.')
+    throw new Error('Setările nu au fost salvate: doar managerul poate schimba configurarea.')
   }
 }
 

@@ -36,9 +36,9 @@ import type { Enums } from '@/types/database'
 import type { MasaHarta, ZonaHarta } from '@/types/floor-plan'
 
 const FORME: Array<{ valoare: Enums<'masa_forma'>; eticheta: string }> = [
-  { valoare: 'rotunda', eticheta: 'Rotunda' },
-  { valoare: 'patrata', eticheta: 'Patrata' },
-  { valoare: 'dreptunghiulara', eticheta: 'Dreptunghiulara' },
+  { valoare: 'rotunda', eticheta: 'Rotundă' },
+  { valoare: 'patrata', eticheta: 'Pătrată' },
+  { valoare: 'dreptunghiulara', eticheta: 'Dreptunghiulară' },
 ]
 
 /**
@@ -104,8 +104,8 @@ export function PanouMeseAdmin({
         pozitieY: zona.grid_marime * (2 + Math.floor(meseInZona / 8)),
       }),
     onSuccess: (creata) => {
-      notificari.succes(`Masa ${creata.numar_masa} a fost adaugata.`, {
-        descriere: 'Trage-o pe harta unde ii e locul.',
+      notificari.succes(`Masa ${creata.numar_masa} a fost adăugată.`, {
+        descriere: 'Trage-o pe hartă unde îi e locul.',
       })
       onSelecteaza(creata.id)
       reincarca()
@@ -124,7 +124,7 @@ export function PanouMeseAdmin({
     mutationFn: (ids: string[]) => unesteMese(ids),
     onSuccess: () => {
       notificari.succes('Mesele au fost unite.', {
-        descriere: 'O rezervare pe oricare dintre ele ocupa acum tot grupul.',
+        descriere: 'O rezervare pe oricare dintre ele ocupă acum tot grupul.',
       })
       setDeUnit([])
       reincarca()
@@ -144,7 +144,7 @@ export function PanouMeseAdmin({
   const sterge = useMutation({
     mutationFn: () => stergeMasa(masa!.id),
     onSuccess: () => {
-      notificari.succes('Masa a fost stearsa.')
+      notificari.succes('Masa a fost ștearsă.')
       onSelecteaza(null)
       reincarca()
     },
@@ -156,24 +156,24 @@ export function PanouMeseAdmin({
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
-        <CardTitle className="text-base">Mesele salii</CardTitle>
+        <CardTitle className="text-base">Mesele sălii</CardTitle>
         <Button size="xs" variant="outline" disabled={adauga.isPending} onClick={() => adauga.mutate()}>
           <PlusIcon className="size-3.5" />
-          Adauga
+          Adaugă
         </Button>
       </CardHeader>
       <CardContent className="grid gap-3">
         {!masa ? (
           <p className="text-xs text-muted-foreground">
-            Alege o masa de pe harta ca sa-i schimbi numarul, locurile sau forma. Muta-o tragand-o
-            direct pe plan; peretii si barul raman ale echipei TableX.
+            Alege o masă de pe hartă ca să-i schimbi numărul, locurile sau forma. Mut-o trăgând-o
+            direct pe plan; pereții și barul rămân ale echipei TableX.
           </p>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-1">
                 <Label htmlFor="masa-numar" className="text-xs">
-                  Numar
+                  Număr
                 </Label>
                 <Input
                   id="masa-numar"
@@ -234,7 +234,7 @@ export function PanouMeseAdmin({
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-1">
                 <Label htmlFor="masa-latime" className="text-xs">
-                  Latime
+                  Lățime
                 </Label>
                 <Input
                   id="masa-latime"
@@ -253,7 +253,7 @@ export function PanouMeseAdmin({
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="masa-inaltime" className="text-xs">
-                  Inaltime
+                  Înălțime
                 </Label>
                 <Input
                   id="masa-inaltime"
@@ -277,7 +277,7 @@ export function PanouMeseAdmin({
                 sterge si istoricul ei. */}
             <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
               <Label htmlFor="masa-indisponibila" className="text-sm font-normal">
-                Scoasa din uz
+                Scoasă din uz
               </Label>
               <Switch
                 id="masa-indisponibila"
@@ -292,11 +292,11 @@ export function PanouMeseAdmin({
               {masa.grup_unire_id ? (
                 <>
                   <p className="text-sm font-medium">
-                    Unita cu{' '}
-                    {colegiDeGrup.map((m) => m.numar_masa).join(', ') || 'nicio alta masa'}
+                    Unită cu{' '}
+                    {colegiDeGrup.map((m) => m.numar_masa).join(', ') || 'nicio altă masă'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    O rezervare pusa pe oricare dintre ele ocupa tot grupul —{' '}
+                    O rezervare pusă pe oricare dintre ele ocupă tot grupul —{' '}
                     {capacitateGrup} locuri la un loc.
                   </p>
                   <Button
@@ -307,15 +307,15 @@ export function PanouMeseAdmin({
                     onClick={() => desparte.mutate(masa.grup_unire_id!)}
                   >
                     <UnlinkIcon className="size-3.5" />
-                    Desfa grupul
+                    Desfă grupul
                   </Button>
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-medium">Uneste cu alta masa</p>
+                  <p className="text-sm font-medium">Unește cu altă masă</p>
                   {candidatiUnire.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      Nu mai e nicio alta masa libera de grup in zona asta.
+                      Nu mai e nicio altă masă liberă de grup în zona asta.
                     </p>
                   ) : (
                     <>
@@ -345,7 +345,7 @@ export function PanouMeseAdmin({
                         onClick={() => uneste.mutate([masa.id, ...deUnit])}
                       >
                         <LinkIcon className="size-3.5" />
-                        Uneste ({1 + deUnit.length} mese,{' '}
+                        Unește ({1 + deUnit.length} mese,{' '}
                         {masa.capacitate +
                           candidatiUnire
                             .filter((m) => deUnit.includes(m.id))
@@ -366,22 +366,22 @@ export function PanouMeseAdmin({
               onClick={() => setConfirmaStergere(true)}
             >
               <Trash2Icon className="size-3.5" />
-              Sterge masa
+              Șterge masa
             </Button>
 
             {confirmaStergere && (
               <Dialog open onOpenChange={(deschis) => !deschis && setConfirmaStergere(false)}>
                 <DialogContent className="sm:max-w-sm">
                   <DialogHeader>
-                    <DialogTitle>Stergi masa {masa.numar_masa}?</DialogTitle>
+                    <DialogTitle>Ștergi masa {masa.numar_masa}?</DialogTitle>
                     <DialogDescription>
-                      Masa dispare de pe plan. Baza refuza oricum stergerea daca masa are
-                      rezervari viitoare.
+                      Masa dispare de pe plan. Baza refuză oricum ștergerea dacă masa are
+                      rezervări viitoare.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setConfirmaStergere(false)}>
-                      Renunta
+                      Renunță
                     </Button>
                     <Button
                       variant="destructive"
@@ -391,7 +391,7 @@ export function PanouMeseAdmin({
                         setConfirmaStergere(false)
                       }}
                     >
-                      Sterge masa
+                      Șterge masa
                     </Button>
                   </DialogFooter>
                 </DialogContent>

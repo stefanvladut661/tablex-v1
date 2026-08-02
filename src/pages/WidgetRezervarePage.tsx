@@ -94,7 +94,7 @@ export function WidgetRezervarePage() {
             Acest restaurant nu este disponibil momentan
           </h1>
           <p className="max-w-md text-sm text-muted-foreground">
-            Rezervarile online sunt oprite temporar. Revino mai tarziu sau contacteaza
+            Rezervările online sunt oprite temporar. Revino mai târziu sau contactează
             restaurantul telefonic.
           </p>
         </div>
@@ -103,9 +103,9 @@ export function WidgetRezervarePage() {
 
     return (
       <div className="flex min-h-svh flex-col items-center justify-center gap-3 bg-background px-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Restaurantul nu a fost gasit</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Restaurantul nu a fost găsit</h1>
         <p className="max-w-md text-sm text-muted-foreground">
-          Linkul e gresit sau restaurantul nu mai accepta rezervari online.
+          Linkul e greșit sau restaurantul nu mai acceptă rezervări online.
         </p>
         <Button asChild variant="outline">
           <Link to={RUTE.acasa}>Mergi la TableX</Link>
@@ -151,7 +151,7 @@ export function WidgetRezervarePage() {
             </div>
           </div>
           <span className="text-xs text-muted-foreground">
-            Rezervari prin Table<span className="text-primary">X</span>
+            Rezervări prin Table<span className="text-primary">X</span>
           </span>
         </div>
       </header>
@@ -163,18 +163,18 @@ export function WidgetRezervarePage() {
               <CheckCircle2Icon className="size-6 text-primary" />
               <CardTitle className="mt-2">
                 {rezultat.status === 'confirmata'
-                  ? 'Rezervarea ta e confirmata'
-                  : 'Cererea ta a fost trimisa'}
+                  ? 'Rezervarea ta e confirmată'
+                  : 'Cererea ta a fost trimisă'}
               </CardTitle>
               <CardDescription>
                 {rezultat.status === 'confirmata'
-                  ? `Te asteptam la ${rezultat.restaurant}. Daca planurile se schimba, suna-ne.`
-                  : `${rezultat.restaurant} confirma manual rezervarile. Primesti raspuns in scurt timp.`}
+                  ? `Te așteptăm la ${rezultat.restaurant}. Dacă planurile se schimbă, sună-ne.`
+                  : `${rezultat.restaurant} confirmă manual rezervările. Primești răspuns în scurt timp.`}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" onClick={() => setRezultat(null)}>
-                Trimite alta rezervare
+                Trimite altă rezervare
               </Button>
             </CardContent>
           </Card>
@@ -191,11 +191,11 @@ export function WidgetRezervarePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Rezerva o masa</CardTitle>
+              <CardTitle className="text-base">Rezervă o masă</CardTitle>
               <CardDescription>
                 {restaurantData.aprobare_automata
-                  ? 'Rezervarea se confirma automat.'
-                  : 'Restaurantul confirma manual fiecare rezervare.'}
+                  ? 'Rezervarea se confirmă automat.'
+                  : 'Restaurantul confirmă manual fiecare rezervare.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -240,12 +240,12 @@ export function WidgetRezervarePage() {
                   className="aspect-[3/2] w-full"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Masa se aloca de personal, in functie de numarul de persoane si de ora aleasa.
+                  Masa se alocă de personal, în funcție de numărul de persoane și de ora aleasă.
                 </p>
               </>
             ) : (
               <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-                Planul salii nu e disponibil public pentru acest restaurant.
+                Planul sălii nu e disponibil public pentru acest restaurant.
               </p>
             )}
           </div>

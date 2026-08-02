@@ -20,10 +20,10 @@ export function MentenantaPage() {
       <WrenchIcon className="size-6 text-status-expirare" />
       <h1 className="text-2xl font-semibold tracking-tight">Revenim imediat</h1>
       <p className="max-w-md text-sm text-muted-foreground">
-        {setari.data?.mesaj_mentenanta ?? 'TableX este in mentenanta. Revenim in scurt timp.'}
+        {setari.data?.mesaj_mentenanta ?? 'TableX este în mentenanță. Revenim în scurt timp.'}
       </p>
       <p className="max-w-md text-xs text-muted-foreground">
-        Rezervarile deja confirmate nu sunt afectate.
+        Rezervările deja confirmate nu sunt afectate.
       </p>
       <Button
         variant="outline"
@@ -32,7 +32,7 @@ export function MentenantaPage() {
         onClick={() => void setari.refetch()}
       >
         {setari.isFetching && <Loader2Icon className="animate-spin" />}
-        Reincearca
+        Reîncearcă
       </Button>
     </div>
   )

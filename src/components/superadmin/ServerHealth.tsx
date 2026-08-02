@@ -21,7 +21,7 @@ const NUME_SERVICIU: Record<Enums<'serviciu_extern'>, string> = {
 }
 
 const ETICHETA_STATUS: Record<Enums<'serviciu_status'>, string> = {
-  ok: 'Functioneaza',
+  ok: 'Funcționează',
   degradat: 'Simulat (v1)',
   indisponibil: 'Indisponibil',
 }
@@ -70,10 +70,10 @@ export function ServerHealth() {
 
         {bazaCazuta ? (
           <p className="px-3 py-4 text-sm text-muted-foreground">
-            Verificarea nu a raspuns — conexiunea la Supabase pare intrerupta.
+            Verificarea nu a răspuns — conexiunea la Supabase pare întreruptă.
           </p>
         ) : stare.isLoading ? (
-          <p className="px-3 py-4 text-sm text-muted-foreground">Se verifica...</p>
+          <p className="px-3 py-4 text-sm text-muted-foreground">Se verifică...</p>
         ) : (
           <ul className="divide-y divide-border">
             {servicii.map((serviciu) => (

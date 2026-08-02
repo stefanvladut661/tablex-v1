@@ -153,7 +153,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                       </a>
                     ) : (
                       // Walk-in anonim (§25.6): nu inventam un numar de telefon.
-                      <span className="text-muted-foreground">Fara telefon</span>
+                      <span className="text-muted-foreground">Fără telefon</span>
                     )}
                   </dd>
                 </div>
@@ -162,7 +162,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                   <dd className="font-medium">
                     {rezervare.masa
                       ? `${rezervare.masa.numar_masa} (${rezervare.masa.capacitate} loc.)`
-                      : 'Nealocata'}
+                      : 'Nealocată'}
                     {rezervare.zona ? ` · ${rezervare.zona.nume}` : ''}
                   </dd>
                 </div>
@@ -188,7 +188,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                 Object.keys(rezervare.campuri_custom).length > 0 && (
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-xs font-medium text-muted-foreground">
-                      Raspunsuri din formular
+                      Răspunsuri din formular
                     </p>
                     <dl className="mt-1 grid gap-1 text-sm">
                       {Object.entries(rezervare.campuri_custom as Record<string, unknown>).map(
@@ -222,7 +222,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                 {inLucru && (
                   <p className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2Icon className="size-4 animate-spin" />
-                    Se salveaza...
+                    Se salvează...
                   </p>
                 )}
 
@@ -233,14 +233,14 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                       onClick={() =>
                         schimba(
                           'confirmata',
-                          'Rezervare confirmata.',
+                          'Rezervare confirmată.',
                           'rezervare_confirmata',
                           'Confirmare Rezervare',
                         )
                       }
                     >
                       <CheckIcon />
-                      Confirma
+                      Confirmă
                     </Button>
                     <Button
                       variant="outline"
@@ -248,7 +248,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                       onClick={() =>
                         schimba(
                           'respinsa',
-                          'Rezervare respinsa.',
+                          'Rezervare respinsă.',
                           'rezervare_respinsa',
                           'Rezervare Respinsa',
                         )
@@ -267,7 +267,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                     onClick={() => schimba('sosita', 'Client marcat ca sosit.')}
                   >
                     <LogInIcon />
-                    Marcheaza sosit
+                    Marchează sosit
                   </Button>
                 )}
 
@@ -281,17 +281,17 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                       void trimiteWhatsAppSimulat(
                         rezervare.telefon!,
                         'Intarziere scurta',
-                        `${rezervare.client_nume}, masa ta se elibereaza cu o mica intarziere. Ne cerem scuze — te asteptam!`,
+                        `${rezervare.client_nume}, masa ta se eliberează cu o mică întârziere. Ne cerem scuze — te așteptăm!`,
                         rezervare.id,
                       ).then((trimis) =>
                         trimis
-                          ? notificari.succes('Mesajul de intarziere a fost consemnat.')
-                          : notificari.atentie('Fara credite WhatsApp: mesajul nu a plecat.'),
+                          ? notificari.succes('Mesajul de întârziere a fost consemnat.')
+                          : notificari.atentie('Fără credite WhatsApp: mesajul nu a plecat.'),
                       )
                     }}
                   >
                     <ClockIcon />
-                    Anunta intarziere scurta
+                    Anunță întârziere scurtă
                   </Button>
                 )}
 
@@ -308,10 +308,10 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                     <Button
                       variant="destructive"
                       disabled={inLucru}
-                      onClick={() => schimba('anulata', 'Rezervare anulata.')}
+                      onClick={() => schimba('anulata', 'Rezervare anulată.')}
                     >
                       <BanIcon />
-                      Anuleaza
+                      Anulează
                     </Button>
                   </div>
                 )}
@@ -329,12 +329,12 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                       {rezervare.client_nume} · {rezervare.nr_persoane} persoane ·{' '}
                       {ora(rezervare.data_ora, fus)}
                       {deConfirmat.status === 'respinsa' &&
-                        ' — clientul primeste anuntul pe email si WhatsApp, daca exista.'}
+                        ' — clientul primește anunțul pe email și WhatsApp, dacă există.'}
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setDeConfirmat(null)}>
-                      Renunta
+                      Renunță
                     </Button>
                     <Button
                       variant="destructive"
@@ -349,7 +349,7 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                         setDeConfirmat(null)
                       }}
                     >
-                      {deConfirmat.status === 'respinsa' ? 'Respinge' : 'Anuleaza rezervarea'}
+                      {deConfirmat.status === 'respinsa' ? 'Respinge' : 'Anulează rezervarea'}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

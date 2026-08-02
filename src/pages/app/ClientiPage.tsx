@@ -77,11 +77,11 @@ export function ClientiPage() {
   const stergeDate = useMutation({
     mutationFn: stergeDateleClientului,
     onSuccess: (rezervariCuratate) => {
-      notificari.succes('Datele personale au fost sterse.', {
+      notificari.succes('Datele personale au fost șterse.', {
         descriere:
           rezervariCuratate > 0
-            ? `${rezervariCuratate} rezervari au fost anonimizate; raman in statistici, fara date personale.`
-            : 'Clientul nu avea rezervari.',
+            ? `${rezervariCuratate} rezervări au fost anonimizate; rămân în statistici, fără date personale.`
+            : 'Clientul nu avea rezervări.',
       })
       setConfirmStergere(null)
       setSelectat(null)
@@ -97,11 +97,11 @@ export function ClientiPage() {
     mutationFn: ({ principalId, duplicatId }: { principalId: string; duplicatId: string }) =>
       contopesteClienti(principalId, duplicatId),
     onSuccess: (rezervariMutate) => {
-      notificari.succes('Fisele au fost contopite.', {
+      notificari.succes('Fișele au fost contopite.', {
         descriere:
           rezervariMutate > 0
-            ? `${rezervariMutate} rezervari au trecut la fisa pastrata. Numarul celeilalte fise ramane legat de ea.`
-            : 'Fisa absorbita nu avea rezervari. Numarul ei ramane legat de fisa pastrata.',
+            ? `${rezervariMutate} rezervări au trecut la fișa păstrată. Numărul celeilalte fișe rămâne legat de ea.`
+            : 'Fișa absorbită nu avea rezervări. Numărul ei rămâne legat de fișa păstrată.',
       })
       setContopireIn(null)
       // Fisa deschisa are alte cifre acum; o inchidem in loc s-o aratam veche.
@@ -131,9 +131,9 @@ export function ClientiPage() {
       { titlu: 'Telefon', valoare: (c) => c.telefon },
       { titlu: 'Email', valoare: (c) => c.email },
       { titlu: 'Vizite', valoare: (c) => c.nr_vizite },
-      { titlu: 'Neprezentari', valoare: (c) => c.nr_no_show },
-      { titlu: 'Ultima vizita', valoare: (c) => c.data_ultima_vizita },
-      { titlu: 'Taguri', valoare: (c) => c.taguri.join(', ') },
+      { titlu: 'Neprezentări', valoare: (c) => c.nr_no_show },
+      { titlu: 'Ultima vizită', valoare: (c) => c.data_ultima_vizita },
+      { titlu: 'Etichete', valoare: (c) => c.taguri.join(', ') },
       { titlu: 'Note', valoare: (c) => c.note },
     ])
     descarcaCsv(`clienti-${formatFus(new Date(), 'yyyy-MM-dd', fus)}.csv`, csv)
@@ -143,9 +143,9 @@ export function ClientiPage() {
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight">Clienti</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Clienți</h1>
           <p className="text-sm text-muted-foreground">
-            Fisele apar singure din rezervari, cu telefonul drept cheie.
+            Fișele apar singure din rezervări, cu telefonul drept cheie.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export function ClientiPage() {
               onChange={(e) => setCaut(e.target.value)}
               placeholder="Nume, telefon, email, tag"
               className="h-9 w-64 pl-7"
-              aria-label="Caut clienti"
+              aria-label="Caut clienți"
             />
           </div>
           <Button
@@ -177,7 +177,7 @@ export function ClientiPage() {
         <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
           {caut
             ? 'Niciun client pentru acest filtru.'
-            : 'Inca niciun client. Prima rezervare cu telefon creeaza automat o fisa.'}
+            : 'Încă niciun client. Prima rezervare cu telefon creează automat o fișă.'}
         </p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -188,7 +188,7 @@ export function ClientiPage() {
                 <TableHead className="w-32">Telefon</TableHead>
                 <TableHead className="w-20 text-right">Vizite</TableHead>
                 <TableHead className="w-24 text-right">Neprezentat</TableHead>
-                <TableHead className="w-36">Ultima vizita</TableHead>
+                <TableHead className="w-36">Ultima vizită</TableHead>
                 <TableHead className="w-40">Etichete</TableHead>
               </TableRow>
             </TableHeader>
@@ -198,7 +198,7 @@ export function ClientiPage() {
                   key={client.id}
                   tabIndex={0}
                   role="button"
-                  aria-label={`Deschide fisa ${client.nume ?? client.telefon}`}
+                  aria-label={`Deschide fișa ${client.nume ?? client.telefon}`}
                   className="cursor-pointer"
                   onClick={() => setSelectat(client)}
                   onKeyDown={(e) => {
@@ -208,7 +208,7 @@ export function ClientiPage() {
                   }}
                 >
                   <TableCell>
-                    <div className="font-medium">{client.nume ?? 'Fara nume'}</div>
+                    <div className="font-medium">{client.nume ?? 'Fără nume'}</div>
                     {client.email && (
                       <div className="text-xs text-muted-foreground">{client.email}</div>
                     )}
@@ -315,7 +315,7 @@ function FisaClient({
     <Sheet open onOpenChange={(deschis) => !deschis && onInchide()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{client.nume ?? 'Client fara nume'}</SheetTitle>
+          <SheetTitle>{client.nume ?? 'Client fără nume'}</SheetTitle>
           <SheetDescription>
             {client.telefon}
             {client.email ? ` · ${client.email}` : ''}
@@ -350,7 +350,7 @@ function FisaClient({
               rows={3}
               key={`note-${client.id}`}
               defaultValue={client.note ?? ''}
-              placeholder="Preferinte, alergii, masa preferata..."
+              placeholder="Preferințe, alergii, masa preferată..."
               onBlur={(e) => {
                 const note = e.target.value.trim()
                 if (note === (client.note ?? '')) return
@@ -358,7 +358,7 @@ function FisaClient({
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Vizibile doar personalului. Nu scrie aici date de sanatate fara acordul clientului.
+              Vizibile doar personalului. Nu scrie aici date de sănătate fără acordul clientului.
             </p>
           </div>
 
@@ -387,7 +387,7 @@ function FisaClient({
             {rezervari.isLoading ? (
               <Skeleton className="h-24 w-full" />
             ) : (rezervari.data ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nicio rezervare inregistrata.</p>
+              <p className="text-sm text-muted-foreground">Nicio rezervare înregistrată.</p>
             ) : (
               <ul className="grid gap-1.5">
                 {(rezervari.data ?? []).map((rezervare) => (
@@ -412,10 +412,10 @@ function FisaClient({
 
           {esteManager && (
             <div className="grid gap-2 rounded-lg border border-border p-3">
-              <p className="text-sm font-medium">Acelasi om, doua fise?</p>
+              <p className="text-sm font-medium">Același om, două fișe?</p>
               <p className="text-xs text-muted-foreground">
-                Fisa are drept cheie telefonul, deci acelasi client sunat de pe alt numar
-                primeste o fisa noua. Contopirea aduce vizitele si istoricul aici.
+                Fișa are drept cheie telefonul, deci același client sunat de pe alt număr
+                primește o fișă nouă. Contopirea aduce vizitele și istoricul aici.
               </p>
               <Button
                 variant="outline"
@@ -424,17 +424,17 @@ function FisaClient({
                 onClick={onCereContopire}
               >
                 <MergeIcon className="size-3.5" />
-                Contopeste o alta fisa in aceasta
+                Contopește o altă fișă în aceasta
               </Button>
             </div>
           )}
 
           <div className="grid gap-2 rounded-lg border border-destructive/40 p-3">
-            <p className="text-sm font-medium">Stergerea datelor la cerere</p>
+            <p className="text-sm font-medium">Ștergerea datelor la cerere</p>
             <p className="text-xs text-muted-foreground">
               {client.gdpr_consimtamant
-                ? 'Clientul si-a dat consimtamantul la prelucrarea datelor.'
-                : 'Clientul NU si-a dat consimtamantul explicit.'}
+                ? 'Clientul și-a dat consimțământul la prelucrarea datelor.'
+                : 'Clientul NU și-a dat consimțământul explicit.'}
             </p>
             <Button
               variant="destructive"
@@ -443,11 +443,11 @@ function FisaClient({
               disabled={!esteManager}
               onClick={onCereStergere}
             >
-              Sterge datele personale
+              Șterge datele personale
             </Button>
             {!esteManager && (
               <p className="text-xs text-muted-foreground">
-                Doar managerul poate face asta. Regula e impusa si de baza de date.
+                Doar managerul poate face asta. Regula e impusă și de baza de date.
               </p>
             )}
           </div>
@@ -498,11 +498,11 @@ function DialogContopire({
     <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Contopeste o fisa in {pastrat.nume ?? pastrat.telefon}</DialogTitle>
+          <DialogTitle>Contopește o fișă în {pastrat.nume ?? pastrat.telefon}</DialogTitle>
           <DialogDescription>
-            Alege fisa duplicata. Vizitele, neprezentarile, etichetele, notele si toate
-            rezervarile ei trec la fisa de mai sus, iar numarul ei ramane legat de ea:
-            rezervarile viitoare de pe acel numar ajung tot aici.
+            Alege fișa duplicată. Vizitele, neprezentările, etichetele, notele și toate
+            rezervările ei trec la fișa de mai sus, iar numărul ei rămâne legat de ea:
+            rezervările viitoare de pe acel număr ajung tot aici.
           </DialogDescription>
         </DialogHeader>
 
@@ -517,7 +517,7 @@ function DialogContopire({
               }}
               placeholder="Nume, telefon, email"
               className="h-9 pl-7"
-              aria-label="Caut fisa de contopit"
+              aria-label="Caut fișa de contopit"
               autoFocus
             />
           </div>
@@ -525,8 +525,8 @@ function DialogContopire({
           {rezultate.length === 0 ? (
             <p className="rounded-md border border-border p-4 text-sm text-muted-foreground">
               {candidati.length === 0
-                ? 'Nu mai exista alta fisa de client.'
-                : 'Nicio fisa pentru acest filtru.'}
+                ? 'Nu mai există altă fișă de client.'
+                : 'Nicio fișă pentru acest filtru.'}
             </p>
           ) : (
             <ul className="max-h-64 overflow-y-auto rounded-md border border-border">
@@ -544,13 +544,13 @@ function DialogContopire({
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-medium">
-                          {client.nume ?? 'Fara nume'}
+                          {client.nume ?? 'Fără nume'}
                         </span>
                         <span className="block text-xs text-muted-foreground tabular-nums">
                           {client.telefon}
                           {client.data_ultima_vizita
                             ? ` · ultima ${formatFus(client.data_ultima_vizita, 'd MMM yyyy', fus)}`
-                            : ' · nicio vizita'}
+                            : ' · nicio vizită'}
                         </span>
                       </span>
                       <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
@@ -566,21 +566,21 @@ function DialogContopire({
 
           {ales && (
             <p className="rounded-md border border-destructive/40 p-3 text-sm">
-              <strong>{ales.nume ?? ales.telefon}</strong> ({ales.telefon}) dispare din lista, iar{' '}
+              <strong>{ales.nume ?? ales.telefon}</strong> ({ales.telefon}) dispare din listă, iar{' '}
               <strong>{pastrat.nume ?? pastrat.telefon}</strong> va avea{' '}
-              <span className="tabular-nums">{pastrat.nr_vizite + ales.nr_vizite}</span> vizite si{' '}
+              <span className="tabular-nums">{pastrat.nr_vizite + ales.nr_vizite}</span> vizite și{' '}
               <span className="tabular-nums">{pastrat.nr_no_show + ales.nr_no_show}</span>{' '}
-              neprezentari. Operatia nu poate fi anulata.
+              neprezentări. Operația nu poate fi anulată.
             </p>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button disabled={!ales || inLucru} onClick={() => ales && onConfirma(ales)}>
-            Contopeste
+            Contopește
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -605,27 +605,27 @@ function DialogStergereDate({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangleIcon className="size-4 text-destructive" />
-            Stergi datele lui {client.nume ?? client.telefon}?
+            Ștergi datele lui {client.nume ?? client.telefon}?
           </DialogTitle>
           <DialogDescription asChild>
             <div className="grid gap-2 text-sm text-muted-foreground">
               <p>
-                Fisa de client dispare, iar numele, telefonul, emailul si notele clientului se sterg
-                din TOATE rezervarile lui.
+                Fișa de client dispare, iar numele, telefonul, emailul și notele clientului se șterg
+                din TOATE rezervările lui.
               </p>
               <p>
-                Rezervarile raman in statistici — data, numarul de persoane si masa —, dar fara
-                nimic care sa identifice persoana. Operatia nu poate fi anulata.
+                Rezervările rămân în statistici — data, numărul de persoane și masa —, dar fără
+                nimic care să identifice persoana. Operația nu poate fi anulată.
               </p>
             </div>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button variant="destructive" disabled={inLucru} onClick={onConfirma}>
-            Sterge definitiv
+            Șterge definitiv
           </Button>
         </DialogFooter>
       </DialogContent>

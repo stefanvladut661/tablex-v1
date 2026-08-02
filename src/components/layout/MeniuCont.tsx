@@ -43,15 +43,15 @@ export function MeniuCont() {
       return
     }
     if (parola !== confirmare) {
-      setEroare('Cele doua parole nu coincid.')
+      setEroare('Cele două parole nu coincid.')
       return
     }
 
     setInLucru(true)
     try {
       await seteazaParolaNoua(parola)
-      notificari.succes('Parola a fost schimbata.', {
-        descriere: 'Ramai autentificat pe dispozitivul asta.',
+      notificari.succes('Parola a fost schimbată.', {
+        descriere: 'Rămâi autentificat pe dispozitivul ăsta.',
       })
       setDialogParola(false)
       setParola('')
@@ -73,7 +73,7 @@ export function MeniuCont() {
         onClick={() => setDialogParola(true)}
       >
         <KeyRoundIcon />
-        Schimba parola
+        Schimbă parola
       </Button>
 
       <Button
@@ -83,23 +83,23 @@ export function MeniuCont() {
         onClick={() => setDialogIesire(true)}
       >
         <LogOutIcon />
-        Iesi din cont
+        Ieși din cont
       </Button>
 
       {dialogParola && (
         <Dialog open onOpenChange={(deschis) => !deschis && setDialogParola(false)}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Schimba parola</DialogTitle>
+              <DialogTitle>Schimbă parola</DialogTitle>
               <DialogDescription>
-                Minim 8 caractere, cu o litera mare si o cifra. Sesiunile deschise pe alte
-                dispozitive raman active.
+                Minim 8 caractere, cu o literă mare și o cifră. Sesiunile deschise pe alte
+                dispozitive rămân active.
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-3">
               <div className="grid gap-1.5">
-                <Label htmlFor="parola-noua">Parola noua</Label>
+                <Label htmlFor="parola-noua">Parola nouă</Label>
                 <Input
                   id="parola-noua"
                   type="password"
@@ -112,7 +112,7 @@ export function MeniuCont() {
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="parola-confirmare">Inca o data</Label>
+                <Label htmlFor="parola-confirmare">Încă o dată</Label>
                 <Input
                   id="parola-confirmare"
                   type="password"
@@ -129,11 +129,11 @@ export function MeniuCont() {
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogParola(false)}>
-                Renunta
+                Renunță
               </Button>
               <Button disabled={inLucru} onClick={() => void schimba()}>
                 {inLucru && <Loader2Icon className="animate-spin" />}
-                Schimba parola
+                Schimbă parola
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -148,14 +148,14 @@ export function MeniuCont() {
         <Dialog open onOpenChange={(deschis) => !deschis && setDialogIesire(false)}>
           <DialogContent className="sm:max-w-xs">
             <DialogHeader>
-              <DialogTitle>Iesi din cont?</DialogTitle>
+              <DialogTitle>Ieși din cont?</DialogTitle>
               <DialogDescription>
-                Va trebui sa te autentifici din nou pe dispozitivul asta.
+                Va trebui să te autentifici din nou pe dispozitivul ăsta.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogIesire(false)}>
-                Ramai
+                Rămâi
               </Button>
               <Button
                 variant="destructive"
@@ -163,7 +163,7 @@ export function MeniuCont() {
                   void deconectare().catch((e) => notificari.eroare(e))
                 }}
               >
-                Iesi
+                Ieși
               </Button>
             </DialogFooter>
           </DialogContent>

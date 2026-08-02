@@ -67,7 +67,7 @@ export function CommandPalette() {
         <CommandInput placeholder="Numele restaurantului..." />
         <CommandList>
           <CommandEmpty>
-            {restaurante.isLoading ? 'Se incarca...' : 'Niciun restaurant gasit.'}
+            {restaurante.isLoading ? 'Se încarcă...' : 'Niciun restaurant găsit.'}
           </CommandEmpty>
           <CommandGroup heading="Restaurante">
             {(restaurante.data ?? []).map((restaurant) => (

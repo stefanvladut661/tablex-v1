@@ -31,7 +31,7 @@ function schemaPentru(dinInvitatie: boolean) {
       confirmare: z.string(),
       termeni: z
         .boolean()
-        .refine((bifat) => bifat, { message: 'Trebuie sa accepti termenii pentru a continua.' }),
+        .refine((bifat) => bifat, { message: 'Trebuie să accepți termenii pentru a continua.' }),
     })
     .refine((date) => date.parola === date.confirmare, {
       message: 'Parolele nu coincid.',
@@ -85,17 +85,17 @@ export function SignupPage() {
 
   return (
     <CadruAuth
-      titlu="Creeaza cont"
+      titlu="Creează cont"
       descriere={
         dinInvitatie
-          ? 'Dupa confirmarea emailului te intorci la invitatie si intri in echipa.'
-          : 'Restaurantul se configureaza dupa confirmarea adresei de email.'
+          ? 'După confirmarea emailului te întorci la invitație și intri în echipă.'
+          : 'Restaurantul se configurează după confirmarea adresei de email.'
       }
       subsol={
         <>
           Ai deja cont?{' '}
           <Link to={RUTE.login} className="font-medium text-primary hover:underline">
-            Autentifica-te
+            Autentifică-te
           </Link>
         </>
       }
@@ -140,7 +140,7 @@ export function SignupPage() {
           {...form.register('parola')}
         />
         <CampText
-          eticheta="Confirma parola"
+          eticheta="Confirmă parola"
           type="password"
           autoComplete="new-password"
           eroare={form.formState.errors.confirmare?.message}
@@ -164,7 +164,7 @@ export function SignupPage() {
               )}
             />
             <Label htmlFor="termeni" className="text-sm font-normal leading-snug">
-              Sunt de acord cu termenii si cu prelucrarea datelor conform GDPR.
+              Sunt de acord cu termenii și cu prelucrarea datelor conform GDPR.
             </Label>
           </div>
           {form.formState.errors.termeni && (
@@ -176,7 +176,7 @@ export function SignupPage() {
 
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Loader2Icon className="animate-spin" />}
-          Creeaza cont
+          Creează cont
         </Button>
       </form>
     </CadruAuth>

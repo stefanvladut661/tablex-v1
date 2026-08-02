@@ -53,15 +53,15 @@ export function FormularPage() {
   const salveazaCuloare = useMutation({
     mutationFn: (valoare: string) =>
       actualizeazaRestaurant(restaurant!.id, { culoare_accent: valoare }),
-    onSuccess: () => notificari.succes('Culoarea de accent a fost salvata.'),
+    onSuccess: () => notificari.succes('Culoarea de accent a fost salvată.'),
     onError: (eroare) => notificari.eroare(eroare),
   })
 
   const incarcaLogo = useMutation({
     mutationFn: (fisier: File) => urcaLogo(restaurant!.id, fisier),
     onSuccess: () => {
-      notificari.succes('Logoul a fost incarcat.', {
-        descriere: 'Apare pe pagina publica de rezervari.',
+      notificari.succes('Logoul a fost încărcat.', {
+        descriere: 'Apare pe pagina publică de rezervări.',
       })
       reincarca()
     },
@@ -71,7 +71,7 @@ export function FormularPage() {
   const eliminaLogo = useMutation({
     mutationFn: () => stergeLogo(restaurant!.id),
     onSuccess: () => {
-      notificari.succes('Logoul a fost sters.')
+      notificari.succes('Logoul a fost șters.')
       reincarca()
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -80,7 +80,7 @@ export function FormularPage() {
   if (!restaurant) return null
 
   const linkPublic = `${window.location.origin}${RUTE.widget(restaurant.slug)}`
-  const codIframe = `<iframe src="${linkPublic}" width="100%" height="900" style="border:0;border-radius:12px" title="Rezervari ${restaurant.nume}"></iframe>`
+  const codIframe = `<iframe src="${linkPublic}" width="100%" height="900" style="border:0;border-radius:12px" title="Rezervări ${restaurant.nume}"></iframe>`
 
   /**
    * Previzualizarea are nevoie de forma publica a restaurantului. O construim
@@ -108,16 +108,16 @@ export function FormularPage() {
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Formularul de rezervare</h1>
           <p className="text-sm text-muted-foreground">
-            Ce intreaba pagina ta publica, si cum arata. Modificarile se vad imediat in dreapta.
+            Ce întreabă pagina ta publică, și cum arată. Modificările se văd imediat în dreapta.
           </p>
         </div>
 
         {/* §27.6 — branding: logo si culoare de accent. */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Cum arata</CardTitle>
+            <CardTitle className="text-base">Cum arată</CardTitle>
             <CardDescription>
-              Logoul si culoarea ta inlocuiesc marca TableX pe pagina publica.
+              Logoul și culoarea ta înlocuiesc marca TableX pe pagina publică.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -153,7 +153,7 @@ export function FormularPage() {
                   onClick={() => refFisier.current?.click()}
                 >
                   {incarcaLogo.isPending && <Loader2Icon className="animate-spin" />}
-                  Incarca
+                  Încarcă
                 </Button>
                 {restaurant.logo_url && (
                   <Button
@@ -163,12 +163,12 @@ export function FormularPage() {
                     onClick={() => eliminaLogo.mutate()}
                   >
                     <Trash2Icon className="size-3.5" />
-                    Sterge
+                    Șterge
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                PNG, JPG, WEBP sau SVG, pana la 2 MB. Limita e impusa pe server.
+                PNG, JPG, WEBP sau SVG, până la 2 MB. Limita e impusă pe server.
               </p>
             </div>
 
@@ -197,9 +197,9 @@ export function FormularPage() {
         {/* §27.7 — codul de integrare. */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pune formularul pe site-ul tau</CardTitle>
+            <CardTitle className="text-base">Pune formularul pe site-ul tău</CardTitle>
             <CardDescription>
-              Copiaza codul si lipeste-l unde vrei sa apara. Se actualizeaza singur.
+              Copiază codul și lipește-l unde vrei să apară. Se actualizează singur.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
@@ -210,7 +210,7 @@ export function FormularPage() {
                 <Button
                   size="icon-sm"
                   variant="outline"
-                  aria-label="Copiaza linkul"
+                  aria-label="Copiază linkul"
                   onClick={() => {
                     void navigator.clipboard?.writeText(linkPublic)
                     notificari.succes('Link copiat.')
@@ -242,7 +242,7 @@ export function FormularPage() {
                 }}
               >
                 <CopyIcon className="size-3.5" />
-                Copiaza codul
+                Copiază codul
               </Button>
             </div>
           </CardContent>
@@ -251,7 +251,7 @@ export function FormularPage() {
 
       {/* ── Previzualizarea live (§27.5) ── */}
       <div className="grid content-start gap-2">
-        <p className="text-sm font-medium">Asa il vede clientul</p>
+        <p className="text-sm font-medium">Așa îl vede clientul</p>
         <div
           className="rounded-lg border border-border bg-card p-4"
           style={{ '--primary': culoare } as React.CSSProperties}
@@ -274,7 +274,7 @@ export function FormularPage() {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          E chiar formularul de pe pagina publica, doar ca nu trimite nimic.
+          E chiar formularul de pe pagina publică, doar că nu trimite nimic.
         </p>
       </div>
     </div>

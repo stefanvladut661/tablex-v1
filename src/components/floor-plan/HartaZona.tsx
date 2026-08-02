@@ -151,13 +151,13 @@ export function HartaZona({
       </svg>
 
       <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
-        <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mareste">
+        <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mărește">
           <PlusIcon />
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micsoreaza">
+        <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micșorează">
           <MinusIcon />
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Incadreaza harta">
+        <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Încadrează harta">
           <MaximizeIcon />
         </Button>
       </div>

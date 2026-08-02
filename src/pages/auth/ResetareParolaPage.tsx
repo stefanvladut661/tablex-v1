@@ -37,11 +37,11 @@ export function ResetareParolaPage() {
 
   return (
     <CadruAuth
-      titlu="Resetare parola"
-      descriere="Iti trimitem un link pentru setarea unei parole noi."
+      titlu="Resetare parolă"
+      descriere="Îți trimitem un link pentru setarea unei parole noi."
       subsol={
         <Link to={RUTE.login} className="font-medium text-primary hover:underline">
-          Inapoi la autentificare
+          Înapoi la autentificare
         </Link>
       }
     >
@@ -49,7 +49,7 @@ export function ResetareParolaPage() {
         <div className="flex flex-col items-center gap-2 text-center">
           <MailCheckIcon className="size-6 text-primary" />
           <p className="text-sm text-muted-foreground">
-            Daca adresa exista in sistem, vei primi un email cu linkul de resetare in cateva
+            Dacă adresa există în sistem, vei primi un email cu linkul de resetare în câteva
             minute.
           </p>
         </div>

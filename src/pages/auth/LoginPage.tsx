@@ -59,7 +59,7 @@ export function LoginPage() {
     try {
       await trimiteMagicLink(valori.email)
       setLinkTrimis(true)
-      notificari.succes('Link trimis', { descriere: 'Verifica-ti casuta de email.' })
+      notificari.succes('Link trimis', { descriere: 'Verifică-ți căsuța de email.' })
     } catch (eroare) {
       notificari.eroare(eroare)
     }
@@ -68,12 +68,12 @@ export function LoginPage() {
   return (
     <CadruAuth
       titlu="Autentificare"
-      descriere="Intra in panoul restaurantului tau."
+      descriere="Intră în panoul restaurantului tău."
       subsol={
         <>
           Nu ai cont?{' '}
           <Link to={RUTE.signup} className="font-medium text-primary hover:underline">
-            Creeaza unul
+            Creează unul
           </Link>
         </>
       }
@@ -117,7 +117,7 @@ export function LoginPage() {
 
             <Button type="submit" disabled={formParola.formState.isSubmitting}>
               {formParola.formState.isSubmitting && <Loader2Icon className="animate-spin" />}
-              Intra in cont
+              Intră în cont
             </Button>
           </form>
         </TabsContent>
@@ -125,7 +125,7 @@ export function LoginPage() {
         <TabsContent value="magic">
           {linkTrimis ? (
             <p className="pt-4 text-sm text-muted-foreground">
-              Ti-am trimis un link de autentificare. Deschide-l de pe acest dispozitiv; expira in
+              Ți-am trimis un link de autentificare. Deschide-l de pe acest dispozitiv; expiră în
               60 de minute.
             </p>
           ) : (
@@ -139,7 +139,7 @@ export function LoginPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="nume@restaurant.ro"
-                ajutor="Primesti un link de acces, fara parola."
+                ajutor="Primești un link de acces, fără parolă."
                 eroare={formMagic.formState.errors.email?.message}
                 {...formMagic.register('email')}
               />

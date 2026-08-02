@@ -65,7 +65,7 @@ export function VedereLuna({ zile, luna, rezervari, fus, onAlegeZi }: Props) {
 
               {inAsteptare > 0 && (
                 <span className="rounded bg-status-expirare-soft px-1 text-[11px] font-medium text-foreground tabular-nums">
-                  {inAsteptare} in asteptare
+                  {inAsteptare} în așteptare
                 </span>
               )}
             </button>

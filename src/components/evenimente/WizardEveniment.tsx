@@ -27,7 +27,7 @@ import {
 } from '@/services/evenimente'
 import type { MasaHarta, ZonaHarta } from '@/types/floor-plan'
 
-const PASI = ['Detalii', 'Mese', 'Pret si anunt'] as const
+const PASI = ['Detalii', 'Mese', 'Preț și anunț'] as const
 
 /**
  * Wizardul in trei pasi din §29.2. Ordinea nu e arbitrara: nu poti pune pret
@@ -108,7 +108,7 @@ export function WizardEveniment({
     },
     onSuccess: (eveniment) => {
       notificari.succes(`Evenimentul „${eveniment.nume}" a fost creat.`, {
-        descriere: 'E ciorna: publica-l cand vrei sa apara pe widget.',
+        descriere: 'E ciornă: publică-l când vrei să apară pe widget.',
       })
       void queryClient.invalidateQueries({ queryKey: CHEI_EVENIMENTE.lista(restaurantId) })
       onInchide()
@@ -182,7 +182,7 @@ export function WizardEveniment({
 
             {/* Afisul (§29.2 pasul 1): apare pe card, in anunt si pe widget. */}
             <div className="grid gap-1.5">
-              <Label htmlFor="ev-afis">Afis / poza (optional)</Label>
+              <Label htmlFor="ev-afis">Afiș / poză (opțional)</Label>
               <div className="flex items-center gap-3">
                 <Input
                   id="ev-afis"
@@ -194,7 +194,7 @@ export function WizardEveniment({
                 {afisPreview ? (
                   <img
                     src={afisPreview}
-                    alt="Previzualizarea afisului"
+                    alt="Previzualizarea afișului"
                     className="h-14 w-20 rounded-md border border-border object-cover"
                   />
                 ) : (
@@ -210,12 +210,12 @@ export function WizardEveniment({
         {pas === 1 && (
           <div className="grid gap-2">
             <p className="text-sm text-muted-foreground">
-              Mesele care intra in eveniment. Capacitatea lui se calculeaza din scaunele lor — nu
-              se scrie de mana, ca sa nu se departeze de sala.
+              Mesele care intră în eveniment. Capacitatea lui se calculează din scaunele lor — nu
+              se scrie de mână, ca să nu se depărteze de sală.
             </p>
             {mese.length === 0 ? (
               <p className="rounded-md border border-border p-4 text-sm text-muted-foreground">
-                Nu exista mese configurate. Adauga-le intai din Harta salii.
+                Nu există mese configurate. Adaugă-le întâi din Harta sălii.
               </p>
             ) : (
               <ul className="grid max-h-64 gap-1 overflow-y-auto">
@@ -248,9 +248,9 @@ export function WizardEveniment({
         {pas === 2 && (
           <div className="grid gap-3">
             <div className="grid gap-2">
-              <p className="text-sm font-medium">Pretul biletului, pe zona</p>
+              <p className="text-sm font-medium">Prețul biletului, pe zonă</p>
               <p className="text-xs text-muted-foreground">
-                Pretul poate diferi de la o zona la alta (§29.3). O zona lasata goala nu vinde
+                Prețul poate diferi de la o zonă la alta (§29.3). O zonă lăsată goală nu vinde
                 bilete.
               </p>
               {zone.map((zona) => (
@@ -280,14 +280,14 @@ export function WizardEveniment({
             <div className="grid gap-2 border-t border-border pt-3">
               <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="ev-popup" className="text-sm font-normal">
-                  Anunta evenimentul pe pagina de rezervari
+                  Anunță evenimentul pe pagina de rezervări
                 </Label>
                 <Switch id="ev-popup" checked={popup} onCheckedChange={setPopup} />
               </div>
               {popup && (
                 <div className="flex items-center gap-2">
                   <Label htmlFor="ev-zile" className="text-xs text-muted-foreground">
-                    Cu cate zile inainte
+                    Cu câte zile înainte
                   </Label>
                   <Input
                     id="ev-zile"
@@ -301,7 +301,7 @@ export function WizardEveniment({
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Anuntul apare doar dupa ce publici evenimentul, si doar in fereastra de mai sus.
+                Anunțul apare doar după ce publici evenimentul, și doar în fereastra de mai sus.
               </p>
 
               {/* §29.4 — preview LIVE al anuntului, exact componenta care se
@@ -309,7 +309,7 @@ export function WizardEveniment({
               {popup && (
                 <div className="grid gap-1.5">
                   <p className="text-xs font-medium text-muted-foreground uppercase">
-                    Asa il vede clientul
+                    Așa îl vede clientul
                   </p>
                   <AnuntEveniment
                     fus={fus}
@@ -336,17 +336,17 @@ export function WizardEveniment({
         <DialogFooter>
           {pas > 0 && (
             <Button variant="ghost" onClick={() => setPas((p) => p - 1)}>
-              Inapoi
+              Înapoi
             </Button>
           )}
           {pas < PASI.length - 1 ? (
             <Button disabled={!poateContinua} onClick={() => setPas((p) => p + 1)}>
-              Continua
+              Continuă
             </Button>
           ) : (
             <Button disabled={creeaza.isPending} onClick={() => creeaza.mutate()}>
               {creeaza.isPending && <Loader2Icon className="animate-spin" />}
-              Creeaza evenimentul
+              Creează evenimentul
             </Button>
           )}
         </DialogFooter>

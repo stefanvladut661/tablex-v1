@@ -46,7 +46,7 @@ const schema = z.object({
   oras: z.string().trim().max(120).optional(),
   adresa: z.string().trim().max(240).optional(),
   telefon_contact: z.string().trim().max(30).optional(),
-  email_contact: z.union([z.email('Adresa de email nu pare valida.'), z.literal('')]).optional(),
+  email_contact: z.union([z.email('Adresa de email nu pare validă.'), z.literal('')]).optional(),
   tip_locatie: z.string().trim().max(60).optional(),
 
   aprobare_automata: z.boolean(),
@@ -54,7 +54,7 @@ const schema = z.object({
   buffer_minute: z.number().int().min(0).max(60, 'Maxim 60 de minute.'),
   max_scaune_masa: z.number().int().min(1).max(24, 'Maxim 24 de scaune.'),
   data_retentie_ani: z.number().int().min(1).max(10, 'Maxim 10 ani.'),
-  culoare_accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Foloseste formatul #RRGGBB.'),
+  culoare_accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Folosește formatul #RRGGBB.'),
 
   program: z.object({
     luni: schemaZi,
@@ -124,7 +124,7 @@ export function SetariPage() {
       // Profilul tine si restaurantul, deci antetul si fusul orar trebuie
       // reimprospatate ca sa reflecte imediat noile setari.
       await reincarcaProfil()
-      notificari.succes('Setarile au fost salvate.')
+      notificari.succes('Setările au fost salvate.')
       setConflicte(null)
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -148,9 +148,9 @@ export function SetariPage() {
   async function copiazaLink() {
     try {
       await navigator.clipboard.writeText(linkWidget)
-      notificari.succes('Link copiat.', { descriere: 'Pune-l pe site sau in bio.' })
+      notificari.succes('Link copiat.', { descriere: 'Pune-l pe site sau în bio.' })
     } catch {
-      notificari.info('Copiaza manual linkul', { descriere: linkWidget, durata: 15_000 })
+      notificari.info('Copiază manual linkul', { descriere: linkWidget, durata: 15_000 })
     }
   }
 
@@ -176,17 +176,17 @@ export function SetariPage() {
         className="mx-auto grid max-w-3xl gap-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold tracking-tight">Setari</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Setări</h1>
           <Button type="submit" disabled={salveaza.isPending}>
             {salveaza.isPending && <Loader2Icon className="animate-spin" />}
-            Salveaza
+            Salvează
           </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Identitate si contact</CardTitle>
-            <CardDescription>Datele afisate clientilor in widgetul public.</CardDescription>
+            <CardTitle className="text-base">Identitate și contact</CardTitle>
+            <CardDescription>Datele afișate clienților în widgetul public.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -196,12 +196,12 @@ export function SetariPage() {
                 {...form.register('nume')}
               />
               <CampText
-                eticheta="Tip locatie"
+                eticheta="Tip locație"
                 eroare={form.formState.errors.tip_locatie?.message}
                 {...form.register('tip_locatie')}
               />
               <CampText
-                eticheta="Oras"
+                eticheta="Oraș"
                 eroare={form.formState.errors.oras?.message}
                 {...form.register('oras')}
               />
@@ -230,7 +230,7 @@ export function SetariPage() {
                 <code className="min-w-0 flex-1 truncate text-sm">{linkWidget}</code>
                 <Button type="button" variant="outline" size="sm" onClick={() => void copiazaLink()}>
                   <CopyIcon />
-                  Copiaza
+                  Copiază
                 </Button>
                 <Button type="button" variant="ghost" size="sm" asChild>
                   <a href={linkWidget} target="_blank" rel="noreferrer">
@@ -240,7 +240,7 @@ export function SetariPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Adresa se schimba doar de echipa TableX: linkurile deja distribuite ar deveni
+                Adresa se schimbă doar de echipa TableX: linkurile deja distribuite ar deveni
                 invalide.
               </p>
             </div>
@@ -251,17 +251,17 @@ export function SetariPage() {
           <CardHeader>
             <CardTitle className="text-base">Reguli de rezervare</CardTitle>
             <CardDescription>
-              Se aplica rezervarilor NOI. Cele existente isi pastreaza durata si buffer-ul cu care
+              Se aplică rezervărilor NOI. Cele existente își păstrează durata și buffer-ul cu care
               au fost create.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
               <div>
-                <Label htmlFor="aprobare">Aprobare automata</Label>
+                <Label htmlFor="aprobare">Aprobare automată</Label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Pornit: cererile din widget devin direct confirmate. Oprit: ajung „in asteptare"
-                  si le confirmi tu.
+                  Pornit: cererile din widget devin direct confirmate. Oprit: ajung „în așteptare"
+                  și le confirmi tu.
                 </p>
               </div>
               <Controller
@@ -275,27 +275,27 @@ export function SetariPage() {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <CampText
-                eticheta="Durata implicita (min)"
+                eticheta="Durata implicită (min)"
                 type="number"
                 min={90}
                 max={180}
                 step={15}
-                ajutor="Intre 90 si 180."
+                ajutor="Între 90 și 180."
                 eroare={form.formState.errors.durata_implicita_minute?.message}
                 {...form.register('durata_implicita_minute', { valueAsNumber: true })}
               />
               <CampText
-                eticheta="Buffer intre rezervari (min)"
+                eticheta="Buffer între rezervări (min)"
                 type="number"
                 min={0}
                 max={60}
                 step={5}
-                ajutor="Timp de curatare."
+                ajutor="Timp de curățare."
                 eroare={form.formState.errors.buffer_minute?.message}
                 {...form.register('buffer_minute', { valueAsNumber: true })}
               />
               <CampText
-                eticheta="Scaune maxim / masa"
+                eticheta="Scaune maxim / masă"
                 type="number"
                 min={1}
                 max={24}
@@ -314,18 +314,18 @@ export function SetariPage() {
                 disabled={verificaBuffer.isPending}
               >
                 {verificaBuffer.isPending && <Loader2Icon className="animate-spin" />}
-                Verifica impactul buffer-ului
+                Verifică impactul buffer-ului
               </Button>
 
               {conflicte !== null && conflicte.length > 0 && (
                 <div className="grid gap-2 rounded-lg border border-status-expirare bg-status-expirare-soft p-3">
                   <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <TriangleAlertIcon className="size-4" />
-                    {conflicte.length} suprapuneri ar apărea cu aceasta valoare
+                    {conflicte.length} suprapuneri ar apărea cu această valoare
                   </p>
                   <p className="text-xs text-foreground/80">
-                    Rezervarile existente NU se schimba — valoarea noua se aplica doar celor
-                    viitoare. Lista arata unde ar fi fost conflicte daca s-ar fi aplicat retroactiv.
+                    Rezervările existente NU se schimbă — valoarea nouă se aplică doar celor
+                    viitoare. Lista arată unde ar fi fost conflicte dacă s-ar fi aplicat retroactiv.
                   </p>
                   <ul className="grid gap-1 text-xs text-foreground/80">
                     {conflicte.slice(0, 5).map((conflict) => (
@@ -342,9 +342,9 @@ export function SetariPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Program de functionare</CardTitle>
+            <CardTitle className="text-base">Program de funcționare</CardTitle>
             <CardDescription>
-              Widgetul refuza rezervarile in afara acestui program. Zilele speciale se adauga
+              Widgetul refuză rezervările în afara acestui program. Zilele speciale se adaugă
               separat, ca excepții.
             </CardDescription>
           </CardHeader>
@@ -379,7 +379,7 @@ export function SetariPage() {
                   <span className="text-muted-foreground">–</span>
                   <input
                     type="time"
-                    aria-label={`Ora de inchidere ${eticheta}`}
+                    aria-label={`Ora de închidere ${eticheta}`}
                     className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                     {...form.register(`program.${cheie}.pana_la`)}
                   />
@@ -391,7 +391,7 @@ export function SetariPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Aspect si date</CardTitle>
+            <CardTitle className="text-base">Aspect și date</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
@@ -420,7 +420,7 @@ export function SetariPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Se aplica in widgetul public, nu in panou.
+                Se aplică în widgetul public, nu în panou.
               </p>
               {form.formState.errors.culoare_accent && (
                 <p className="text-xs font-medium text-destructive">
@@ -430,11 +430,11 @@ export function SetariPage() {
             </div>
 
             <CampText
-              eticheta="Retentie date clienti (ani)"
+              eticheta="Retenție date clienți (ani)"
               type="number"
               min={1}
               max={10}
-              ajutor="Dupa acest termen, datele clientilor pot fi sterse (GDPR)."
+              ajutor="După acest termen, datele clienților pot fi șterse (GDPR)."
               eroare={form.formState.errors.data_retentie_ani?.message}
               {...form.register('data_retentie_ani', { valueAsNumber: true })}
             />
@@ -444,7 +444,7 @@ export function SetariPage() {
         <div className="flex justify-end">
           <Button type="submit" disabled={salveaza.isPending}>
             {salveaza.isPending && <Loader2Icon className="animate-spin" />}
-            Salveaza setarile
+            Salvează setările
           </Button>
         </div>
       </form>

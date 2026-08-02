@@ -48,7 +48,7 @@ function masa(
 
 export const ZONE_DEMO: ZonaHarta[] = [
   { id: 'demo-salon', nume: 'Salon interior', canvas_latime: 1200, canvas_inaltime: 800, grid_marime: 20 },
-  { id: 'demo-terasa', nume: 'Terasa', canvas_latime: 1000, canvas_inaltime: 700, grid_marime: 20 },
+  { id: 'demo-terasa', nume: 'Terasă', canvas_latime: 1000, canvas_inaltime: 700, grid_marime: 20 },
 ]
 
 const PERETI_SALON: ElementStructura[] = [
@@ -62,7 +62,7 @@ export const STRUCTURA_DEMO: Record<string, ElementStructura[]> = {
   'demo-salon': [
     ...PERETI_SALON,
     { tip: 'bar', x: 60, y: 50, latime: 340, inaltime: 74, eticheta: 'Bar', z: 1 },
-    { tip: 'bucatarie', x: 960, y: 40, latime: 200, inaltime: 150, eticheta: 'Bucatarie', z: 1 },
+    { tip: 'bucatarie', x: 960, y: 40, latime: 200, inaltime: 150, eticheta: 'Bucătărie', z: 1 },
     { tip: 'vip', x: 880, y: 540, latime: 280, inaltime: 220, eticheta: 'Zona VIP', z: 0 },
     { tip: 'dj', x: 60, y: 660, latime: 130, inaltime: 100, eticheta: 'DJ', z: 1 },
     { tip: 'intrare', x: 520, y: 740, latime: 160, inaltime: 46, eticheta: 'Intrare', z: 1 },
@@ -74,8 +74,8 @@ export const STRUCTURA_DEMO: Record<string, ElementStructura[]> = {
   'demo-terasa': [
     { tip: 'perete', x: 0, y: 0, latime: 1000, inaltime: 14 },
     { tip: 'perete', x: 0, y: 0, latime: 14, inaltime: 700 },
-    { tip: 'piscina', x: 560, y: 300, latime: 320, inaltime: 220, eticheta: 'Piscina', z: 0 },
-    { tip: 'bar', x: 80, y: 40, latime: 260, inaltime: 66, eticheta: 'Bar terasa', z: 1 },
+    { tip: 'piscina', x: 560, y: 300, latime: 320, inaltime: 220, eticheta: 'Piscină', z: 0 },
+    { tip: 'bar', x: 80, y: 40, latime: 260, inaltime: 66, eticheta: 'Bar terasă', z: 1 },
     { tip: 'intrare', x: 40, y: 620, latime: 150, inaltime: 44, eticheta: 'Acces salon', z: 1 },
     { tip: 'planta', x: 500, y: 80, latime: 46, inaltime: 46, z: 2 },
     { tip: 'planta', x: 900, y: 120, latime: 46, inaltime: 46, z: 2 },

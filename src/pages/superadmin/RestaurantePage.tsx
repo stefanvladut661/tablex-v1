@@ -85,9 +85,9 @@ const ETICHETE_AUDIT: Record<Enums<'audit_actiune'>, string> = {
   discount: 'Discount',
   manual_floor_plan_unlock: 'Deblocare floor plan',
   schimbare_plan: 'Schimbare plan',
-  nota: 'Nota',
-  schimbare_preturi: 'Schimbare preturi',
-  maintenance_toggle: 'Mentenanta',
+  nota: 'Notă',
+  schimbare_preturi: 'Schimbare prețuri',
+  maintenance_toggle: 'Mentenanță',
 }
 
 type Filtru = 'toate' | 'start' | 'pro' | 'suspendate'
@@ -164,15 +164,15 @@ function DialogComercial({
     <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Trial si discount: {restaurant.nume}</DialogTitle>
+          <DialogTitle>Trial și discount: {restaurant.nume}</DialogTitle>
           <DialogDescription>
-            Ambele intra automat in registrul de audit, cu valorile dinainte si de dupa.
+            Ambele intră automat în registrul de audit, cu valorile dinainte și de după.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="trial">Perioada de proba, prelungita pana la</Label>
+            <Label htmlFor="trial">Perioada de probă, prelungită până la</Label>
             <Input
               id="trial"
               type="date"
@@ -182,8 +182,8 @@ function DialogComercial({
             />
             <p className="text-xs text-muted-foreground">
               {trialInTrecut
-                ? 'Data e in trecut: trialul apare ca expirat.'
-                : 'Lasa gol ca sa revii la perioada standard.'}
+                ? 'Data e în trecut: trialul apare ca expirat.'
+                : 'Lasă gol ca să revii la perioada standard.'}
             </p>
           </div>
 
@@ -201,15 +201,15 @@ function DialogComercial({
             />
             <p className="text-xs text-muted-foreground">
               {discountValid
-                ? 'Intre 0 si 100. Lasa gol ca sa scoti discountul.'
-                : 'Baza accepta doar valori intre 0 si 100.'}
+                ? 'Între 0 și 100. Lasă gol ca să scoți discountul.'
+                : 'Baza acceptă doar valori între 0 și 100.'}
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button
             disabled={inLucru || !discountValid}
@@ -217,7 +217,7 @@ function DialogComercial({
               onSalveaza({ trial: trial === '' ? null : trial, discount: discountNumeric })
             }
           >
-            Salveaza
+            Salvează
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -250,8 +250,8 @@ function DialogSuspendare({
           </DialogTitle>
           <DialogDescription>
             {actiune === 'banat'
-              ? 'Contul devine inaccesibil definitiv. Rezervarile rămân in baza de date.'
-              : 'Personalul nu mai poate intra in panou pana la reactivare.'}
+              ? 'Contul devine inaccesibil definitiv. Rezervările rămân în baza de date.'
+              : 'Personalul nu mai poate intra în panou până la reactivare.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -265,20 +265,20 @@ function DialogSuspendare({
             placeholder="Ex: neplata abonamentului de 60 de zile."
           />
           <p className="text-xs text-muted-foreground">
-            Motivul e afisat restaurantului si rămâne in registrul de audit.
+            Motivul e afișat restaurantului și rămâne în registrul de audit.
           </p>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button
             variant="destructive"
             disabled={inLucru || motiv.trim().length < 3}
             onClick={() => onConfirma(motiv.trim())}
           >
-            {actiune === 'banat' ? 'Baneaza' : 'Suspenda'}
+            {actiune === 'banat' ? 'Banează' : 'Suspendă'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -304,15 +304,15 @@ function DialogDetalii({
   })
 
   const randDate: Array<[string, string | null]> = [
-    ['Nume firma', restaurant.nume_firma],
+    ['Nume firmă', restaurant.nume_firma],
     ['CUI', restaurant.cui],
-    ['Adresa', restaurant.adresa],
-    ['Persoana de contact', restaurant.persoana_contact],
+    ['Adresă', restaurant.adresa],
+    ['Persoană de contact', restaurant.persoana_contact],
     ['Telefon', restaurant.telefon_contact],
     ['Email', restaurant.email_contact],
-    ['Oras', restaurant.oras],
-    ['Adresa publica', `/r/${restaurant.slug}`],
-    ['Inregistrat la', dataScurta(restaurant.created_at)],
+    ['Oraș', restaurant.oras],
+    ['Adresă publică', `/r/${restaurant.slug}`],
+    ['Înregistrat la', dataScurta(restaurant.created_at)],
   ]
 
   return (
@@ -321,13 +321,13 @@ function DialogDetalii({
         <DialogHeader>
           <DialogTitle>{restaurant.nume}</DialogTitle>
           <DialogDescription>
-            Date de firma si istoricul intervențiilor echipei. Totul e doar de citit.
+            Date de firmă și istoricul intervențiilor echipei. Totul e doar de citit.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="firma">
           <TabsList>
-            <TabsTrigger value="firma">Date firma</TabsTrigger>
+            <TabsTrigger value="firma">Date firmă</TabsTrigger>
             <TabsTrigger value="audit">Audit Log</TabsTrigger>
           </TabsList>
 
@@ -398,7 +398,7 @@ export function RestaurantePage() {
     mutationFn: ({ id, modificari }: { id: string; modificari: Parameters<typeof intervine>[1] }) =>
       intervine(id, modificari),
     onSuccess: () => {
-      notificari.succes('Intervenție aplicata.')
+      notificari.succes('Intervenție aplicată.')
       setSuspendare(null)
       setComercial(null)
       void queryClient.invalidateQueries({ queryKey: CHEI_SA.restaurante })
@@ -459,14 +459,14 @@ export function RestaurantePage() {
               <Input
                 value={caut}
                 onChange={(e) => setCaut(e.target.value)}
-                placeholder="Nume, adresa publica, oras"
+                placeholder="Nume, adresă publică, oraș"
                 className="h-8 w-64 pl-7"
                 aria-label="Caut restaurante"
               />
             </div>
           </div>
           <p className="text-sm text-muted-foreground tabular-nums">
-            {restaurante.isLoading ? 'Se incarca...' : `${filtrate.length} restaurante`}
+            {restaurante.isLoading ? 'Se încarcă...' : `${filtrate.length} restaurante`}
           </p>
         </div>
 
@@ -480,7 +480,7 @@ export function RestaurantePage() {
                   <TableHead>Restaurant</TableHead>
                   <TableHead className="w-20">Plan</TableHead>
                   <TableHead className="w-24">Status</TableHead>
-                  <TableHead className="w-28">Inregistrat</TableHead>
+                  <TableHead className="w-28">Înregistrat</TableHead>
                   <TableHead className="w-24 text-right">MRR</TableHead>
                   <TableHead className="w-40">Trial / discount</TableHead>
                   <TableHead className="w-16 text-right">Acțiuni</TableHead>
@@ -535,13 +535,13 @@ export function RestaurantePage() {
                       <TableCell>
                         <div className="text-xs">
                           {restaurant.trial_extins_pana_la
-                            ? `Trial pana la ${dataScurta(restaurant.trial_extins_pana_la)}`
+                            ? `Trial până la ${dataScurta(restaurant.trial_extins_pana_la)}`
                             : 'Trial standard'}
                         </div>
                         <div className="text-xs text-muted-foreground tabular-nums">
                           {restaurant.discount_procent
                             ? `${restaurant.discount_procent}% discount`
-                            : 'Fara discount'}
+                            : 'Fără discount'}
                         </div>
                       </TableCell>
 
@@ -605,7 +605,7 @@ export function RestaurantePage() {
                                   }
                                 >
                                   {restaurant.floor_plan_deblocat_manual
-                                    ? 'Blocheaza floor plan'
+                                    ? 'Blochează floor plan'
                                     : 'Manual Floor Plan Unlock'}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -616,7 +616,7 @@ export function RestaurantePage() {
                                         setSuspendare({ restaurant, actiune: 'suspendat' })
                                       }
                                     >
-                                      Suspenda
+                                      Suspendă
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       variant="destructive"
@@ -625,7 +625,7 @@ export function RestaurantePage() {
                                       }
                                     >
                                       <BanIcon />
-                                      Baneaza
+                                      Banează
                                     </DropdownMenuItem>
                                   </>
                                 ) : (
@@ -638,7 +638,7 @@ export function RestaurantePage() {
                                     }
                                   >
                                     <PlayIcon />
-                                    Reactiveaza
+                                    Reactivează
                                   </DropdownMenuItem>
                                 )}
                               </>
@@ -654,8 +654,8 @@ export function RestaurantePage() {
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          Fiecare intervenție intra automat in registru, cu autor si valori inainte/dupa.
-          Suspendarea si banarea cer un motiv, impus si de baza de date.
+          Fiecare intervenție intră automat în registru, cu autor și valori înainte/după.
+          Suspendarea și banarea cer un motiv, impus și de baza de date.
         </p>
       </div>
 

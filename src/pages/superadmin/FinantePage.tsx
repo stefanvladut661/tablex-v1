@@ -34,7 +34,7 @@ const MRR_LUNAR_DEMO = [
 
 const VENITURI_DEMO = [
   { sursa: 'Abonamente (Start + Pro)', valoare: 700, pondere: 62 },
-  { sursa: 'Configurari floor plan', valoare: 240, pondere: 21 },
+  { sursa: 'Configurări floor plan', valoare: 240, pondere: 21 },
   { sursa: 'Credite WhatsApp', valoare: 130, pondere: 12 },
   { sursa: 'Comisioane bilete', valoare: 55, pondere: 5 },
 ]
@@ -45,7 +45,7 @@ const FACTURI_DEMO = [
   { numar: 'TBX-2026-0839', client: 'Casa Veche', suma: '160,00 €', status: 'Platita', data: '27 iul 2026' },
   { numar: 'TBX-2026-0838', client: 'La Cuptor', suma: '10,00 €', status: 'Restanta', data: '25 iul 2026' },
   { numar: 'TBX-2026-0837', client: 'Vinoteca 9', suma: '50,00 €', status: 'Platita', data: '24 iul 2026' },
-  { numar: 'TBX-2026-0836', client: 'Gradina de Vara', suma: '5,00 €', status: 'Emisa', data: '24 iul 2026' },
+  { numar: 'TBX-2026-0836', client: 'Grădina de Vară', suma: '5,00 €', status: 'Emisa', data: '24 iul 2026' },
 ]
 
 export function FinantePage() {
@@ -60,16 +60,16 @@ export function FinantePage() {
         <InfoIcon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
         <p>
           <span className="font-medium">Previzualizare cu date simulate.</span> Automatizarea
-          facturilor, integrarea webhooks Stripe, ledger-ul de plati si rapoartele contabile se
-          implementeaza ulterior, printr-un prompt dedicat. Nimic de aici nu e editabil si nicio
-          cifra nu e reala.
+          facturilor, integrarea webhooks Stripe, ledger-ul de plăți și rapoartele contabile se
+          implementează ulterior, printr-un prompt dedicat. Nimic de aici nu e editabil și nicio
+          cifră nu e reală.
         </p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Evolutie MRR (demo)</CardTitle>
+            <CardTitle className="text-base">Evoluție MRR (demo)</CardTitle>
             <CardDescription>Ultimele 6 luni, date simulate.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -112,7 +112,7 @@ export function FinantePage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Venituri pe surse (demo)</CardTitle>
-            <CardDescription>Luna curenta, date simulate.</CardDescription>
+            <CardDescription>Luna curentă, date simulate.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             {VENITURI_DEMO.map((sursa) => (
@@ -136,7 +136,7 @@ export function FinantePage() {
           <CardHeader>
             <CardTitle className="text-base">Facturi recente (demo)</CardTitle>
             <CardDescription>
-              Structura viitorului tabel de facturare — randurile sunt simulate.
+              Structura viitorului tabel de facturare — rândurile sunt simulate.
             </CardDescription>
           </CardHeader>
           <CardContent>

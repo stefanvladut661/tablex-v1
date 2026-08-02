@@ -204,7 +204,7 @@ export function VedereZi({
             type="button"
             style={{ height: PX_PE_ORA }}
             onClick={() => onCreeazaLaOra(h)}
-            aria-label={`Adauga rezervare la ora ${String(h % 24).padStart(2, '0')}:00`}
+            aria-label={`Adaugă rezervare la ora ${String(h % 24).padStart(2, '0')}:00`}
             className="block w-full border-b border-border/60 transition-colors last:border-b-0 hover:bg-accent/40"
           />
         ))}
@@ -261,7 +261,7 @@ export function VedereZi({
                   {rezervare.nr_persoane}
                 </span>
                 {rezervare.masa && <span>Masa {rezervare.masa.numar_masa}</span>}
-                {!rezervare.masa && <span className="italic">fara masa</span>}
+                {!rezervare.masa && <span className="italic">fără masă</span>}
               </div>
             </button>
           )
@@ -269,7 +269,7 @@ export function VedereZi({
 
         {blocuri.length === 0 && (
           <p className="pointer-events-none absolute inset-x-0 top-6 text-center text-sm text-muted-foreground">
-            Nicio rezervare activa. Click pe o ora pentru a adauga una.
+            Nicio rezervare activă. Click pe o oră pentru a adăuga una.
           </p>
         )}
       </div>

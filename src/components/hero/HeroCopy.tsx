@@ -15,7 +15,7 @@ import { useDelayScurs, useMiscareHero } from './useParallax'
  * cade pe Safari la fonturi variabile.
  */
 
-const LINII = ['Mesele tale, rezervate', 'inainte ca usile'] as const
+const LINII = ['Mesele tale, rezervate', 'înainte ca ușile'] as const
 const LINIE_SUBLINIATA = 'sa se deschida.'
 
 function LinieH1({ text, la, redus }: { text: string; la: number; redus: boolean }) {
@@ -108,8 +108,8 @@ export function HeroCopy() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: t(TIMELINE.subtitlu), ease: 'easeOut' }}
       >
-        Disponibilitate live, zero rezervari duble si un plan al salii pe care
-        echipa ta chiar il intelege.
+        Disponibilitate live, zero rezervări duble și un plan al sălii pe care
+        echipa ta chiar îl înțelege.
       </motion.p>
 
       <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -166,7 +166,7 @@ export function HeroCopy() {
             href="#cum-functioneaza"
             className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[-0.01em] text-foreground focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
           >
-            Vezi cum functioneaza
+            Vezi cum funcționează
             <ArrowRightIcon
               className="size-4 transition-transform group-hover:translate-x-0.5"
               aria-hidden

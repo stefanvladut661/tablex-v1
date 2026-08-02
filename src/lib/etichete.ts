@@ -7,24 +7,24 @@ import type { Enums } from '@/types/database'
  */
 
 export const ETICHETE_STATUS_REZERVARE: Record<Enums<'rezervare_status'>, string> = {
-  pending: 'In asteptare',
-  confirmata: 'Confirmata',
-  sosita: 'Sosita',
-  anulata: 'Anulata',
+  pending: 'În așteptare',
+  confirmata: 'Confirmată',
+  sosita: 'Sosită',
+  anulata: 'Anulată',
   no_show: 'Neprezentat',
-  respinsa: 'Respinsa',
+  respinsa: 'Respinsă',
 }
 
 export const ETICHETE_SURSA_REZERVARE: Record<Enums<'rezervare_sursa'>, string> = {
   widget: 'Widget public',
-  manual: 'Introdusa manual',
+  manual: 'Introdusă manual',
   walk_in: 'Walk-in',
   telefon: 'Telefonic',
 }
 
 export const ETICHETE_ROL_ADMIN: Record<Enums<'admin_rol'>, string> = {
   manager: 'Manager',
-  ospatar: 'Ospatar',
+  ospatar: 'Ospătar',
 }
 
 /** Rolurile din echipa TableX (§9.2.7), nu ale unui restaurant. */
@@ -35,15 +35,15 @@ export const ETICHETE_ROL_ECHIPA: Record<Enums<'super_admin_rol'>, string> = {
 }
 
 export const ETICHETE_STATUS_CERERE_FP: Record<Enums<'fp_request_status'>, string> = {
-  pending: 'In asteptare',
-  in_progress: 'In lucru',
+  pending: 'În așteptare',
+  in_progress: 'În lucru',
   published: 'Publicat',
   respins: 'Respins',
 }
 
 export const ETICHETE_STATUS_INVITATIE: Record<Enums<'invitatie_status'>, string> = {
-  trimisa: 'In asteptare',
-  acceptata: 'Acceptata',
-  expirata: 'Expirata',
-  anulata: 'Anulata',
+  trimisa: 'În așteptare',
+  acceptata: 'Acceptată',
+  expirata: 'Expirată',
+  anulata: 'Anulată',
 }

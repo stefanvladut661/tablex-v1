@@ -60,7 +60,7 @@ type TabLista = { cheie: string; eticheta: string; statusuri: StatusRezervare[] 
 
 const TABURI: TabLista[] = [
   { cheie: 'toate', eticheta: 'Toate', statusuri: null },
-  { cheie: 'pending', eticheta: 'In asteptare', statusuri: ['pending'] },
+  { cheie: 'pending', eticheta: 'În așteptare', statusuri: ['pending'] },
   { cheie: 'confirmate', eticheta: 'Confirmate', statusuri: ['confirmata'] },
   { cheie: 'sosite', eticheta: 'Sosite', statusuri: ['sosita'] },
   { cheie: 'incheiate', eticheta: 'Anulate / No-show', statusuri: ['anulata', 'no_show', 'respinsa'] },
@@ -216,7 +216,7 @@ export function ListaRezervariPage() {
     muta.mutate(
       { id: rezervare.id, noteInterne: note },
       {
-        onSuccess: () => notificari.succes('Nota interna a fost salvata.'),
+        onSuccess: () => notificari.succes('Nota internă a fost salvată.'),
         onError: (eroare) => notificari.eroare(eroare),
       },
     )
@@ -234,7 +234,7 @@ export function ListaRezervariPage() {
             variant="outline"
             size="icon-sm"
             onClick={() => setZi((c) => addDays(c, -1))}
-            aria-label="Ziua anterioara"
+            aria-label="Ziua anterioară"
           >
             <ChevronLeftIcon />
           </Button>
@@ -245,7 +245,7 @@ export function ListaRezervariPage() {
             variant="outline"
             size="icon-sm"
             onClick={() => setZi((c) => addDays(c, 1))}
-            aria-label="Ziua urmatoare"
+            aria-label="Ziua următoare"
           >
             <ChevronRightIcon />
           </Button>
@@ -266,9 +266,9 @@ export function ListaRezervariPage() {
             <Input
               value={caut}
               onChange={(e) => setCaut(e.target.value)}
-              placeholder="Nume, telefon, masa"
+              placeholder="Nume, telefon, masă"
               className="h-8 w-48 pl-7"
-              aria-label="Caut in rezervari"
+              aria-label="Caut în rezervări"
             />
           </div>
 
@@ -277,8 +277,8 @@ export function ListaRezervariPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ora">Dupa ora</SelectItem>
-              <SelectItem value="nume">Dupa nume</SelectItem>
+              <SelectItem value="ora">După oră</SelectItem>
+              <SelectItem value="nume">După nume</SelectItem>
             </SelectContent>
           </Select>
 
@@ -308,7 +308,7 @@ export function ListaRezervariPage() {
                 ))}
               </div>
               <p className="px-2 pb-2 text-xs text-muted-foreground">
-                Preferinta ta, nu a restaurantului.
+                Preferința ta, nu a restaurantului.
               </p>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -318,7 +318,7 @@ export function ListaRezervariPage() {
             size="sm"
             onClick={exporta}
             disabled={filtrate.length === 0}
-            title="Exporta ce e afisat acum, cu filtrele aplicate"
+            title="Exportă ce e afișat acum, cu filtrele aplicate"
           >
             <DownloadIcon />
             Export CSV
@@ -348,12 +348,12 @@ export function ListaRezervariPage() {
         // Fara ramura asta, o cadere de retea arata identic cu o zi goala —
         // adica dezastru operational citit ca zi linistita.
         <div className="grid justify-items-start gap-2 rounded-lg border border-destructive/40 bg-card p-6">
-          <p className="text-sm font-medium">Nu am putut incarca rezervarile.</p>
+          <p className="text-sm font-medium">Nu am putut încărca rezervările.</p>
           <p className="text-sm text-muted-foreground">
-            Lista de mai jos ar fi goala din cauza erorii, nu fiindca nu ai rezervari.
+            Lista de mai jos ar fi goală din cauza erorii, nu fiindcă nu ai rezervări.
           </p>
           <Button variant="outline" size="sm" onClick={() => void rezervari.refetch()}>
-            Reincearca
+            Reîncearcă
           </Button>
         </div>
       ) : filtrate.length === 0 ? (
@@ -361,7 +361,7 @@ export function ListaRezervariPage() {
           <p className="text-sm text-muted-foreground">
             {caut || tab !== 'toate'
               ? 'Nicio rezervare pentru filtrele alese.'
-              : 'Nicio rezervare in ziua asta.'}
+              : 'Nicio rezervare în ziua asta.'}
           </p>
         </div>
       ) : (
@@ -393,12 +393,12 @@ export function ListaRezervariPage() {
                 {deConfirmat.rezervare.client_nume} · {deConfirmat.rezervare.nr_persoane} persoane ·{' '}
                 {ora(deConfirmat.rezervare.data_ora, fus)}
                 {deConfirmat.status === 'respinsa' &&
-                  ' — clientul primeste anuntul pe email si WhatsApp, daca exista.'}
+                  ' — clientul primește anunțul pe email și WhatsApp, dacă există.'}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeConfirmat(null)}>
-                Renunta
+                Renunță
               </Button>
               <Button
                 variant="destructive"
@@ -408,7 +408,7 @@ export function ListaRezervariPage() {
                   setDeConfirmat(null)
                 }}
               >
-                {deConfirmat.status === 'respinsa' ? 'Respinge' : 'Anuleaza rezervarea'}
+                {deConfirmat.status === 'respinsa' ? 'Respinge' : 'Anulează rezervarea'}
               </Button>
             </DialogFooter>
           </DialogContent>

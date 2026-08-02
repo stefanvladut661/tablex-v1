@@ -108,22 +108,22 @@ export function PanouAsteptare({
     <Card>
       <CardHeader>
         <CardTitle className="text-base">
-          Asteapta
+          Așteaptă
           {asteapta.length > 0 && (
             <span className="ml-1.5 text-sm text-muted-foreground tabular-nums">
               {asteapta.length}
             </span>
           )}
         </CardTitle>
-        <CardDescription>Trage un oaspete pe o masa libera ca sa-l asezi.</CardDescription>
+        <CardDescription>Trage un oaspete pe o masă liberă ca să-l așezi.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2">
         {lista.isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : asteapta.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Nimeni la coada. Oaspetii veniti fara rezervare, cand nu e masa libera, se adauga din
-            pagina Asteptare.
+            Nimeni la coadă. Oaspeții veniți fără rezervare, când nu e masă liberă, se adaugă din
+            pagina Așteptare.
           </p>
         ) : (
           <ul className="grid gap-1.5">
@@ -134,7 +134,7 @@ export function PanouAsteptare({
               >
                 <button
                   type="button"
-                  aria-label={`Trage-l pe ${intrare.nume} pe o masa`}
+                  aria-label={`Trage-l pe ${intrare.nume} pe o masă`}
                   className="cursor-grab touch-none text-muted-foreground"
                   onPointerDown={(e) => porneste(intrare, e)}
                 >
@@ -158,7 +158,7 @@ export function PanouAsteptare({
                 </span>
 
                 <Button size="xs" variant="outline" onClick={() => onAsaza(intrare)}>
-                  Asaza
+                  Așază
                 </Button>
               </li>
             ))}

@@ -470,7 +470,7 @@ export function EditorZona({
         viewBox={`0 0 ${zona.canvas_latime} ${zona.canvas_inaltime}`}
         preserveAspectRatio="xMidYMid meet"
         role="application"
-        aria-label={`Editor pentru zona ${zona.nume}, stratul ${editezStructura ? 'structura' : 'mese'}`}
+        aria-label={`Editor pentru zona ${zona.nume}, stratul ${editezStructura ? 'structură' : 'mese'}`}
         className={cn(
           'h-full w-full touch-none bg-canvas-fundal select-none',
           modAdaugare ? 'cursor-copy' : 'cursor-default',
@@ -538,7 +538,7 @@ export function EditorZona({
                 data-structura-indice={indice}
                 tabIndex={0}
                 role="button"
-                aria-label={`${element.tip}${element.eticheta ? ` „${element.eticheta}”` : ''}. Trage cu mouse-ul sau muta cu sagetile.`}
+                aria-label={`${element.tip}${element.eticheta ? ` „${element.eticheta}”` : ''}. Trage cu mouse-ul sau mută cu săgețile.`}
                 aria-pressed={selectat}
                 onKeyDown={(eveniment) =>
                   laTasta(
@@ -590,7 +590,7 @@ export function EditorZona({
                 data-masa-id={masa.id}
                 tabIndex={0}
                 role="button"
-                aria-label={`Masa ${masa.numar_masa}. Trage cu mouse-ul sau muta cu sagetile.`}
+                aria-label={`Masa ${masa.numar_masa}. Trage cu mouse-ul sau mută cu săgețile.`}
                 aria-pressed={masaSelectata === masa.id}
                 onKeyDown={(eveniment) =>
                   laTasta(
@@ -624,7 +624,7 @@ export function EditorZona({
                     data-de-pe-masa={masa.id}
                     className="cursor-grab"
                     role="button"
-                    aria-label={`Muta rezervarea ${rezervariPeMese[masa.id].eticheta} pe alta masa`}
+                    aria-label={`Mută rezervarea ${rezervariPeMese[masa.id].eticheta} pe altă masă`}
                   >
                     <circle
                       cx={afisata.pozitie_x + afisata.latime - 8}
@@ -710,13 +710,13 @@ export function EditorZona({
       {/* Aceleasi comenzi de zoom ca pe viewer (HartaZona): rotita face
           acelasi lucru, butoanele raman pentru tableta (§32). */}
       <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
-        <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mareste">
+        <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mărește">
           <PlusIcon />
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micsoreaza">
+        <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micșorează">
           <MinusIcon />
         </Button>
-        <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Incadreaza harta">
+        <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Încadrează harta">
           <MaximizeIcon />
         </Button>
       </div>

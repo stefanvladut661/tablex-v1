@@ -121,7 +121,7 @@ export function Hero() {
     <MiscareHeroContext.Provider value={context}>
       <section
         ref={heroRef}
-        aria-label="tableX — rezervari pe planul salii"
+        aria-label="tableX — rezervări pe planul sălii"
         className="hero-wash relative isolate overflow-hidden"
       >
         {/* Strat 0 — grid-ul de 1px, semnal de software serios */}

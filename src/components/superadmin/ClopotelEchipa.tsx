@@ -34,7 +34,7 @@ const CLASE_URGENTA: Record<Enums<'notificare_urgenta'>, string> = {
 
 const TITLU_GRUP: Record<Enums<'notificare_urgenta'>, string> = {
   rosu: 'Urgente',
-  galben: 'De urmarit',
+  galben: 'De urmărit',
   albastru: 'Informative',
 }
 
@@ -112,7 +112,7 @@ export function ClopotelEchipa() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className="relative" aria-label="Notificari interne">
+        <Button variant="ghost" size="icon-sm" className="relative" aria-label="Notificări interne">
           <BellIcon />
           {necitite.length > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-status-ocupat text-[10px] font-semibold text-status-ocupat-foreground tabular-nums">
@@ -124,7 +124,7 @@ export function ClopotelEchipa() {
 
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-          <span className="text-sm font-medium">Notificari interne</span>
+          <span className="text-sm font-medium">Notificări interne</span>
           {necitite.length > 0 && (
             <Button
               variant="ghost"
@@ -133,17 +133,17 @@ export function ClopotelEchipa() {
               disabled={citesteToate.isPending}
             >
               <CheckCheckIcon />
-              Marcheaza tot
+              Marchează tot
             </Button>
           )}
         </div>
 
         <ScrollArea className="max-h-80">
           {lista.isLoading ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Se incarca...</p>
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Se încarcă...</p>
           ) : grupuri.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-              Nicio notificare. Cererile de plan, creditele epuizate si tichetele noi apar aici.
+              Nicio notificare. Cererile de plan, creditele epuizate și tichetele noi apar aici.
             </p>
           ) : (
             grupuri.map((grup) => (

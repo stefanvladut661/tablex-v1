@@ -58,7 +58,7 @@ export function BaraOrara({
     <div className="grid gap-2">
       <div
         role="group"
-        aria-label="Ora afisata pe harta"
+        aria-label="Ora afișată pe hartă"
         className="flex gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1.5"
       >
         {sloturi.map((slot) => {
@@ -72,7 +72,7 @@ export function BaraOrara({
               key={slot}
               type="button"
               aria-pressed={ales}
-              aria-label={`Arata sala la ora ${formateazaOra(slot)}`}
+              aria-label={`Arată sala la ora ${formateazaOra(slot)}`}
               onClick={() => onSchimba(slot)}
               className={`shrink-0 rounded-md px-2 py-1 text-xs tabular-nums transition-colors ${
                 ales
@@ -94,7 +94,7 @@ export function BaraOrara({
             <span className="font-medium">Previzualizare pentru ora {formateazaOra(oraAfisata)}</span>
             <span className="text-muted-foreground">
               {' '}
-              — mesele arata cum vor fi atunci, nu cum sunt acum.
+              — mesele arată cum vor fi atunci, nu cum sunt acum.
             </span>
           </p>
           <Button size="xs" variant="outline" onClick={() => onSchimba(oraLive)}>

@@ -40,10 +40,10 @@ export function TabAbonament({ restaurant }: { restaurant: Restaurant }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <CreditCardIcon className="size-4 text-primary" />
-            Planul tau
+            Planul tău
           </CardTitle>
           <CardDescription>
-            Fara contract pe termen lung si fara comision pe rezervare.
+            Fără contract pe termen lung și fără comision pe rezervare.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -67,10 +67,10 @@ export function TabAbonament({ restaurant }: { restaurant: Restaurant }) {
               <p className="font-medium">Pro Floor — {pretPro} EUR pe luna</p>
               <ul className="grid gap-1 text-sm text-muted-foreground">
                 {[
-                  'Harta 2D a salii, cu status live pe mese',
-                  'Mutarea rezervarilor intre mese, prin tragere',
+                  'Harta 2D a sălii, cu status live pe mese',
+                  'Mutarea rezervărilor între mese, prin tragere',
                   'Unirea meselor pentru grupuri mari',
-                  'Coada de asteptare langa plan',
+                  'Coada de așteptare lângă plan',
                 ].map((functie) => (
                   <li key={functie} className="flex items-start gap-1.5">
                     <CheckIcon className="mt-0.5 size-3.5 shrink-0 text-status-liber" />
@@ -84,18 +84,18 @@ export function TabAbonament({ restaurant }: { restaurant: Restaurant }) {
                 </a>
               </Button>
               <p className="text-xs text-muted-foreground">
-                Planul se schimba de echipa TableX: e o operatie comerciala, inregistrata in
-                registrul de interventii.
+                Planul se schimbă de echipa TableX: e o operațiune comercială, înregistrată în
+                registrul de intervenții.
               </p>
             </div>
           )}
 
           {/* §10.2 — calculatorul de setup, cu preturile reale din app_settings. */}
           <div className="grid gap-2 rounded-lg border border-border p-3">
-            <p className="font-medium">Configurarea hartii 2D — taxa unica</p>
+            <p className="font-medium">Configurarea hărții 2D — taxă unică</p>
             <div className="flex items-center gap-2">
               <Label htmlFor="mese-setup" className="text-sm font-normal text-muted-foreground">
-                Cate mese ai?
+                Câte mese ai?
               </Label>
               <Input
                 id="mese-setup"
@@ -109,16 +109,16 @@ export function TabAbonament({ restaurant }: { restaurant: Restaurant }) {
               <span className="ml-auto font-semibold tabular-nums">{setupTotal} EUR</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {pretSetup} EUR acopera pana la {pragMese} de mese, indiferent de cate zone ai. Peste,{' '}
-              {pretMasaExtra} EUR pentru fiecare masa in plus.
-              {restaurant.setup_floor_plan_platit && ' Taxa e deja achitata pentru contul tau.'}
+              {pretSetup} EUR acoperă până la {pragMese} de mese, indiferent de câte zone ai. Peste,{' '}
+              {pretMasaExtra} EUR pentru fiecare masă în plus.
+              {restaurant.setup_floor_plan_platit && ' Taxa e deja achitată pentru contul tău.'}
             </p>
           </div>
 
           <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3 text-center">
-            <p className="text-sm font-medium">Plata online se activeaza in curand</p>
+            <p className="text-sm font-medium">Plata online se activează în curând</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Pana atunci, facturarea se face prin transfer, la cererea echipei.
+              Până atunci, facturarea se face prin transfer, la cererea echipei.
             </p>
           </div>
         </CardContent>

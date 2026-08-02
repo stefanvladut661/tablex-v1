@@ -48,15 +48,15 @@ export function DemoHartaPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="icon-sm" aria-label="Inapoi">
+            <Button asChild variant="ghost" size="icon-sm" aria-label="Înapoi">
               <Link to={RUTE.acasa}>
                 <ArrowLeftIcon />
               </Link>
             </Button>
             <div>
-              <h1 className="font-semibold tracking-tight">Harta 2D — demonstratie</h1>
+              <h1 className="font-semibold tracking-tight">Harta 2D — demonstrație</h1>
               <p className="text-xs text-muted-foreground">
-                Date fictive. Aceeasi forma pe care o are planul unui restaurant real.
+                Date fictive. Aceeași formă pe care o are planul unui restaurant real.
               </p>
             </div>
           </div>
@@ -90,8 +90,8 @@ export function DemoHartaPage() {
           />
 
           <p className="text-xs text-muted-foreground">
-            Scroll pentru zoom, trage pentru deplasare, click pe o masa pentru detalii. Tab si
-            Enter functioneaza la fel, pentru navigarea de la tastatura.
+            Scroll pentru zoom, trage pentru deplasare, click pe o masă pentru detalii. Tab și
+            Enter funcționează la fel, pentru navigarea de la tastatură.
           </p>
         </div>
 
@@ -102,9 +102,9 @@ export function DemoHartaPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <ClockIcon className="size-4 text-primary" />
-                Ora afisata
+                Ora afișată
               </CardTitle>
-              <CardDescription>Deruleaza ziua si vezi cum se schimba harta.</CardDescription>
+              <CardDescription>Derulează ziua și vezi cum se schimbă harta.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               <div className="text-2xl font-semibold tabular-nums">{formateazaOra(ora)}</div>
@@ -115,7 +115,7 @@ export function DemoHartaPage() {
                 step={0.25}
                 value={ora}
                 onChange={(e) => setOra(Number(e.target.value))}
-                aria-label="Ora afisata pe harta"
+                aria-label="Ora afișată pe hartă"
                 className="w-full accent-primary"
               />
               <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
@@ -148,13 +148,13 @@ export function DemoHartaPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Masa selectata</CardTitle>
+              <CardTitle className="text-base">Masa selectată</CardTitle>
             </CardHeader>
             <CardContent>
               {masa && status ? (
                 <dl className="grid gap-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Numar</dt>
+                    <dt className="text-muted-foreground">Număr</dt>
                     <dd className="font-medium">{masa.numar_masa}</dd>
                   </div>
                   <div className="flex justify-between">
@@ -162,7 +162,7 @@ export function DemoHartaPage() {
                     <dd className="font-medium">{masa.capacitate} locuri</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Forma</dt>
+                    <dt className="text-muted-foreground">Formă</dt>
                     <dd className="font-medium capitalize">{masa.forma}</dd>
                   </div>
                   <div className="flex justify-between">
@@ -177,7 +177,7 @@ export function DemoHartaPage() {
                 </dl>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Nicio masa selectata. Click pe o masa din harta.
+                  Nicio masă selectată. Click pe o masă din hartă.
                 </p>
               )}
             </CardContent>

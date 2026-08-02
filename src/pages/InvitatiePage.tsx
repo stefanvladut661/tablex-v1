@@ -36,27 +36,27 @@ export function InvitatiePage() {
     return (
       <CadruAuth
         titlu="Link incomplet"
-        descriere="Linkul de invitatie nu contine niciun token."
+        descriere="Linkul de invitație nu conține niciun token."
         subsol={
           <Link to={RUTE.acasa} className="font-medium text-primary hover:underline">
-            Inapoi la pagina principala
+            Înapoi la pagina principală
           </Link>
         }
       >
         <p className="text-sm text-muted-foreground">
-          Deschide linkul exact cum l-ai primit pe email, fara sa il modifici.
+          Deschide linkul exact cum l-ai primit pe email, fără să îl modifici.
         </p>
       </CadruAuth>
     )
   }
 
-  if (incarcare || invitatie.isLoading) return <EcranIncarcare mesaj="Se verifica invitatia..." />
+  if (incarcare || invitatie.isLoading) return <EcranIncarcare mesaj="Se verifică invitația..." />
 
   if (invitatie.isError) {
     return (
-      <CadruAuth titlu="Nu am putut verifica invitatia" descriere="Incearca din nou in cateva momente.">
+      <CadruAuth titlu="Nu am putut verifica invitația" descriere="Încearcă din nou în câteva momente.">
         <Button variant="outline" onClick={() => void invitatie.refetch()}>
-          Reincearca
+          Reîncearcă
         </Button>
       </CadruAuth>
     )
@@ -66,16 +66,16 @@ export function InvitatiePage() {
   if (!date) {
     return (
       <CadruAuth
-        titlu="Invitatie invalida"
-        descriere="Invitatia a expirat, a fost anulata sau a fost deja folosita."
+        titlu="Invitație invalidă"
+        descriere="Invitația a expirat, a fost anulată sau a fost deja folosită."
         subsol={
           <Link to={RUTE.acasa} className="font-medium text-primary hover:underline">
-            Inapoi la pagina principala
+            Înapoi la pagina principală
           </Link>
         }
       >
         <p className="text-sm text-muted-foreground">
-          Cere managerului restaurantului o invitatie noua.
+          Cere managerului restaurantului o invitație nouă.
         </p>
       </CadruAuth>
     )
@@ -86,7 +86,7 @@ export function InvitatiePage() {
   const antet = (
     <div className="grid gap-2 rounded-lg bg-muted p-3 text-sm">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground">{esteEchipa ? 'Organizatie' : 'Restaurant'}</span>
+        <span className="text-muted-foreground">{esteEchipa ? 'Organizație' : 'Restaurant'}</span>
         <span className="font-medium">{date.restaurant_nume}</span>
       </div>
       <div className="flex items-center justify-between gap-3">
@@ -106,19 +106,19 @@ export function InvitatiePage() {
     const inapoiAici = `${RUTE.invitatie}?token=${encodeURIComponent(token)}`
     return (
       <CadruAuth
-        titlu={`Invitatie la ${date.restaurant_nume}`}
-        descriere="Autentifica-te cu adresa invitata pentru a accepta."
+        titlu={`Invitație la ${date.restaurant_nume}`}
+        descriere="Autentifică-te cu adresa invitată pentru a accepta."
       >
         <div className="grid gap-4">
           {antet}
           <Button asChild>
             <Link to={RUTE.login} state={{ de_la: inapoiAici }}>
-              Am cont — autentifica-te
+              Am cont — autentifică-te
             </Link>
           </Button>
           <Button asChild variant="outline">
             <Link to={RUTE.signup} state={{ de_la: inapoiAici }}>
-              Creeaza cont
+              Creează cont
             </Link>
           </Button>
         </div>
@@ -141,10 +141,10 @@ export function InvitatiePage() {
         <div className="grid gap-4">
           {antet}
           <p className="text-sm text-muted-foreground">
-            Deconecteaza-te si intra cu adresa {date.email} pentru a accepta invitatia.
+            Deconectează-te și intră cu adresa {date.email} pentru a accepta invitația.
           </p>
           <Button variant="outline" onClick={() => void deconectare()}>
-            Iesi din cont
+            Ieși din cont
           </Button>
         </div>
       </CadruAuth>
@@ -159,7 +159,7 @@ export function InvitatiePage() {
     try {
       await acceptaInvitatie(token)
       await reincarcaProfil()
-      notificari.succes(`Bine ai venit in echipa ${date!.restaurant_nume}!`)
+      notificari.succes(`Bine ai venit în echipa ${date!.restaurant_nume}!`)
       // Invitatia de echipa nu are restaurant: panoul ei e altul.
       navigate(date!.tip === 'echipa' ? RUTE.superadmin : RUTE.app, { replace: true })
     } catch (eroare) {
@@ -171,11 +171,11 @@ export function InvitatiePage() {
 
   return (
     <CadruAuth
-      titlu={`Invitatie la ${date.restaurant_nume}`}
+      titlu={`Invitație la ${date.restaurant_nume}`}
       descriere={
         emailPotrivit
-          ? 'Accepta invitatia pentru a intra in panoul restaurantului.'
-          : 'Invitatia e pentru o alta adresa de email.'
+          ? 'Acceptă invitația pentru a intra în panoul restaurantului.'
+          : 'Invitația e pentru o altă adresă de email.'
       }
     >
       <div className="grid gap-4">
@@ -184,16 +184,16 @@ export function InvitatiePage() {
         {emailPotrivit ? (
           <Button onClick={() => void accepta()} disabled={seAccepta}>
             {seAccepta ? <Loader2Icon className="animate-spin" /> : <MailIcon />}
-            Accepta invitatia
+            Acceptă invitația
           </Button>
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
-              Ești autentificat ca {utilizator?.email}. Invitatia a fost trimisa adresei{' '}
+              Ești autentificat ca {utilizator?.email}. Invitația a fost trimisă adresei{' '}
               {date.email}.
             </p>
             <Button variant="outline" onClick={() => void deconectare()}>
-              Iesi si intra cu adresa corecta
+              Ieși și intră cu adresa corectă
             </Button>
           </>
         )}

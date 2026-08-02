@@ -554,9 +554,9 @@ function DialogEditareEveniment({
     <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Editeaza evenimentul</DialogTitle>
+          <DialogTitle>Editează evenimentul</DialogTitle>
           <DialogDescription>
-            Schimbarile se vad imediat pe card si, daca e publicat, pe widget.
+            Schimbările se văd imediat pe card și, dacă e publicat, pe widget.
           </DialogDescription>
         </DialogHeader>
 
@@ -590,7 +590,7 @@ function DialogEditareEveniment({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="edit-afis">Afis nou (optional)</Label>
+            <Label htmlFor="edit-afis">Afiș nou (opțional)</Label>
             <Input
               id="edit-afis"
               type="file"
@@ -603,13 +603,13 @@ function DialogEditareEveniment({
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button
             disabled={salveaza.isPending || nume.trim().length < 2}
             onClick={() => salveaza.mutate()}
           >
-            Salveaza
+            Salvează
           </Button>
         </DialogFooter>
       </DialogContent>

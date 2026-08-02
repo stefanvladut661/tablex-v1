@@ -107,7 +107,7 @@ export async function schimbaStatus(id: string, status: StatusRezervare): Promis
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Rezervarea nu a fost modificata: contul tau nu are acest drept.')
+    throw new Error('Rezervarea nu a fost modificată: contul tău nu are acest drept.')
   }
 }
 
@@ -153,7 +153,7 @@ export async function mutaRezervare(mutare: MutareRezervare): Promise<void> {
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Rezervarea nu a fost modificata: contul tau nu are acest drept.')
+    throw new Error('Rezervarea nu a fost modificată: contul tău nu are acest drept.')
   }
 }
 

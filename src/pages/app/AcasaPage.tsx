@@ -50,26 +50,26 @@ export function AcasaPage() {
     <div className="grid gap-4 p-4 sm:p-6">
       <div>
         <h1 className="text-lg font-semibold tracking-tight">{restaurant.nume}</h1>
-        <p className="text-sm text-muted-foreground">Cum arata ziua de azi.</p>
+        <p className="text-sm text-muted-foreground">Cum arată ziua de azi.</p>
       </div>
 
       {kpi.isLoading ? (
         <Skeleton className="h-28 w-full" />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <CardKpi eticheta="Rezervari azi" valoare={date?.rezervari_azi ?? 0} />
-          <CardKpi eticheta="Persoane asteptate" valoare={date?.persoane_azi ?? 0} />
+          <CardKpi eticheta="Rezervări azi" valoare={date?.rezervari_azi ?? 0} />
+          <CardKpi eticheta="Persoane așteptate" valoare={date?.persoane_azi ?? 0} />
           <CardKpi
             eticheta="Ocupare acum"
             valoare={ocupare === null ? '—' : `${ocupare}%`}
             detaliu={
               date && date.mese_total > 0
                 ? `${date.mese_ocupate} din ${date.mese_total} mese`
-                : 'Nicio masa configurata'
+                : 'Nicio masă configurată'
             }
           />
           <CardKpi
-            eticheta="Neprezentari (7 zile)"
+            eticheta="Neprezentări (7 zile)"
             valoare={date?.no_show_7_zile ?? 0}
             accent={Boolean(date?.no_show_7_zile)}
           />
@@ -83,7 +83,7 @@ export function AcasaPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-status-expirare bg-status-expirare-soft p-4">
           <p className="text-sm">
             <span className="font-semibold tabular-nums">{date.pending_nerezolvate}</span>{' '}
-            {date.pending_nerezolvate === 1 ? 'cerere asteapta' : 'cereri asteapta'} un raspuns.
+            {date.pending_nerezolvate === 1 ? 'cerere așteaptă' : 'cereri așteaptă'} un răspuns.
           </p>
           <Button size="sm" variant="outline" asChild>
             <Link to={RUTE.appRezervari}>
@@ -98,7 +98,7 @@ export function AcasaPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <ClockIcon className="size-4 text-primary" />
-            Urmatoarele sosiri
+            Următoarele sosiri
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -106,7 +106,7 @@ export function AcasaPage() {
             <Skeleton className="h-24 w-full" />
           ) : (sosiri.data ?? []).length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nicio rezervare care urmeaza. Un oaspete venit acum se inregistreaza cu Walk-in, din
+              Nicio rezervare care urmează. Un oaspete venit acum se înregistrează cu Walk-in, din
               Calendar.
             </p>
           ) : (
@@ -125,7 +125,7 @@ export function AcasaPage() {
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {rezervare.nr_persoane} pers.
-                    {rezervare.masa ? ` · masa ${rezervare.masa.numar_masa}` : ' · fara masa'}
+                    {rezervare.masa ? ` · masa ${rezervare.masa.numar_masa}` : ' · fără masă'}
                   </span>
                 </li>
               ))}

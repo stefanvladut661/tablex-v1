@@ -21,7 +21,7 @@ export function AnuntEveniment({
       {eveniment.afis_url && (
         <img
           src={eveniment.afis_url}
-          alt={`Afisul evenimentului ${eveniment.nume}`}
+          alt={`Afișul evenimentului ${eveniment.nume}`}
           className="max-h-56 w-full object-cover"
         />
       )}

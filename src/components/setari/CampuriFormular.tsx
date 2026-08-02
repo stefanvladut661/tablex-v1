@@ -63,7 +63,7 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
   const adauga = useMutation({
     mutationFn: creeazaCamp,
     onSuccess: () => {
-      notificari.succes('Camp adaugat in formular.')
+      notificari.succes('Câmp adăugat în formular.')
       setEticheta('')
       setOptiuni('')
       setObligatoriu(false)
@@ -82,7 +82,7 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
   const sterge = useMutation({
     mutationFn: stergeCamp,
     onSuccess: () => {
-      notificari.succes('Camp sters.')
+      notificari.succes('Câmp șters.')
       reincarca()
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -102,7 +102,7 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
       <CardHeader>
         <CardTitle className="text-base">Formularul public</CardTitle>
         <CardDescription>
-          Ce intreaba widgetul cand cineva rezerva. Raspunsurile apar pe rezervare, in panou.
+          Ce întreabă widgetul când cineva rezervă. Răspunsurile apar pe rezervare, în panou.
         </CardDescription>
       </CardHeader>
 
@@ -155,7 +155,7 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
 
                   <div className="flex items-center gap-2">
                     <Label htmlFor={`activ-${camp.id}`} className="text-xs font-normal">
-                      Afisat
+                      Afișat
                     </Label>
                     <Switch
                       id={`activ-${camp.id}`}
@@ -170,7 +170,7 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={`Sterge campul ${camp.eticheta}`}
+                    aria-label={`Șterge câmpul ${camp.eticheta}`}
                     // Campurile de sistem nu se sterg: au coloane proprii in
                     // rezervari, iar rezerva_public le asteapta mereu.
                     disabled={camp.sistem}
@@ -198,16 +198,16 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
             })
           }}
         >
-          <p className="text-sm font-medium">Adauga o intrebare proprie</p>
+          <p className="text-sm font-medium">Adaugă o întrebare proprie</p>
 
           <div className="grid gap-3 sm:grid-cols-[1fr_12rem]">
             <div className="grid gap-1.5">
-              <Label htmlFor="camp-eticheta">Intrebarea</Label>
+              <Label htmlFor="camp-eticheta">Întrebarea</Label>
               <Input
                 id="camp-eticheta"
                 value={eticheta}
                 onChange={(e) => setEticheta(e.target.value)}
-                placeholder="Scaun pentru copil? Ocazie speciala?"
+                placeholder="Scaun pentru copil? Ocazie specială?"
                 className="h-9"
               />
             </div>
@@ -230,16 +230,16 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
 
           {tip === 'dropdown' && (
             <div className="grid gap-1.5">
-              <Label htmlFor="camp-optiuni">Optiuni</Label>
+              <Label htmlFor="camp-optiuni">Opțiuni</Label>
               <Input
                 id="camp-optiuni"
                 value={optiuni}
                 onChange={(e) => setOptiuni(e.target.value)}
-                placeholder="Aniversare, Cerere in casatorie, Intalnire de afaceri"
+                placeholder="Aniversare, Cerere în căsătorie, Întâlnire de afaceri"
                 className="h-9"
               />
               <p className="text-xs text-muted-foreground">
-                Separate prin virgula, cel putin doua. Baza refuza orice alta valoare.
+                Separate prin virgulă, cel puțin două. Baza refuză orice altă valoare.
               </p>
             </div>
           )}
@@ -257,13 +257,13 @@ export function CampuriFormular({ restaurantId }: { restaurantId: string }) {
             </div>
             <Button type="submit" size="sm" disabled={!potAdauga}>
               <PlusIcon />
-              Adauga
+              Adaugă
             </Button>
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Numele intern al campului se deriva din intrebare si nu se mai schimba: el e cheia sub
-            care raman salvate raspunsurile deja primite.
+            Numele intern al câmpului se derivă din întrebare și nu se mai schimbă: el e cheia sub
+            care rămân salvate răspunsurile deja primite.
           </p>
         </form>
       </CardContent>

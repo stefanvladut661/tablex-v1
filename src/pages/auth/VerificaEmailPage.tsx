@@ -31,7 +31,7 @@ export function VerificaEmailPage() {
 
   return (
     <CadruAuth
-      titlu="Confirma-ti emailul"
+      titlu="Confirmă-ți emailul"
       descriere={
         email
           ? `Am trimis un link de confirmare la ${email}.`
@@ -39,7 +39,7 @@ export function VerificaEmailPage() {
       }
       subsol={
         <Link to={RUTE.login} className="font-medium text-primary hover:underline">
-          Inapoi la autentificare
+          Înapoi la autentificare
         </Link>
       }
     >
@@ -47,7 +47,7 @@ export function VerificaEmailPage() {
         <div className="flex items-start gap-3 rounded-lg bg-muted p-3">
           <MailCheckIcon className="mt-0.5 size-4 shrink-0 text-primary" />
           <p className="text-sm text-muted-foreground">
-            Dupa confirmare te intoarcem automat in aplicatie, unde continui configurarea
+            După confirmare te întoarcem automat în aplicație, unde continui configurarea
             restaurantului.
           </p>
         </div>

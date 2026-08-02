@@ -42,8 +42,8 @@ export function TabWhatsApp({ restaurantId }: { restaurantId: string }) {
   const reincarca = useMutation({
     mutationFn: reincarcaCredite,
     onSuccess: (soldNou) => {
-      notificari.succes(`Credite adaugate. Sold: ${soldNou}.`, {
-        descriere: 'Reincarcare demonstrativa — plata online se activeaza mai tarziu.',
+      notificari.succes(`Credite adăugate. Sold: ${soldNou}.`, {
+        descriere: 'Reîncărcare demonstrativă — plata online se activează mai târziu.',
       })
       void queryClient.invalidateQueries({ queryKey: CHEI_WHATSAPP.sold(restaurantId) })
       void queryClient.invalidateQueries({ queryKey: CHEI_WHATSAPP.tranzactii(restaurantId) })
@@ -63,7 +63,7 @@ export function TabWhatsApp({ restaurantId }: { restaurantId: string }) {
             Credite WhatsApp
           </CardTitle>
           <CardDescription>
-            Un mesaj trimis = un credit. Emailul si notificarile din aplicatie raman gratuite si
+            Un mesaj trimis = un credit. Emailul și notificările din aplicație rămân gratuite și
             nelimitate.
           </CardDescription>
         </CardHeader>
@@ -79,8 +79,8 @@ export function TabWhatsApp({ restaurantId }: { restaurantId: string }) {
 
           {(sold.data ?? 0) === 0 && (
             <p className="rounded-lg border border-status-expirare bg-status-expirare-soft p-3 text-sm">
-              Fara credite, mementourile si confirmarile prin WhatsApp nu pleaca. Clientul nu vede
-              nicio eroare — pur si simplu nu primeste mesajul.
+              Fără credite, mementourile și confirmările prin WhatsApp nu pleacă. Clientul nu vede
+              nicio eroare — pur și simplu nu primește mesajul.
             </p>
           )}
 
@@ -101,13 +101,13 @@ export function TabWhatsApp({ restaurantId }: { restaurantId: string }) {
                   disabled={reincarca.isPending}
                   onClick={() => reincarca.mutate(pachet.id)}
                 >
-                  Reincarca
+                  Reîncarcă
                 </Button>
               </div>
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
-            Reincarcarea e demonstrativa: adauga creditele, dar nu incaseaza nimic.
+            Reîncărcarea e demonstrativă: adaugă creditele, dar nu încasează nimic.
           </p>
         </CardContent>
       </Card>
@@ -115,11 +115,11 @@ export function TabWhatsApp({ restaurantId }: { restaurantId: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Consum lunar</CardTitle>
-          <CardDescription>Ultimele sase luni cu activitate.</CardDescription>
+          <CardDescription>Ultimele șase luni cu activitate.</CardDescription>
         </CardHeader>
         <CardContent>
           {luni.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Niciun mesaj trimis inca.</p>
+            <p className="text-sm text-muted-foreground">Niciun mesaj trimis încă.</p>
           ) : (
             <div className="flex items-end gap-3" style={{ height: 120 }}>
               {luni.map((luna) => (

@@ -72,7 +72,7 @@ export function VedereSaptamana({
               <Button
                 variant="ghost"
                 size="icon-xs"
-                aria-label={`Adauga rezervare pe ${formatFus(zi, 'd MMMM', fus)}`}
+                aria-label={`Adaugă rezervare pe ${formatFus(zi, 'd MMMM', fus)}`}
                 onClick={() => onCreeazaInZi(zi)}
               >
                 <PlusIcon />
@@ -107,7 +107,7 @@ export function VedereSaptamana({
 
             {aleZilei.length > 0 && (
               <div className="border-t border-border px-2 py-1 text-xs text-muted-foreground tabular-nums">
-                {aleZilei.length} rezervari · {persoane} pers.
+                {aleZilei.length} rezervări · {persoane} pers.
               </div>
             )}
           </div>

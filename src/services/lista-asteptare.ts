@@ -93,7 +93,7 @@ export async function schimbaStatusAsteptare(
   if (error) throw error
   // Un UPDATE respins de RLS raspunde 200 cu zero randuri (lectia din Faza 3).
   if (!data?.length) {
-    throw new Error('Modificarea nu a fost aplicata: contul tau nu are acest drept.')
+    throw new Error('Modificarea nu a fost aplicată: contul tău nu are acest drept.')
   }
 }
 
@@ -113,7 +113,7 @@ export async function schimbaPozitii(
   for (const { error, data } of rezultate) {
     if (error) throw error
     if (!data?.length) {
-      throw new Error('Reordonarea nu a fost aplicata: contul tau nu are acest drept.')
+      throw new Error('Reordonarea nu a fost aplicată: contul tău nu are acest drept.')
     }
   }
 }

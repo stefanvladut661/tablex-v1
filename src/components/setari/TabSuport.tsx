@@ -39,9 +39,9 @@ import type { Enums } from '@/types/database'
 const ETICHETE_STATUS: Record<Enums<'support_status'>, string> = {
   nou: 'Trimis',
   deschis: 'Deschis',
-  in_lucru: 'In lucru',
+  in_lucru: 'În lucru',
   rezolvat: 'Rezolvat',
-  inchis: 'Inchis',
+  inchis: 'Închis',
 }
 
 function dataOra(iso: string): string {
@@ -70,7 +70,7 @@ function DialogTicketNou({
     mutationFn: () =>
       deschideTicket(restaurantId, utilizator?.id ?? '', subiect.trim(), mesaj.trim()),
     onSuccess: () => {
-      notificari.succes('Tichetul a fost trimis. Echipa TableX raspunde aici, in conversatie.')
+      notificari.succes('Tichetul a fost trimis. Echipa TableX răspunde aici, în conversație.')
       void queryClient.invalidateQueries({
         queryKey: CHEI_SUPORT.aleRestaurantului(restaurantId),
       })
@@ -83,9 +83,9 @@ function DialogTicketNou({
     <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Tichet nou catre echipa TableX</DialogTitle>
+          <DialogTitle>Tichet nou către echipa TableX</DialogTitle>
           <DialogDescription>
-            Descrie problema; echipa primeste tichetul imediat si raspunde in conversatie.
+            Descrie problema; echipa primește tichetul imediat și răspunde în conversație.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,7 +96,7 @@ function DialogTicketNou({
               id="subiect"
               value={subiect}
               onChange={(e) => setSubiect(e.target.value)}
-              placeholder="Ex: Nu pot muta masa 12 pe terasa"
+              placeholder="Ex: Nu pot muta masa 12 pe terasă"
               className="h-9"
             />
           </div>
@@ -113,7 +113,7 @@ function DialogTicketNou({
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Renunta
+            Renunță
           </Button>
           <Button
             disabled={deschide.isPending || !subiect.trim() || !mesaj.trim()}
@@ -249,8 +249,8 @@ export function TabSuport({ restaurantId }: { restaurantId: string }) {
         <div>
           <CardTitle className="text-base">Ajutor & suport</CardTitle>
           <CardDescription>
-            Conversatii directe cu echipa TableX. Raspunsurile apar aici si in clopotelul de
-            notificari.
+            Conversații directe cu echipa TableX. Răspunsurile apar aici și în clopoțelul de
+            notificări.
           </CardDescription>
         </div>
         <Button size="sm" onClick={() => setTicketNou(true)}>
@@ -264,8 +264,8 @@ export function TabSuport({ restaurantId }: { restaurantId: string }) {
           <Skeleton className="h-32 w-full" />
         ) : (tichete.data ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Niciun tichet inca. Daca ceva nu merge sau ai o intrebare, deschide un tichet — echipa
-            TableX il vede imediat.
+            Niciun tichet încă. Dacă ceva nu merge sau ai o întrebare, deschide un tichet — echipa
+            TableX îl vede imediat.
           </p>
         ) : (
           <>

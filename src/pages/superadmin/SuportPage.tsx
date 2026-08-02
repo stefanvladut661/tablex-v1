@@ -51,9 +51,9 @@ import type { Enums } from '@/types/database'
 const ETICHETE_STATUS: Record<Enums<'support_status'>, string> = {
   nou: 'Nou',
   deschis: 'Deschis',
-  in_lucru: 'In lucru',
+  in_lucru: 'În lucru',
   rezolvat: 'Rezolvat',
-  inchis: 'Inchis',
+  inchis: 'Închis',
 }
 
 const ETICHETE_PRIORITATE: Record<Enums<'support_prioritate'>, string> = {
@@ -101,7 +101,7 @@ function DialogSabloane({
     mutationFn: () =>
       creeazaSablon(titlu.trim(), continut.trim(), global ? null : (utilizator?.id ?? '')),
     onSuccess: () => {
-      notificari.succes('Sablon salvat.')
+      notificari.succes('Șablon salvat.')
       setTitlu('')
       setContinut('')
       void invalideaza()
@@ -119,9 +119,9 @@ function DialogSabloane({
     <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Sabloane de raspuns rapid</DialogTitle>
+          <DialogTitle>Șabloane de răspuns rapid</DialogTitle>
           <DialogDescription>
-            Personale sau globale pentru toata echipa. Un click le pune in raspuns.
+            Personale sau globale pentru toată echipa. Un click le pune în răspuns.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +129,7 @@ function DialogSabloane({
           {sabloane.isLoading ? (
             <Skeleton className="h-24 w-full" />
           ) : (sabloane.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">Niciun sablon inca.</p>
+            <p className="text-sm text-muted-foreground">Niciun șablon încă.</p>
           ) : (
             <ul className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border border-border">
               {(sabloane.data ?? []).map((sablon) => (
@@ -152,7 +152,7 @@ function DialogSabloane({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={`Sterge sablonul ${sablon.titlu}`}
+                    aria-label={`Șterge șablonul ${sablon.titlu}`}
                     onClick={() => sterge.mutate(sablon.id)}
                   >
                     <Trash2Icon />
@@ -175,12 +175,12 @@ function DialogSabloane({
                 id="titlu-sablon"
                 value={titlu}
                 onChange={(e) => setTitlu(e.target.value)}
-                placeholder="Ex: Resetare parola ospatar"
+                placeholder="Ex: Resetare parolă ospătar"
                 className="h-9"
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="continut-sablon-suport">Continut</Label>
+              <Label htmlFor="continut-sablon-suport">Conținut</Label>
               <Textarea
                 id="continut-sablon-suport"
                 rows={2}
@@ -191,7 +191,7 @@ function DialogSabloane({
             {esteDeplin && (
               <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="sablon-global" className="text-sm font-normal">
-                  Global, pentru toata echipa
+                  Global, pentru toată echipa
                 </Label>
                 <Switch id="sablon-global" checked={global} onCheckedChange={setGlobal} />
               </div>
@@ -203,14 +203,14 @@ function DialogSabloane({
               disabled={creeaza.isPending || !titlu.trim() || !continut.trim()}
             >
               <PlusIcon />
-              Salveaza
+              Salvează
             </Button>
           </form>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onInchide}>
-            Inchide
+            Închide
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -264,7 +264,7 @@ function Conversatie({ ticket }: { ticket: Ticket }) {
         <div className="min-w-0">
           <p className="truncate font-medium">{ticket.subiect}</p>
           <p className="text-xs text-muted-foreground">
-            {ticket.restaurant?.nume ?? 'Restaurant sters'} · deschis {dataOra(ticket.created_at)}
+            {ticket.restaurant?.nume ?? 'Restaurant șters'} · deschis {dataOra(ticket.created_at)}
           </p>
         </div>
 
@@ -328,7 +328,7 @@ function Conversatie({ ticket }: { ticket: Ticket }) {
                 {intrare.nota_interna && (
                   <p className="mb-0.5 flex items-center gap-1 text-xs font-medium">
                     <LockIcon className="size-3" aria-hidden="true" />
-                    Nota interna — doar echipa TableX
+                    Notă internă — doar echipa TableX
                   </p>
                 )}
                 <p className="whitespace-pre-wrap">{intrare.continut}</p>
@@ -360,7 +360,7 @@ function Conversatie({ ticket }: { ticket: Ticket }) {
           value={mesaj}
           onChange={(e) => setMesaj(e.target.value)}
           placeholder={
-            notaInterna ? 'Nota interna — restaurantul nu o vede...' : 'Raspunde restaurantului...'
+            notaInterna ? 'Notă internă — restaurantul nu o vede...' : 'Răspunde restaurantului...'
           }
           aria-label="Mesaj"
         />
@@ -368,7 +368,7 @@ function Conversatie({ ticket }: { ticket: Ticket }) {
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Switch checked={notaInterna} onCheckedChange={setNotaInterna} />
-              Nota interna (§46.4)
+              Notă internă (§46.4)
             </label>
             <Button
               type="button"
@@ -377,12 +377,12 @@ function Conversatie({ ticket }: { ticket: Ticket }) {
               onClick={() => setSabloaneDeschise(true)}
             >
               <ZapIcon />
-              Sabloane
+              Șabloane
             </Button>
           </div>
           <Button type="submit" size="sm" disabled={trimite.isPending || !mesaj.trim()}>
             <SendIcon />
-            {notaInterna ? 'Salveaza nota' : 'Trimite'}
+            {notaInterna ? 'Salvează nota' : 'Trimite'}
           </Button>
         </div>
       </form>
@@ -415,8 +415,8 @@ export function SuportPage() {
         <Skeleton className="h-96 w-full" />
       ) : tichete.length === 0 ? (
         <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-          Niciun tichet. Managerii deschid tichete din panoul lor (Setari → Ajutor & suport), iar
-          conversatiile apar aici, cele urgente primele.
+          Niciun tichet. Managerii deschid tichete din panoul lor (Setări → Ajutor & suport), iar
+          conversațiile apar aici, cele urgente primele.
         </p>
       ) : (
         // Inbox stil Gmail (§46.1): lista in stanga, threadul in dreapta.
@@ -433,7 +433,7 @@ export function SuportPage() {
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-medium">
-                      {intrare.restaurant?.nume ?? 'Restaurant sters'}
+                      {intrare.restaurant?.nume ?? 'Restaurant șters'}
                     </span>
                     <span
                       className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${CLASE_PRIORITATE[intrare.prioritate]}`}
@@ -453,7 +453,7 @@ export function SuportPage() {
           {ticket ? (
             <Conversatie key={ticket.id} ticket={ticket} />
           ) : (
-            <p className="p-6 text-sm text-muted-foreground">Alege un tichet din lista.</p>
+            <p className="p-6 text-sm text-muted-foreground">Alege un tichet din listă.</p>
           )}
         </div>
       )}

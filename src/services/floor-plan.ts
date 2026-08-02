@@ -77,7 +77,7 @@ export async function schimbaStatusCerere(id: string, status: StatusCerere): Pro
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Cererea nu a fost modificata: contul tau nu are acest drept.')
+    throw new Error('Cererea nu a fost modificată: contul tău nu are acest drept.')
   }
 }
 

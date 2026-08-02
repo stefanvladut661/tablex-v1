@@ -73,13 +73,13 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
       // Invitatia exista in ambele cazuri.
       const rezultat = await trimiteEmail('invitatie_echipa', invitatie.id)
       if (rezultat.trimis) {
-        notificari.succes('Invitatie trimisa pe email.', { descriere: invitatie.email })
+        notificari.succes('Invitație trimisă pe email.', { descriere: invitatie.email })
       } else {
         copiazaLink(invitatie.token)
-        notificari.succes('Invitatie creata.', {
+        notificari.succes('Invitație creată.', {
           descriere: rezultat.simulat
-            ? 'Emailul automat nu e configurat, deci linkul e in clipboard.'
-            : 'Linkul e in clipboard. Trimite-l pe email persoanei invitate.',
+            ? 'Emailul automat nu e configurat, deci linkul e în clipboard.'
+            : 'Linkul e în clipboard. Trimite-l pe email persoanei invitate.',
         })
       }
     },
@@ -89,7 +89,7 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
   const anuleaza = useMutation({
     mutationFn: anuleazaInvitatiaEchipa,
     onSuccess: () => {
-      notificari.succes('Invitatie anulata.')
+      notificari.succes('Invitație anulată.')
       reincarca()
     },
     onError: (eroare) => notificari.eroare(eroare),
@@ -155,18 +155,18 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
           </div>
           <Button type="submit" disabled={invita.isPending}>
             <UserPlusIcon className="size-4" />
-            Invita
+            Invită
           </Button>
           <p className="w-full text-xs text-muted-foreground">
-            Contul se creeaza abia cand persoana accepta invitatia, cu adresa careia i-a fost
-            trimisa. Linkul ajunge in clipboard: pana la conectarea furnizorului de email,
+            Contul se creează abia când persoana acceptă invitația, cu adresa căreia i-a fost
+            trimisă. Linkul ajunge în clipboard: până la conectarea furnizorului de email,
             trimite-l tu.
           </p>
         </form>
       ) : (
         <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
           Vezi echipa, dar doar rolul „Super admin" poate invita sau schimba membri. Regula e
-          impusa de baza de date, nu doar de ecranul asta.
+          impusă de baza de date, nu doar de ecranul ăsta.
         </p>
       )}
 
@@ -188,7 +188,7 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
                 {(membri.data ?? []).map((membru) => (
                   <TableRow key={membru.id}>
                     <TableCell>
-                      <div className="font-medium">{membru.nume ?? 'Fara nume'}</div>
+                      <div className="font-medium">{membru.nume ?? 'Fără nume'}</div>
                       <div className="text-xs text-muted-foreground">{membru.email ?? '—'}</div>
                     </TableCell>
                     <TableCell>
@@ -229,7 +229,7 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
                             })
                           }
                         >
-                          {membru.activ ? 'Dezactiveaza' : 'Reactiveaza'}
+                          {membru.activ ? 'Dezactivează' : 'Reactivează'}
                         </Button>
                       ) : (
                         <Badge variant={membru.activ ? 'secondary' : 'outline'}>
@@ -246,12 +246,12 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
       </div>
 
       <div className="grid gap-2">
-        <h2 className="text-sm font-medium">Invitatii</h2>
+        <h2 className="text-sm font-medium">Invitații</h2>
         {invitatii.isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : (invitatii.data ?? []).length === 0 ? (
           <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-            Nicio invitatie trimisa.
+            Nicio invitație trimisă.
           </p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -286,7 +286,7 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
                             }}
                           >
                             <CopyIcon className="size-3.5" />
-                            Copiaza
+                            Copiază
                           </Button>
                           <Button
                             size="xs"
@@ -294,7 +294,7 @@ export function EchipaTableX({ esteDeplin, userId }: { esteDeplin: boolean; user
                             disabled={anuleaza.isPending}
                             onClick={() => anuleaza.mutate(invitatie.id)}
                           >
-                            Anuleaza
+                            Anulează
                           </Button>
                         </div>
                       )}

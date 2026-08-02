@@ -72,13 +72,13 @@ export function CardRezervare({
                   </a>
                 ) : (
                   // Walk-in anonim (§25.6): nu inventam un numar.
-                  'fara telefon'
+                  'fără telefon'
                 )}
               </span>
             )}
             {arata('masa') && (
               <span>
-                {rezervare.masa ? `masa ${rezervare.masa.numar_masa}` : 'masa nealocata'}
+                {rezervare.masa ? `masa ${rezervare.masa.numar_masa}` : 'masă nealocată'}
               </span>
             )}
             {arata('zona') && rezervare.zona && <span>{rezervare.zona.nume}</span>}
@@ -103,16 +103,16 @@ export function CardRezervare({
                 <Button
                   size="xs"
                   disabled={inLucru}
-                  onClick={() => onSchimbaStatus('confirmata', 'Rezervare confirmata.')}
+                  onClick={() => onSchimbaStatus('confirmata', 'Rezervare confirmată.')}
                 >
                   <CheckIcon className="size-3.5" />
-                  Accepta
+                  Acceptă
                 </Button>
                 <Button
                   size="xs"
                   variant="outline"
                   disabled={inLucru}
-                  onClick={() => onSchimbaStatus('respinsa', 'Rezervare respinsa.')}
+                  onClick={() => onSchimbaStatus('respinsa', 'Rezervare respinsă.')}
                 >
                   Respinge
                 </Button>
@@ -144,16 +144,16 @@ export function CardRezervare({
                 </Button>
                 <Button size="xs" variant="outline" disabled={inLucru} onClick={onEditeaza}>
                   <PencilIcon className="size-3.5" />
-                  Modifica
+                  Modifică
                 </Button>
                 <Button
                   size="xs"
                   variant="ghost"
                   disabled={inLucru}
-                  onClick={() => onSchimbaStatus('anulata', 'Rezervare anulata.')}
+                  onClick={() => onSchimbaStatus('anulata', 'Rezervare anulată.')}
                 >
                   <BanIcon className="size-3.5" />
-                  Anuleaza
+                  Anulează
                 </Button>
               </>
             )}
@@ -191,7 +191,7 @@ export function CardRezervare({
                 setNoteDeschise(false)
               }}
             >
-              Renunta
+              Renunță
             </Button>
             <Button
               size="xs"
@@ -201,7 +201,7 @@ export function CardRezervare({
                 setNoteDeschise(false)
               }}
             >
-              Salveaza nota
+              Salvează nota
             </Button>
           </div>
         </div>
@@ -209,7 +209,7 @@ export function CardRezervare({
 
       {readOnly && rezervare.note_interne && (
         <p className="border-t border-border pt-2 text-xs text-muted-foreground">
-          Nota interna: {rezervare.note_interne}
+          Notă internă: {rezervare.note_interne}
         </p>
       )}
     </li>

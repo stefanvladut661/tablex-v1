@@ -231,7 +231,7 @@ export function HartaPage() {
     return (
       <div className="grid gap-3 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold tracking-tight">Harta salii</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Harta sălii</h1>
           <LegendaStatus />
         </div>
         <BlocajPlan>
@@ -251,7 +251,7 @@ export function HartaPage() {
     <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-[1fr_16rem]">
       <div className="grid gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold tracking-tight">Harta salii</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Harta sălii</h1>
           <LegendaStatus />
         </div>
 
@@ -267,7 +267,7 @@ export function HartaPage() {
           <Skeleton className="aspect-[3/2] w-full" />
         ) : !zone.data?.length ? (
           <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-            Nu exista nicio zona configurata.
+            Nu există nicio zonă configurată.
           </p>
         ) : (
           <>
@@ -285,8 +285,8 @@ export function HartaPage() {
 
             {zonaCurenta && meseZona.length === 0 && !esteManager ? (
               <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-                Zona „{zonaCurenta.nume}" nu are inca mese. Managerul le poate adauga, sau planul
-                2D se configureaza de echipa TableX, din schita trimisa de tine.
+                Zona „{zonaCurenta.nume}" nu are încă mese. Managerul le poate adăuga, sau planul
+                2D se configurează de echipa TableX, din schița trimisă de tine.
               </p>
             ) : (
               zonaCurenta &&
@@ -358,7 +358,7 @@ export function HartaPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <ClockIcon className="size-4 text-primary" />
-              Ora afisata
+              Ora afișată
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
@@ -366,15 +366,15 @@ export function HartaPage() {
                 doar valoarea, mare, pentru cine se uita de la distanta. */}
             <div className="text-2xl font-semibold tabular-nums">{formateazaOra(oraAfisata)}</div>
             <p className="text-xs text-muted-foreground">
-              Click pe o masa libera deschide un walk-in pe ea; pe una ocupata, rezervarea.
-              {esteManager && ' Trage o masa ca s-o muti pe plan.'}
+              Click pe o masă liberă deschide un walk-in pe ea; pe una ocupată, rezervarea.
+              {esteManager && ' Trage o masă ca s-o muți pe plan.'}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Acum in zona</CardTitle>
+            <CardTitle className="text-base">Acum în zonă</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -472,12 +472,12 @@ export function HartaPage() {
                 {deMutat.rezervare.client_nume} · {deMutat.rezervare.nr_persoane} persoane ·{' '}
                 {ora(deMutat.rezervare.data_ora, fus)}
                 {deMutat.masa.capacitate < deMutat.rezervare.nr_persoane &&
-                  ` — atentie, masa are doar ${deMutat.masa.capacitate} locuri.`}
+                  ` — atenție, masa are doar ${deMutat.masa.capacitate} locuri.`}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeMutat(null)}>
-                Renunta
+                Renunță
               </Button>
               <Button
                 disabled={muta.isPending}
@@ -497,7 +497,7 @@ export function HartaPage() {
                   )
                 }
               >
-                Muta rezervarea
+                Mută rezervarea
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -64,10 +64,10 @@ const SECTIUNI: Sectiune[] = [
     // interventiile pentru el, iar baza le refuza oricum.
     roluri: ['super_admin', 'support'],
   },
-  { cale: RUTE.superadminFinante, eticheta: 'Finante', icoana: CoinsIcon, roluri: ['super_admin'] },
+  { cale: RUTE.superadminFinante, eticheta: 'Finanțe', icoana: CoinsIcon, roluri: ['super_admin'] },
   {
     cale: RUTE.superadminComunicari,
-    eticheta: 'Comunicari',
+    eticheta: 'Comunicări',
     icoana: MessageSquareIcon,
     roluri: ['super_admin'],
   },
@@ -79,7 +79,7 @@ const SECTIUNI: Sectiune[] = [
   },
   {
     cale: RUTE.superadminSetari,
-    eticheta: 'Setari',
+    eticheta: 'Setări',
     icoana: SettingsIcon,
     roluri: ['super_admin', 'designer_architect', 'support'],
   },
@@ -180,7 +180,7 @@ export function LayoutSuperAdmin() {
             }}
           >
             <LogOutIcon />
-            Iesi din cont
+            Ieși din cont
           </Button>
         </div>
       </aside>
@@ -209,7 +209,7 @@ export function LayoutSuperAdmin() {
           <div className="flex items-center gap-1">
             <ServerHealth />
             <ClopotelEchipa />
-            <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comuta tema">
+            <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comută tema">
               {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
             </Button>
           </div>

@@ -10,9 +10,9 @@ export const CHEI_CAMPURI = {
 
 export const ETICHETE_TIP: Record<TipCamp, string> = {
   text: 'Text',
-  numar: 'Numar',
-  checkbox: 'Bifa (da/nu)',
-  dropdown: 'Lista de optiuni',
+  numar: 'Număr',
+  checkbox: 'Bifă (da/nu)',
+  dropdown: 'Listă de opțiuni',
 }
 
 /**
@@ -62,10 +62,10 @@ export async function creeazaCamp(camp: CampNou): Promise<CampFormular> {
   const cheie = cheieDinEticheta(camp.eticheta)
 
   if (!cheie) {
-    throw new Error('Eticheta trebuie sa contina litere sau cifre.')
+    throw new Error('Eticheta trebuie să conțină litere sau cifre.')
   }
   if (existente.some((c) => c.cheie === cheie)) {
-    throw new Error('Exista deja un camp cu acest nume.')
+    throw new Error('Există deja un câmp cu acest nume.')
   }
 
   const ordine = existente.reduce((maxim, c) => Math.max(maxim, c.ordine), -1) + 1
@@ -102,7 +102,7 @@ export async function actualizeazaCamp(
   // Politica de scriere cere is_manager(); un UPDATE filtrat de RLS raspunde
   // 200 cu zero randuri (lectia din Faza 3).
   if (!data?.length) {
-    throw new Error('Modificarea nu a fost aplicata: doar managerul poate schimba formularul.')
+    throw new Error('Modificarea nu a fost aplicată: doar managerul poate schimba formularul.')
   }
 }
 
@@ -114,6 +114,6 @@ export async function stergeCamp(id: string): Promise<void> {
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Campul nu a fost sters: doar managerul poate schimba formularul.')
+    throw new Error('Câmpul nu a fost șters: doar managerul poate schimba formularul.')
   }
 }

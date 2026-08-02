@@ -69,7 +69,7 @@ async function confirmaModificare(
   actiune: string,
 ): Promise<void> {
   if (!randuri || randuri.length === 0) {
-    throw new Error(`${actiune} nu a fost aplicata: contul tau nu are acest drept.`)
+    throw new Error(`${actiune} nu a fost aplicată: contul tău nu are acest drept.`)
   }
 }
 
@@ -80,7 +80,7 @@ export async function anuleazaInvitatie(id: string): Promise<void> {
     .eq('id', id)
     .select('id')
   if (error) throw error
-  await confirmaModificare(data, 'Anularea invitatiei')
+  await confirmaModificare(data, 'Anularea invitației')
 }
 
 export async function seteazaActivMembru(id: string, activ: boolean): Promise<void> {
@@ -115,8 +115,8 @@ export async function reseteazaParolaOspatar(
   const { data, error } = await supabase.functions.invoke('reseteaza-parola-ospatar', {
     body: { admin_user_id: adminUserId },
   })
-  if (error) throw new Error('Resetarea parolei a esuat. Incearca din nou.')
-  if (!data?.ok) throw new Error(data?.eroare ?? 'Resetarea parolei a esuat.')
+  if (error) throw new Error('Resetarea parolei a eșuat. Încearcă din nou.')
+  if (!data?.ok) throw new Error(data?.eroare ?? 'Resetarea parolei a eșuat.')
   return { parola: data.parola as string, ospatar: (data.ospatar as string | null) ?? null }
 }
 
@@ -133,5 +133,5 @@ export async function stergeMembru(id: string): Promise<void> {
     .eq('id', id)
     .select('id')
   if (error) throw error
-  await confirmaModificare(data, 'Stergerea contului')
+  await confirmaModificare(data, 'Ștergerea contului')
 }

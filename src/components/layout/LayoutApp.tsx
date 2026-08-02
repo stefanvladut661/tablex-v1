@@ -33,15 +33,15 @@ type ElementNav = {
 }
 
 const NAVIGATIE: ElementNav[] = [
-  { cale: RUTE.app, eticheta: 'Acasa', icoana: HouseIcon },
+  { cale: RUTE.app, eticheta: 'Acasă', icoana: HouseIcon },
   { cale: RUTE.appCalendar, eticheta: 'Calendar', icoana: CalendarDaysIcon },
-  { cale: RUTE.appRezervari, eticheta: 'Lista rezervari', icoana: ListIcon },
-  { cale: RUTE.appHarta, eticheta: 'Harta salii', icoana: LayoutGridIcon },
-  { cale: RUTE.appAsteptare, eticheta: 'Asteptare', icoana: ClockIcon },
-  { cale: RUTE.appClienti, eticheta: 'Clienti', icoana: ContactIcon },
+  { cale: RUTE.appRezervari, eticheta: 'Lista rezervări', icoana: ListIcon },
+  { cale: RUTE.appHarta, eticheta: 'Harta sălii', icoana: LayoutGridIcon },
+  { cale: RUTE.appAsteptare, eticheta: 'Așteptare', icoana: ClockIcon },
+  { cale: RUTE.appClienti, eticheta: 'Clienți', icoana: ContactIcon },
   { cale: RUTE.appFormular, eticheta: 'Formular', icoana: FileTextIcon, doarManager: true },
   { cale: RUTE.appEvenimente, eticheta: 'Evenimente', icoana: TicketIcon },
-  { cale: RUTE.appSetari, eticheta: 'Setari', icoana: SettingsIcon, doarManager: true },
+  { cale: RUTE.appSetari, eticheta: 'Setări', icoana: SettingsIcon, doarManager: true },
 ]
 
 function Meniu({ laNavigare }: { laNavigare?: () => void }) {
@@ -157,7 +157,7 @@ export function LayoutApp() {
               restaurantId={profil.restaurant.id}
               fus={profil.restaurant.fus_orar}
             />
-            <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comuta tema">
+            <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comută tema">
               {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
             </Button>
           </div>

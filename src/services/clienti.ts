@@ -87,7 +87,7 @@ export async function actualizeazaClient(
   if (error) throw error
   // Un UPDATE respins de RLS raspunde 200 cu zero randuri (lectia din Faza 3).
   if (!data?.length) {
-    throw new Error('Modificarea nu a fost aplicata: contul tau nu are acest drept.')
+    throw new Error('Modificarea nu a fost aplicată: contul tău nu are acest drept.')
   }
 }
 

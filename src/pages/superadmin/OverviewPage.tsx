@@ -27,18 +27,18 @@ import type { Enums } from '@/types/database'
 
 const PERIOADE: Array<{ cheie: Perioada; eticheta: string }> = [
   { cheie: 'azi', eticheta: 'Azi' },
-  { cheie: 'saptamana', eticheta: 'Saptamana' },
+  { cheie: 'saptamana', eticheta: 'Săptămâna' },
   { cheie: 'luna', eticheta: 'Luna' },
   { cheie: 'an', eticheta: 'An' },
 ]
 
 const ETICHETE_STATUS_REZERVARE: Record<Enums<'rezervare_status'>, string> = {
-  pending: 'in asteptare',
-  confirmata: 'confirmata',
-  sosita: 'sosita',
-  anulata: 'anulata',
+  pending: 'în așteptare',
+  confirmata: 'confirmată',
+  sosita: 'sosită',
+  anulata: 'anulată',
   no_show: 'neprezentare',
-  respinsa: 'respinsa',
+  respinsa: 'respinsă',
 }
 
 function euro(valoare: number): string {
@@ -119,14 +119,14 @@ function HartaLive() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Harta live a rezervarilor</CardTitle>
+        <CardTitle className="text-base">Harta live a rezervărilor</CardTitle>
       </CardHeader>
       <CardContent>
         {feed.isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : (feed.data ?? []).length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Nicio rezervare inca. Cele noi apar aici pe masura ce sunt create, din toata reteaua.
+            Nicio rezervare încă. Cele noi apar aici pe măsură ce sunt create, din toată rețeaua.
           </p>
         ) : (
           <ol className="relative max-h-96 space-y-0 overflow-y-auto">
@@ -149,7 +149,7 @@ function HartaLive() {
                     <span className="text-muted-foreground">
                       {' '}
                       · {intrare.client_nume} · {intrare.nr_persoane}{' '}
-                      {intrare.nr_persoane === 1 ? 'persoana' : 'persoane'}
+                      {intrare.nr_persoane === 1 ? 'persoană' : 'persoane'}
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -206,9 +206,9 @@ export function OverviewPage() {
           incarcare={kpi.isLoading}
         />
         <CardKpi
-          titlu="Incasari credite WhatsApp"
+          titlu="Încasări credite WhatsApp"
           valoare={euro(kpi.data?.incasariCredite ?? 0)}
-          detaliu="Pachete vandute in perioada (demonstrativ, §14)"
+          detaliu="Pachete vândute în perioadă (demonstrativ, §14)"
           incarcare={kpi.isLoading}
         />
         <CardKpi

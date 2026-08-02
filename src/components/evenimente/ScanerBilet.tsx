@@ -75,7 +75,7 @@ export function ScanerBilet({ onInchide }: { onInchide: () => void }) {
   async function pornesteCamera() {
     if (!detectorDisponibil()) {
       notificari.eroare(
-        new Error('Browserul asta nu poate citi coduri. Introdu codul de pe bilet manual.'),
+        new Error('Browserul ăsta nu poate citi coduri. Introdu codul de pe bilet manual.'),
       )
       return
     }
@@ -111,7 +111,7 @@ export function ScanerBilet({ onInchide }: { onInchide: () => void }) {
       }
       void cauta()
     } catch {
-      notificari.eroare(new Error('Nu am putut deschide camera. Verifica permisiunea browserului.'))
+      notificari.eroare(new Error('Nu am putut deschide camera. Verifică permisiunea browserului.'))
       opresteCamera()
     }
   }
@@ -128,9 +128,9 @@ export function ScanerBilet({ onInchide }: { onInchide: () => void }) {
     >
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Scaneaza biletul</DialogTitle>
+          <DialogTitle>Scanează biletul</DialogTitle>
           <DialogDescription>
-            Camera se deschide doar cat scanezi. Sau introdu codul scris pe bilet.
+            Camera se deschide doar cât scanezi. Sau introdu codul scris pe bilet.
           </DialogDescription>
         </DialogHeader>
 
@@ -161,7 +161,7 @@ export function ScanerBilet({ onInchide }: { onInchide: () => void }) {
               />
               <Button disabled={inLucru || !cod.trim()} onClick={() => void verifica(cod)}>
                 {inLucru && <Loader2Icon className="animate-spin" />}
-                Verifica
+                Verifică
               </Button>
             </div>
           </div>
@@ -206,7 +206,7 @@ export function ScanerBilet({ onInchide }: { onInchide: () => void }) {
                 setCod('')
               }}
             >
-              Urmatorul bilet
+              Următorul bilet
             </Button>
           )}
           <Button
@@ -216,7 +216,7 @@ export function ScanerBilet({ onInchide }: { onInchide: () => void }) {
               onInchide()
             }}
           >
-            Inchide
+            Închide
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -47,7 +47,7 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
           if (schimbare.eventType === 'INSERT' && noua?.sursa === 'widget') {
             sunetAlerta()
             notificariUi.info(
-              noua.status === 'pending' ? 'Cerere noua de rezervare' : 'Rezervare noua confirmata',
+              noua.status === 'pending' ? 'Cerere nouă de rezervare' : 'Rezervare nouă confirmată',
               { descriere: noua.client_nume ?? undefined },
             )
           }

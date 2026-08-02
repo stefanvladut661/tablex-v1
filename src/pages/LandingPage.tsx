@@ -48,60 +48,60 @@ const MONEDA = '€'
 const PROBLEME: Problema[] = [
   {
     icoana: PhoneCallIcon,
-    titlu: 'Telefonul suna in mijlocul serviciului',
-    text: 'Nu poti raspunde la telefon, sa notezi in agenda si sa servesti la mese in acelasi timp. Asa apar rezervarile pierdute si mesele date de doua ori.',
+    titlu: 'Telefonul sună în mijlocul serviciului',
+    text: 'Nu poți răspunde la telefon, să notezi în agendă și să servești la mese în același timp. Așa apar rezervările pierdute și mesele date de două ori.',
   },
   {
     icoana: EyeOffIcon,
-    titlu: 'Nimeni nu stie ce e liber acum',
-    text: 'Ospatarul intreaba la receptie, receptia rasfoieste agenda, clientul asteapta in usa. Intre timp o masa buna sta goala fara ca cineva sa observe.',
+    titlu: 'Nimeni nu știe ce e liber acum',
+    text: 'Ospătarul întreabă la recepție, recepția răsfoiește agenda, clientul așteaptă în ușă. Între timp o masă bună stă goală fără ca cineva să observe.',
   },
   {
     icoana: CalendarX2Icon,
-    titlu: 'Doua rezervari pe aceeasi masa',
-    text: 'Suprapunerile scrise de mana se vad abia cand ambii clienti sunt in fata ta. Atunci nu mai ai ce sa repari, doar cui sa-i ceri scuze.',
+    titlu: 'Două rezervări pe aceeași masă',
+    text: 'Suprapunerile scrise de mână se văd abia când ambii clienți sunt în fața ta. Atunci nu mai ai ce să repari, doar cui să-i ceri scuze.',
   },
 ]
 
 const RANDURI_FUNCTIONALITATI: RandFunctionalitate[] = [
   {
     eticheta: 'Harta 2D',
-    titlu: 'Sala ta, desenata la scara',
-    text: 'Planul real al locatiei, cu mesele pe pozitiile lor. Culoarea unei mese nu e o setare, ci rezultatul rezervarilor din momentul afisat: libera, ocupata sau se elibereaza in 20 de minute.',
-    media: 'Captura: harta 2D cu mese colorate pe status',
+    titlu: 'Sala ta, desenată la scară',
+    text: 'Planul real al locației, cu mesele pe pozițiile lor. Culoarea unei mese nu e o setare, ci rezultatul rezervărilor din momentul afișat: liberă, ocupată sau se eliberează în 20 de minute.',
+    media: 'Captură: harta 2D cu mese colorate pe status',
     actiuni: [
-      { text: 'Creeaza cont', to: RUTE.signup },
-      { text: 'Vezi demonstratia', to: RUTE.demoHarta, variant: 'outline' },
+      { text: 'Creează cont', to: RUTE.signup },
+      { text: 'Vezi demonstrația', to: RUTE.demoHarta, variant: 'outline' },
     ],
   },
   {
     eticheta: 'Calendar',
-    titlu: 'Rezervarile in trei perspective',
-    text: 'Zi, saptamana si luna, cu drag & drop intre mese si intervale. Muti o rezervare cu degetul, iar sala se actualizeaza pe toate ecranele deschise.',
-    media: 'Captura: calendarul pe zi, cu rezervari pe intervale',
+    titlu: 'Rezervările în trei perspective',
+    text: 'Zi, săptămână și lună, cu drag & drop între mese și intervale. Muți o rezervare cu degetul, iar sala se actualizează pe toate ecranele deschise.',
+    media: 'Captură: calendarul pe zi, cu rezervări pe intervale',
     actiuni: [
-      { text: 'Creeaza cont', to: RUTE.signup },
-      { text: 'Vezi preturile', to: `${RUTE.acasa}#preturi`, variant: 'outline' },
+      { text: 'Creează cont', to: RUTE.signup },
+      { text: 'Vezi prețurile', to: `${RUTE.acasa}#preturi`, variant: 'outline' },
     ],
   },
   {
     eticheta: 'Walk-in',
-    titlu: 'Clientul intra fara rezervare',
-    text: 'Alegi masa direct pe harta, notezi numarul de persoane si gata. Daca nu e nimic liber, intra pe lista de asteptare si il chemi cand se elibereaza ceva.',
-    media: 'Captura: walk-in si lista de asteptare',
+    titlu: 'Clientul intră fără rezervare',
+    text: 'Alegi masa direct pe hartă, notezi numărul de persoane și gata. Dacă nu e nimic liber, intră pe lista de așteptare și îl chemi când se eliberează ceva.',
+    media: 'Captură: walk-in și lista de așteptare',
     actiuni: [
-      { text: 'Creeaza cont', to: RUTE.signup },
-      { text: 'Vezi demonstratia', to: RUTE.demoHarta, variant: 'outline' },
+      { text: 'Creează cont', to: RUTE.signup },
+      { text: 'Vezi demonstrația', to: RUTE.demoHarta, variant: 'outline' },
     ],
   },
   {
     eticheta: 'CRM clienti',
     titlu: 'Fiecare client, cu istoricul lui',
-    text: 'Vizite, preferinte, alergii, no-show-uri — construite automat din rezervarile de zi cu zi. Cand suna acelasi om de pe alt numar, fisele se pot contopi intr-una singura.',
-    media: 'Captura: fisa unui client, cu istoricul vizitelor',
+    text: 'Vizite, preferințe, alergii, no-show-uri — construite automat din rezervările de zi cu zi. Când sună același om de pe alt număr, fișele se pot contopi într-una singură.',
+    media: 'Captură: fișa unui client, cu istoricul vizitelor',
     actiuni: [
-      { text: 'Creeaza cont', to: RUTE.signup },
-      { text: 'Vezi preturile', to: `${RUTE.acasa}#preturi`, variant: 'outline' },
+      { text: 'Creează cont', to: RUTE.signup },
+      { text: 'Vezi prețurile', to: `${RUTE.acasa}#preturi`, variant: 'outline' },
     ],
   },
 ]
@@ -109,33 +109,33 @@ const RANDURI_FUNCTIONALITATI: RandFunctionalitate[] = [
 const CARACTERISTICI = [
   {
     icoana: LayoutGridIcon,
-    titlu: 'Harta 2D a salii',
-    text: 'Planul real al locatiei, cu mese pe pozitiile lor si status vizibil dintr-o privire.',
+    titlu: 'Harta 2D a sălii',
+    text: 'Planul real al locației, cu mese pe pozițiile lor și status vizibil dintr-o privire.',
   },
   {
     icoana: CalendarClockIcon,
-    titlu: 'Calendar pe zi, saptamana si luna',
-    text: 'Rezervarile in trei perspective, cu drag & drop intre mese si intervale.',
+    titlu: 'Calendar pe zi, săptămână și lună',
+    text: 'Rezervările în trei perspective, cu drag & drop între mese și intervale.',
   },
   {
     icoana: ZapIcon,
-    titlu: 'Walk-in in doua atingeri',
-    text: 'Alegi masa pe harta, notezi numarul de persoane si gata.',
+    titlu: 'Walk-in în două atingeri',
+    text: 'Alegi masa pe hartă, notezi numărul de persoane și gata.',
   },
   {
     icoana: UsersIcon,
     titlu: 'CRM automat',
-    text: 'Istoric, preferinte, numar de vizite si no-show-uri, din rezervarile de zi cu zi.',
+    text: 'Istoric, preferințe, număr de vizite și no-show-uri, din rezervările de zi cu zi.',
   },
   {
     icoana: BellRingIcon,
-    titlu: 'Notificari in timp real',
-    text: 'Rezervare noua, masa care expira, cerere in asteptare — pe toate ecranele deschise.',
+    titlu: 'Notificări în timp real',
+    text: 'Rezervare nouă, masă care expiră, cerere în așteptare — pe toate ecranele deschise.',
   },
   {
     icoana: CombineIcon,
     titlu: 'Mese unite pentru grupuri',
-    text: 'Alipesti mese pentru o masa mare si le desparti la loc cand serviciul s-a terminat.',
+    text: 'Alipești mese pentru o masă mare și le desparți la loc când serviciul s-a terminat.',
   },
 ]
 
@@ -143,17 +143,17 @@ const PASI: PasFlux[] = [
   {
     icoana: UserPlusIcon,
     titlu: 'Creezi contul',
-    text: 'Rezervarile manuale, calendarul si CRM-ul functioneaza imediat dupa inregistrare. Nu astepti nimic ca sa incepi.',
+    text: 'Rezervările manuale, calendarul și CRM-ul funcționează imediat după înregistrare. Nu aștepți nimic ca să începi.',
   },
   {
     icoana: PencilRulerIcon,
-    titlu: 'Ne trimiti schita salii',
-    text: 'O poza sau un desen pe hartie e de ajuns. Echipa TableX construieste planul 2D si il publica in contul tau.',
+    titlu: 'Ne trimiți schița sălii',
+    text: 'O poză sau un desen pe hârtie e de ajuns. Echipa TableX construiește planul 2D și îl publică în contul tău.',
   },
   {
     icoana: LayoutGridIcon,
     titlu: 'Vezi sala pe ecran',
-    text: 'Fiecare masa cu statusul ei, in timp real: libera, ocupata sau se elibereaza in 20 de minute.',
+    text: 'Fiecare masă cu statusul ei, în timp real: liberă, ocupată sau se eliberează în 20 de minute.',
   },
 ]
 
@@ -165,78 +165,78 @@ const PASI: PasFlux[] = [
 const TESTIMONIALE: Testimonial[] = [
   {
     citat:
-      'Substitut — aici intra citatul unui client real despre ce s-a schimbat de cand foloseste TableX.',
+      'Substitut — aici intră citatul unui client real despre ce s-a schimbat de când folosește TableX.',
     autor: 'Nume client',
-    locatie: 'Restaurant, oras',
+    locatie: 'Restaurant, oraș',
   },
   {
     citat:
-      'Substitut — al doilea citat, de preferat despre harta 2D sau despre rezervarile duble care au disparut.',
+      'Substitut — al doilea citat, de preferat despre harta 2D sau despre rezervările duble care au dispărut.',
     autor: 'Nume client',
-    locatie: 'Restaurant, oras',
+    locatie: 'Restaurant, oraș',
   },
   {
     citat:
-      'Substitut — al treilea citat, de preferat de la o locatie cu terasa sau cu mai multe zone.',
+      'Substitut — al treilea citat, de preferat de la o locație cu terasă sau cu mai multe zone.',
     autor: 'Nume client',
-    locatie: 'Restaurant, oras',
+    locatie: 'Restaurant, oraș',
   },
 ]
 
 const CATEGORII_INTREBARI = {
-  inceput: 'Inceput',
-  functionalitati: 'Functionalitati',
-  preturi: 'Preturi',
-  date: 'Date si securitate',
+  inceput: 'Început',
+  functionalitati: 'Funcționalități',
+  preturi: 'Prețuri',
+  date: 'Date și securitate',
 }
 
 const INTREBARI: Record<string, IntrebareFaq[]> = {
   inceput: [
     {
-      intrebare: 'Cat dureaza pana pornesc?',
+      intrebare: 'Cât durează până pornesc?',
       raspuns:
-        'Contul si rezervarile manuale functioneaza imediat dupa inregistrare. Harta 2D apare dupa ce echipa publica planul salii.',
+        'Contul și rezervările manuale funcționează imediat după înregistrare. Harta 2D apare după ce echipa publică planul sălii.',
     },
     {
-      intrebare: 'Cine imi deseneaza planul salii?',
+      intrebare: 'Cine îmi desenează planul sălii?',
       raspuns:
-        'Tu trimiti o schita sau o poza a salii, iar echipa TableX construieste planul 2D si il publica in contul tau. Nu trebuie sa desenezi nimic si nu se plateste separat: e inclus in abonamentul Pro.',
+        'Tu trimiți o schiță sau o poză a sălii, iar echipa TableX construiește planul 2D și îl publică în contul tău. Nu trebuie să desenezi nimic și nu se plătește separat: e inclus în abonamentul Pro.',
     },
   ],
   functionalitati: [
     {
-      intrebare: 'Ce diferenta e intre Start si Pro?',
+      intrebare: 'Ce diferență e între Start și Pro?',
       raspuns:
-        'Start acopera rezervarile nelimitate, calendarul, walk-in-ul cu lista de asteptare, CRM-ul de clienti si widgetul public. Pro adauga harta 2D a salii cu status in timp real, alocarea meselor direct pe plan, mesele unite pentru grupuri si zonele multiple — plus planul desenat de echipa noastra.',
+        'Start acoperă rezervările nelimitate, calendarul, walk-in-ul cu lista de așteptare, CRM-ul de clienți și widgetul public. Pro adaugă harta 2D a sălii cu status în timp real, alocarea meselor direct pe plan, mesele unite pentru grupuri și zonele multiple — plus planul desenat de echipa noastră.',
     },
     {
-      intrebare: 'Pot lucra mai multi ospatari in acelasi timp?',
+      intrebare: 'Pot lucra mai mulți ospătari în același timp?',
       raspuns:
-        'Da. Managerul invita personalul pe email, fiecare cu rolul lui. Un cont apartine unui singur restaurant, iar ospatarii nu au acces la setari sau la facturare.',
+        'Da. Managerul invită personalul pe email, fiecare cu rolul lui. Un cont aparține unui singur restaurant, iar ospătarii nu au acces la setări sau la facturare.',
     },
     {
-      intrebare: 'Ce se intampla cu rezervarile daca doi angajati modifica aceeasi masa?',
+      intrebare: 'Ce se întâmplă cu rezervările dacă doi angajați modifică aceeași masă?',
       raspuns:
-        'Baza de date refuza suprapunerile pe aceeasi masa, inclusiv timpul de buffer dintre rezervari. Conflictul e imposibil, nu doar improbabil.',
+        'Baza de date refuză suprapunerile pe aceeași masă, inclusiv timpul de buffer dintre rezervări. Conflictul e imposibil, nu doar improbabil.',
     },
   ],
   preturi: [
     {
-      intrebare: 'Cum se factureaza?',
+      intrebare: 'Cum se facturează?',
       raspuns:
-        'Exclusiv lunar. Nu exista plata anuala si nici contract pe termen lung — poti schimba planul oricand.',
+        'Exclusiv lunar. Nu există plată anuală și nici contract pe termen lung — poți schimba planul oricând.',
     },
     {
-      intrebare: 'Planul 2D al salii costa separat?',
+      intrebare: 'Planul 2D al sălii costă separat?',
       raspuns:
-        'Nu. Desenarea planului de catre echipa TableX intra in abonamentul Pro, fara taxa de configurare si fara tarif pe masa.',
+        'Nu. Desenarea planului de către echipa TableX intră în abonamentul Pro, fără taxă de configurare și fără tarif pe masă.',
     },
   ],
   date: [
     {
-      intrebare: 'Datele clientilor sunt in siguranta?',
+      intrebare: 'Datele clienților sunt în siguranță?',
       raspuns:
-        'Fiecare restaurant vede exclusiv datele lui, impuse prin politici la nivel de rand in baza de date. Perioada de retentie e configurabila, intre 1 si 10 ani.',
+        'Fiecare restaurant vede exclusiv datele lui, impuse prin politici la nivel de rând în baza de date. Perioada de retenție e configurabilă, între 1 și 10 ani.',
     },
   ],
 }
@@ -247,7 +247,7 @@ function Preturi() {
   if (isError) {
     return (
       <p className="text-center text-sm text-muted-foreground">
-        Preturile nu au putut fi incarcate. Scrie-ne si ti le trimitem.
+        Prețurile nu au putut fi încărcate. Scrie-ne și ți le trimitem.
       </p>
     )
   }
@@ -259,35 +259,35 @@ function Preturi() {
     {
       id: 'start',
       nume: 'Start',
-      descriere: 'Pentru locatii care vor sa scape de agenda de hartie.',
+      descriere: 'Pentru locații care vor să scape de agenda de hârtie.',
       pretLunar: valoare(setari?.pret_plan_start),
-      buton: { text: 'Incepe cu Start', to: RUTE.signup },
+      buton: { text: 'Începe cu Start', to: RUTE.signup },
       evidentiate: [
-        { text: 'Rezervari nelimitate', icoana: CalendarClockIcon },
-        { text: 'Walk-in si lista de asteptare', icoana: ZapIcon },
-        { text: 'CRM clienti', icoana: UsersIcon },
+        { text: 'Rezervări nelimitate', icoana: CalendarClockIcon },
+        { text: 'Walk-in și lista de așteptare', icoana: ZapIcon },
+        { text: 'CRM clienți', icoana: UsersIcon },
       ],
       include: {
         titlu: 'Planul Start mai include:',
-        linii: ['Calendar zi / saptamana / luna', 'Widget public de rezervare'],
+        linii: ['Calendar zi / săptămână / lună', 'Widget public de rezervare'],
       },
     },
     {
       id: 'pro',
       nume: 'Pro',
-      descriere: 'Cu harta 2D interactiva a salii, desenata de noi.',
+      descriere: 'Cu harta 2D interactivă a sălii, desenată de noi.',
       pretLunar: valoare(setari?.pret_plan_pro),
       recomandat: true,
-      buton: { text: 'Incepe cu Pro', to: RUTE.signup },
+      buton: { text: 'Începe cu Pro', to: RUTE.signup },
       evidentiate: [
         { text: 'Planul 2D desenat de echipa TableX, inclus', icoana: PencilRulerIcon },
-        { text: 'Harta 2D cu status in timp real', icoana: LayoutGridIcon },
+        { text: 'Harta 2D cu status în timp real', icoana: LayoutGridIcon },
         { text: 'Alocare mese direct pe plan', icoana: MousePointerClickIcon },
         { text: 'Mese unite pentru grupuri', icoana: CombineIcon },
       ],
       include: {
         titlu: 'Tot ce include Start, plus:',
-        linii: ['Zone multiple (salon, terasa, etaj)'],
+        linii: ['Zone multiple (salon, terasă, etaj)'],
       },
     },
   ]
@@ -317,11 +317,11 @@ export function LandingPage() {
             eticheta="Problema"
             titlu={
               <>
-                Agenda de hartie si telefonul{' '}
-                <span className="text-primary">iti lasa mese goale</span>
+                Agenda de hârtie și telefonul{' '}
+                <span className="text-primary">îți lasă mese goale</span>
               </>
             }
-            subtitlu="Trei lucruri se intampla in fiecare serviciu aglomerat, si toate trei costa bani."
+            subtitlu="Trei lucruri se întâmplă în fiecare serviciu aglomerat, și toate trei costă bani."
           />
           <div className="mt-10">
             <ProblemCards probleme={PROBLEME} />
@@ -333,24 +333,24 @@ export function LandingPage() {
           <DarkBand>
             <SectionHeading
               peFundalInchis
-              eticheta="Solutia"
+              eticheta="Soluția"
               titlu={
                 <>
-                  Toata sala, in timp real,{' '}
+                  Toată sala, în timp real,{' '}
                   <span className="text-sidebar-primary">pe un singur ecran</span>
                 </>
               }
-              subtitlu="TableX inlocuieste agenda de la receptie cu planul 2D al locatiei tale. Fiecare masa isi arata singura statusul, calculat din rezervarile momentului. Suprapunerile sunt refuzate de baza de date, nu de atentia ospatarului."
+              subtitlu="TableX înlocuiește agenda de la recepție cu planul 2D al locației tale. Fiecare masă își arată singură statusul, calculat din rezervările momentului. Suprapunerile sunt refuzate de baza de date, nu de atenția ospătarului."
             />
             <TrustChips
               peFundalInchis
-              elemente={['Fara comision', 'Fara contract', 'Planul 2D inclus in Pro']}
+              elemente={['Fără comision', 'Fără contract', 'Planul 2D inclus în Pro']}
               className="mt-8"
             />
             <div className="mt-8 flex justify-center">
               <Button asChild size="lg" className={PILULA}>
                 <Link to={RUTE.signup}>
-                  Creeaza cont
+                  Creează cont
                   <ArrowRightIcon className="size-4" />
                 </Link>
               </Button>
@@ -361,9 +361,9 @@ export function LandingPage() {
         {/* Randuri de functionalitati */}
         <section id="functionalitati" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
           <SectionHeading
-            eticheta="Cum functioneaza"
-            titlu="Tot ce iti trebuie ca sa pornesti"
-            subtitlu="Patru lucruri pe care le faci zilnic, toate in acelasi ecran."
+            eticheta="Cum funcționează"
+            titlu="Tot ce îți trebuie ca să pornești"
+            subtitlu="Patru lucruri pe care le faci zilnic, toate în același ecran."
           />
 
           <div className="mt-14 grid gap-20">
@@ -376,13 +376,13 @@ export function LandingPage() {
         {/* Harta 2D — demonstratie reala, nu substitut */}
         <section id="harta" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
           <SectionHeading
-            eticheta="Demonstratie"
+            eticheta="Demonstrație"
             titlu={
               <>
                 Harta 2D, <span className="text-primary">la ora 19:30</span>
               </>
             }
-            subtitlu="Nu e o captura de ecran. E harta reala, cu date fictive: deruleaza ziua si vezi cum se schimba sala."
+            subtitlu="Nu e o captură de ecran. E harta reală, cu date fictive: derulează ziua și vezi cum se schimbă sala."
           />
 
           <LegendaStatus className="mt-8" />
@@ -398,14 +398,14 @@ export function LandingPage() {
 
           <div className="mt-6 flex justify-center">
             <Button asChild size="lg" variant="outline" className={PILULA}>
-              <Link to={RUTE.demoHarta}>Deschide demonstratia completa</Link>
+              <Link to={RUTE.demoHarta}>Deschide demonstrația completă</Link>
             </Button>
           </div>
         </section>
 
         {/* Ce primesti — grila scurta, cu reveal in cascada si hover lift */}
         <section className="mx-auto max-w-6xl px-6 py-16">
-          <SectionHeading eticheta="Pe scurt" titlu="Ce primesti" />
+          <SectionHeading eticheta="Pe scurt" titlu="Ce primești" />
           <div ref={primestiRef} className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CARACTERISTICI.map(({ icoana: Icoana, titlu, text }, indice) => (
               <TimelineContent
@@ -431,14 +431,14 @@ export function LandingPage() {
         >
           <div aria-hidden className="hero-grid pointer-events-none absolute inset-0 -z-10 opacity-70" />
           <StepsSection
-            titlu="Cum pornesti"
-            subtitlu="Trei pasi, iar primul dureaza cat sa completezi un formular."
+            titlu="Cum pornești"
+            subtitlu="Trei pași, iar primul durează cât să completezi un formular."
             pasi={PASI}
           />
           <div className="mt-12 flex justify-center">
             <Button asChild size="lg" className={PILULA}>
               <Link to={RUTE.signup}>
-                Creeaza cont
+                Creează cont
                 <ArrowRightIcon className="size-4" />
               </Link>
             </Button>
@@ -448,13 +448,13 @@ export function LandingPage() {
         {/* Preturi */}
         <section id="preturi" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
           <SectionHeading
-            eticheta="Preturi"
+            eticheta="Prețuri"
             titlu={
               <>
-                Pret fix pe luna, <span className="text-primary">fara comision</span>
+                Preț fix pe lună, <span className="text-primary">fără comision</span>
               </>
             }
-            subtitlu="Doua planuri, facturate lunar. Fara contract pe termen lung — poti schimba planul oricand."
+            subtitlu="Două planuri, facturate lunar. Fără contract pe termen lung — poți schimba planul oricând."
           />
           <div className="mt-10 flex justify-center">
             <Preturi />
@@ -466,8 +466,8 @@ export function LandingPage() {
           <DarkBand>
             <SectionHeading
               peFundalInchis
-              eticheta="Ce spun clientii"
-              titlu="Restaurante care si-au mutat sala pe ecran"
+              eticheta="Ce spun clienții"
+              titlu="Restaurante care și-au mutat sala pe ecran"
             />
             <div className="mt-10">
               <QuoteCards testimoniale={TESTIMONIALE} />
@@ -478,8 +478,8 @@ export function LandingPage() {
         {/* Intrebari */}
         <section id="intrebari" className="mx-auto max-w-3xl scroll-mt-20 px-6 py-16">
           <FAQ
-            title="Intrebari frecvente"
-            subtitle="Alege o categorie si deschide raspunsul care te intereseaza."
+            title="Întrebări frecvente"
+            subtitle="Alege o categorie și deschide răspunsul care te interesează."
             categories={CATEGORII_INTREBARI}
             faqData={INTREBARI}
           />
@@ -488,13 +488,13 @@ export function LandingPage() {
         {/* Chemare finala la actiune */}
         <section className="mx-auto max-w-6xl px-6 pt-4 pb-16">
           <CtaBand
-            titlu="Sala ta, pe ecran, incepand de azi"
-            subtitlu="Creezi contul si iei prima rezervare in aceeasi zi. Planul 2D vine de la noi."
+            titlu="Sala ta, pe ecran, începând de azi"
+            subtitlu="Creezi contul și iei prima rezervare în aceeași zi. Planul 2D vine de la noi."
             actiuni={[
-              { text: 'Creeaza cont', to: RUTE.signup, icoana: ArrowRightIcon },
-              { text: 'Vezi demonstratia', to: RUTE.demoHarta, variant: 'outline' },
+              { text: 'Creează cont', to: RUTE.signup, icoana: ArrowRightIcon },
+              { text: 'Vezi demonstrația', to: RUTE.demoHarta, variant: 'outline' },
             ]}
-            nota="Facturare lunara, fara contract pe termen lung."
+            nota="Facturare lunară, fără contract pe termen lung."
           />
         </section>
       </main>
@@ -507,8 +507,8 @@ export function LandingPage() {
                 Table<span className="text-primary">X</span>
               </span>
               <p className="mt-2 max-w-xs text-sm text-muted-foreground text-pretty">
-                Management de rezervari pentru restaurante, baruri si terase, construit in jurul
-                planului real al salii.
+                Management de rezervări pentru restaurante, baruri și terase, construit în jurul
+                planului real al sălii.
               </p>
             </div>
 
@@ -522,7 +522,7 @@ export function LandingPage() {
                 </li>
                 <li>
                   <a href="#functionalitati" className="hover:text-foreground">
-                    Ce primesti
+                    Ce primești
                   </a>
                 </li>
                 <li>
@@ -532,17 +532,17 @@ export function LandingPage() {
                 </li>
                 <li>
                   <a href="#cum-functioneaza" className="hover:text-foreground">
-                    Cum pornesti
+                    Cum pornești
                   </a>
                 </li>
                 <li>
                   <a href="#preturi" className="hover:text-foreground">
-                    Preturi
+                    Prețuri
                   </a>
                 </li>
                 <li>
                   <a href="#intrebari" className="hover:text-foreground">
-                    Intrebari frecvente
+                    Întrebări frecvente
                   </a>
                 </li>
               </ul>
@@ -553,7 +553,7 @@ export function LandingPage() {
               <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
                 <li>
                   <Link to={RUTE.demoHarta} className="hover:text-foreground">
-                    Demonstratie
+                    Demonstrație
                   </Link>
                 </li>
                 <li>
@@ -571,7 +571,7 @@ export function LandingPage() {
           </div>
 
           <div className="mt-10 border-t border-border pt-6 text-sm text-muted-foreground">
-            Table<span className="text-primary">X</span> — management de rezervari pentru
+            Table<span className="text-primary">X</span> — management de rezervări pentru
             restaurante.
           </div>
         </div>

@@ -74,7 +74,7 @@ export async function raspunde(
     })
     .select('id')
   if (error) throw error
-  confirmaScriere(data, 'Mesajul nu a fost trimis: contul tau nu e in echipa de suport.')
+  confirmaScriere(data, 'Mesajul nu a fost trimis: contul tău nu e în echipa de suport.')
 }
 
 export async function schimbaTicket(
@@ -87,7 +87,7 @@ export async function schimbaTicket(
     .eq('id', ticketId)
     .select('id')
   if (error) throw error
-  confirmaScriere(data, 'Tichetul nu s-a schimbat: doar echipa de suport ii schimba starea.')
+  confirmaScriere(data, 'Tichetul nu s-a schimbat: doar echipa de suport îi schimbă starea.')
 }
 
 // ── Sabloanele de raspuns rapid (§46.2) ────────────────────────────────────
@@ -112,7 +112,7 @@ export async function creeazaSablon(
     .insert({ titlu, continut, super_admin_user_id: operatorId })
     .select('id')
   if (error) throw error
-  confirmaScriere(data, 'Sablonul nu a fost salvat: contul tau nu e in echipa de suport.')
+  confirmaScriere(data, 'Șablonul nu a fost salvat: contul tău nu e în echipa de suport.')
 }
 
 export async function stergeSablon(id: string): Promise<void> {
@@ -122,7 +122,7 @@ export async function stergeSablon(id: string): Promise<void> {
     .eq('id', id)
     .select('id')
   if (error) throw error
-  confirmaScriere(data, 'Sablonul nu a fost sters: globalele se sterg doar de rolul super_admin.')
+  confirmaScriere(data, 'Șablonul nu a fost șters: globalele se șterg doar de rolul super_admin.')
 }
 
 // ── Partea restaurantului (§46.1: tichete din dashboard-ul Admin-ilor) ─────
@@ -157,7 +157,7 @@ export async function deschideTicket(
     .insert({ ticket_id: data.id, autor: deschisDe, continut: primulMesaj })
     .select('id')
   if (eroareMesaj) throw eroareMesaj
-  confirmaScriere(mesaj, 'Tichetul s-a deschis, dar mesajul nu s-a salvat. Scrie-l in conversatie.')
+  confirmaScriere(mesaj, 'Tichetul s-a deschis, dar mesajul nu s-a salvat. Scrie-l în conversație.')
 }
 
 export async function raspundeCaRestaurant(
@@ -170,5 +170,5 @@ export async function raspundeCaRestaurant(
     .insert({ ticket_id: ticketId, autor, continut })
     .select('id')
   if (error) throw error
-  confirmaScriere(data, 'Mesajul nu a fost trimis: doar managerul scrie in tichetele restaurantului.')
+  confirmaScriere(data, 'Mesajul nu a fost trimis: doar managerul scrie în tichetele restaurantului.')
 }

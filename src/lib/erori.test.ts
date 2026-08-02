@@ -38,17 +38,17 @@ describe('mesajEroare — forma obiectului de eroare', () => {
     }
 
     expect(mesajEroare(eroare)).toBe(
-      'Exista deja o masa cu acest numar in restaurant. Alege alt numar.',
+      'Există deja o masă cu acest număr în restaurant. Alege alt număr.',
     )
   })
 
   it('accepta si instante de Error, si siruri', () => {
-    expect(mesajEroare(new Error('Invalid login credentials'))).toBe('Email sau parola gresita.')
-    expect(mesajEroare('Invalid login credentials')).toBe('Email sau parola gresita.')
+    expect(mesajEroare(new Error('Invalid login credentials'))).toBe('Email sau parolă greșită.')
+    expect(mesajEroare('Invalid login credentials')).toBe('Email sau parolă greșită.')
   })
 
   it('cade pe mesajul generic doar cand nu are nimic de spus', () => {
-    const generic = 'A aparut o eroare neasteptata. Incearca din nou.'
+    const generic = 'A apărut o eroare neașteptată. Încearcă din nou.'
     expect(mesajEroare(null)).toBe(generic)
     expect(mesajEroare(undefined)).toBe(generic)
     expect(mesajEroare({})).toBe(generic)
@@ -73,15 +73,15 @@ describe('mesajEroare — forma obiectului de eroare', () => {
 
 describe('mesajEroare — traduceri', () => {
   it.each([
-    ['Email not confirmed', 'Trebuie sa confirmi adresa de email inainte de autentificare.'],
-    ['User already registered', 'Exista deja un cont cu acest email.'],
-    ['over_email_send_rate_limit', 'Prea multe emailuri trimise. Incearca din nou peste cateva minute.'],
-    ['Failed to fetch', 'Nu am putut contacta serverul. Verifica-ti conexiunea.'],
+    ['Email not confirmed', 'Trebuie să confirmi adresa de email înainte de autentificare.'],
+    ['User already registered', 'Există deja un cont cu acest email.'],
+    ['over_email_send_rate_limit', 'Prea multe emailuri trimise. Încearcă din nou peste câteva minute.'],
+    ['Failed to fetch', 'Nu am putut contacta serverul. Verifică-ți conexiunea.'],
     [
       'new row violates row-level security policy for table "restaurants"',
-      'Nu ai dreptul sa faci aceasta modificare cu rolul tau.',
+      'Nu ai dreptul să faci această modificare cu rolul tău.',
     ],
-    ['permission denied for function creeaza_restaurant', 'Operatia nu este permisa pentru contul tau.'],
+    ['permission denied for function creeaza_restaurant', 'Operația nu este permisă pentru contul tău.'],
   ])('traduce %s', (brut, asteptat) => {
     expect(mesajEroare({ message: brut })).toBe(asteptat)
   })
@@ -92,16 +92,16 @@ describe('mesajEroare — traduceri', () => {
       code: '23P01',
     }
     expect(mesajEroare(eroare)).toBe(
-      'Masa este deja ocupata in intervalul ales (buffer-ul dintre rezervari inclus).',
+      'Masa este deja ocupată în intervalul ales (buffer-ul dintre rezervări inclus).',
     )
   })
 
   it('traduce CHECK-urile din schema, cu care interfata trebuie sa rămână sincronizata', () => {
     expect(mesajEroare({ message: 'violates check constraint "restaurants_buffer_minute_check"' })).toBe(
-      'Buffer-ul trebuie sa fie intre 0 si 60 de minute.',
+      'Buffer-ul trebuie să fie între 0 și 60 de minute.',
     )
     expect(mesajEroare({ message: 'violates check constraint "restaurants_slug_check"' })).toBe(
-      'Adresa publica poate avea 3-50 caractere: litere mici, cifre si cratime.',
+      'Adresa publică poate avea 3-50 caractere: litere mici, cifre și cratime.',
     )
   })
 })

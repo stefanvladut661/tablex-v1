@@ -67,7 +67,7 @@ function Schita({ cale }: { cale: string }) {
   if (semnat.isLoading) return <Skeleton className="h-14 w-20" />
 
   if (!semnat.data) {
-    return <span className="text-xs text-muted-foreground">Schita nu s-a putut deschide.</span>
+    return <span className="text-xs text-muted-foreground">Schița nu s-a putut deschide.</span>
   }
 
   return (
@@ -80,13 +80,13 @@ function Schita({ cale }: { cale: string }) {
       {ESTE_IMAGINE.test(cale) ? (
         <img
           src={semnat.data}
-          alt="Schita trimisa de restaurant"
+          alt="Schița trimisă de restaurant"
           className="h-14 w-20 rounded-md border border-border object-cover"
         />
       ) : (
         <>
           <FileTextIcon className="size-4" />
-          Deschide fisierul
+          Deschide fișierul
         </>
       )}
     </a>
@@ -118,8 +118,8 @@ function CoadaCereri() {
     onSuccess: (rezultat) => {
       if (rezultat.ok) {
         notificari.succes(
-          `Best Guess gata: ${rezultat.elemente} elemente de structura, ${rezultat.mese} mese.`,
-          { descriere: 'Deschide editorul si finiseaza peste schita.' },
+          `Best Guess gata: ${rezultat.elemente} elemente de structură, ${rezultat.mese} mese.`,
+          { descriere: 'Deschide editorul și finisează peste schiță.' },
         )
       } else {
         notificari.atentie(rezultat.motiv)
@@ -145,9 +145,9 @@ function CoadaCereri() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-32">Primita</TableHead>
-              <TableHead>Restaurant, zona si descriere</TableHead>
-              <TableHead className="w-28">Schita</TableHead>
+              <TableHead className="w-32">Primită</TableHead>
+              <TableHead>Restaurant, zonă și descriere</TableHead>
+              <TableHead className="w-28">Schiță</TableHead>
               <TableHead className="w-28">Status</TableHead>
               <TableHead className="w-72 text-right">Acțiuni</TableHead>
             </TableRow>
@@ -160,7 +160,7 @@ function CoadaCereri() {
                 </TableCell>
                 <TableCell>
                   <div className="font-medium">
-                    {cerere.restaurant?.nume ?? 'Restaurant sters'}
+                    {cerere.restaurant?.nume ?? 'Restaurant șters'}
                     <span className="ml-1.5 font-normal text-muted-foreground">
                       · {cerere.zone_nume}
                     </span>
@@ -192,14 +192,14 @@ function CoadaCereri() {
                       >
                         <SparklesIcon />
                         {genereaza.isPending && genereaza.variables === cerere.id
-                          ? 'Genereaza...'
-                          : 'Genereaza AI'}
+                          ? 'Generează...'
+                          : 'Generează AI'}
                       </Button>
                     )}
                     <Button variant="outline" size="xs" asChild>
                       <Link to={RUTE.superadminEditor(cerere.restaurant_id)}>
                         <LayoutGridIcon />
-                        Deseneaza
+                        Desenează
                       </Link>
                     </Button>
                     {cerere.status === 'pending' && (
@@ -208,7 +208,7 @@ function CoadaCereri() {
                         size="xs"
                         onClick={() => statusCerere.mutate({ id: cerere.id, status: 'in_progress' })}
                       >
-                        Preia in lucru
+                        Preia în lucru
                       </Button>
                     )}
                     {cerere.status === 'in_progress' && (
@@ -216,7 +216,7 @@ function CoadaCereri() {
                         size="xs"
                         onClick={() => statusCerere.mutate({ id: cerere.id, status: 'published' })}
                       >
-                        Marcheaza publicat
+                        Marchează publicat
                       </Button>
                     )}
                     {cerere.status !== 'published' && cerere.status !== 'respins' && (
@@ -236,8 +236,8 @@ function CoadaCereri() {
         </Table>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Fiecare schimbare de status notifica automat restaurantul. Publicarea propriu-zisa a
-        geometriei (zone si mese) se face in editorul de floor plan, separat.
+        Fiecare schimbare de status notifică automat restaurantul. Publicarea propriu-zisă a
+        geometriei (zone și mese) se face în editorul de floor plan, separat.
       </p>
     </>
   )
@@ -268,7 +268,7 @@ function BuilderDirect() {
         <Input
           value={caut}
           onChange={(e) => setCaut(e.target.value)}
-          placeholder="Nume, adresa publica, oras"
+          placeholder="Nume, adresă publică, oraș"
           className="h-8 w-64 pl-7"
           aria-label="Caut restaurante"
         />

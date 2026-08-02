@@ -107,7 +107,7 @@ export async function creeazaSablonWhatsApp(
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Sablonul nu a fost salvat: doar rolul super_admin scrie sabloane.')
+    throw new Error('Șablonul nu a fost salvat: doar rolul super_admin scrie șabloane.')
   }
 }
 
@@ -119,7 +119,7 @@ export async function stergeSablonWhatsApp(id: string): Promise<void> {
     .select('id')
   if (error) throw error
   if (!data?.length) {
-    throw new Error('Sablonul nu a fost sters: doar rolul super_admin sterge sabloane.')
+    throw new Error('Șablonul nu a fost șters: doar rolul super_admin șterge șabloane.')
   }
 }
 

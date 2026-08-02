@@ -140,7 +140,7 @@ export function CalendarPage() {
     muta.mutate(
       { id: rezervare.id, dataOra: instantDinZiSiOra(zi, oraText, fus) },
       {
-        onSuccess: () => notificari.succes(`Rezervare mutata la ${oraText}.`),
+        onSuccess: () => notificari.succes(`Rezervare mutată la ${oraText}.`),
         onError: (eroare) => notificari.eroare(eroare),
       },
     )
@@ -154,13 +154,13 @@ export function CalendarPage() {
     <div className="grid gap-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon-sm" onClick={inapoi} aria-label="Perioada anterioara">
+          <Button variant="outline" size="icon-sm" onClick={inapoi} aria-label="Perioada anterioară">
             <ChevronLeftIcon />
           </Button>
           <Button variant="outline" size="sm" onClick={azi}>
             Azi
           </Button>
-          <Button variant="outline" size="icon-sm" onClick={inainte} aria-label="Perioada urmatoare">
+          <Button variant="outline" size="icon-sm" onClick={inainte} aria-label="Perioada următoare">
             <ChevronRightIcon />
           </Button>
           <h1 className="ml-1 text-lg font-semibold tracking-tight capitalize">{titlu}</h1>
@@ -174,7 +174,7 @@ export function CalendarPage() {
               value={zonaFiltru ?? 'toate'}
               onValueChange={(valoare) => setZonaFiltru(valoare === 'toate' ? null : valoare)}
             >
-              <SelectTrigger className="h-8 w-36" aria-label="Filtru pe zona">
+              <SelectTrigger className="h-8 w-36" aria-label="Filtru pe zonă">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -191,8 +191,8 @@ export function CalendarPage() {
           <Tabs value={vedere} onValueChange={(valoare) => setVedere(valoare as Vedere)}>
             <TabsList>
               <TabsTrigger value="zi">Zi</TabsTrigger>
-              <TabsTrigger value="saptamana">Saptamana</TabsTrigger>
-              <TabsTrigger value="luna">Luna</TabsTrigger>
+              <TabsTrigger value="saptamana">Săptămână</TabsTrigger>
+              <TabsTrigger value="luna">Lună</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -211,16 +211,16 @@ export function CalendarPage() {
 
       <p className="text-sm text-muted-foreground tabular-nums">
         {rezervari.isLoading
-          ? 'Se incarca rezervarile...'
-          : `${total.length} rezervari active · ${persoane} persoane`}
-        {vedere === 'zi' && !program.deschis && ' · restaurantul e inchis in aceasta zi'}
+          ? 'Se încarcă rezervările...'
+          : `${total.length} rezervări active · ${persoane} persoane`}
+        {vedere === 'zi' && !program.deschis && ' · restaurantul e închis în această zi'}
       </p>
 
       {rezervari.isLoading ? (
         <Skeleton className="h-96 w-full" />
       ) : rezervari.isError ? (
         <p className="text-sm text-destructive">
-          Nu am putut incarca rezervarile. Reincarca pagina.
+          Nu am putut încărca rezervările. Reîncarcă pagina.
         </p>
       ) : vedere === 'zi' ? (
         <VedereZi

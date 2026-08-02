@@ -16,7 +16,7 @@ import { RUTE } from '@/lib/rute'
  */
 export function BlocajPlan({
   titlu = 'Harta 2D face parte din planul Pro Floor',
-  descriere = 'Planul salii, statusul meselor in timp real si mutarea rezervarilor intre mese sunt incluse in Pro Floor.',
+  descriere = 'Planul sălii, statusul meselor în timp real și mutarea rezervărilor între mese sunt incluse în Pro Floor.',
   children,
 }: {
   titlu?: string
@@ -41,7 +41,7 @@ export function BlocajPlan({
           <Button asChild size="sm">
             {/* Upgrade-ul se cere din Setari → Abonament; pana la ecranul acela
                 (§30.5) trimitem in Setari, nu intr-un loc care nu exista. */}
-            <a href={RUTE.appSetari}>Deblocheaza Harta 2D — Upgrade la Pro Floor</a>
+            <a href={RUTE.appSetari}>Deblochează Harta 2D — Upgrade la Pro Floor</a>
           </Button>
         </div>
       </div>

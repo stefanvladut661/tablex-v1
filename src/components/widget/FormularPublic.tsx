@@ -39,11 +39,11 @@ const schema = z.object({
   clientNume: numeSchema,
   telefon: telefonSchema,
   email: z.union([emailSchema, z.literal('')]).optional(),
-  nrPersoane: z.number().int().min(1, 'Minim 1 persoana.').max(50, 'Pentru grupuri mai mari, suna-ne.'),
+  nrPersoane: z.number().int().min(1, 'Minim 1 persoană.').max(50, 'Pentru grupuri mai mari, sună-ne.'),
   data: z.string().min(1, 'Alege o zi.'),
-  ora: z.string().regex(/^\d{2}:\d{2}$/, 'Alege o ora.'),
+  ora: z.string().regex(/^\d{2}:\d{2}$/, 'Alege o oră.'),
   noteClient: z.string().max(500).optional(),
-  gdpr: z.boolean().refine((v) => v, { message: 'Avem nevoie de acordul tau pentru a rezerva.' }),
+  gdpr: z.boolean().refine((v) => v, { message: 'Avem nevoie de acordul tău pentru a rezerva.' }),
   // Cheile campurilor proprii se stiu abia dupa incarcare, deci schema le
   // accepta generic. Obligativitatea se verifica la trimitere — si, decisiv, in
   // baza, fiindca API-ul e public.
@@ -141,7 +141,7 @@ export function FormularPublic({
       if (!camp.obligatoriu || !camp.cheie) continue
       if ((valori.campuriCustom?.[camp.cheie] ?? '').trim() !== '') continue
       form.setError(`campuriCustom.${camp.cheie}`, {
-        message: `${camp.eticheta ?? 'Campul'} este obligatoriu.`,
+        message: `${camp.eticheta ?? 'Câmpul'} este obligatoriu.`,
       })
       return
     }
@@ -190,12 +190,12 @@ export function FormularPublic({
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ClockIcon className="size-3.5" />
           {program.interval.deschis
-            ? `${formatFus(program.zi, 'EEEE', fus)}: deschis intre ${String(
+            ? `${formatFus(program.zi, 'EEEE', fus)}: deschis între ${String(
                 Math.floor(program.interval.deLa),
-              ).padStart(2, '0')}:00 si ${String(
+              ).padStart(2, '0')}:00 și ${String(
                 Math.floor(program.interval.panaLa) % 24,
               ).padStart(2, '0')}:00`
-            : `${formatFus(program.zi, 'EEEE', fus)}: inchis`}
+            : `${formatFus(program.zi, 'EEEE', fus)}: închis`}
         </p>
       )}
 
@@ -218,7 +218,7 @@ export function FormularPublic({
 
       {campEmail && (
         <CampText
-          eticheta={`${campEmail.eticheta ?? 'Email'}${campEmail.obligatoriu ? '' : ' (optional)'}`}
+          eticheta={`${campEmail.eticheta ?? 'Email'}${campEmail.obligatoriu ? '' : ' (opțional)'}`}
           type="email"
           autoComplete="email"
           eroare={form.formState.errors.email?.message}
@@ -236,11 +236,11 @@ export function FormularPublic({
       ))}
 
       <div className="grid gap-1.5">
-        <Label htmlFor="noteClient">Preferinte (optional)</Label>
+        <Label htmlFor="noteClient">Preferințe (opțional)</Label>
         <Textarea
           id="noteClient"
           rows={2}
-          placeholder="Masa la fereastra, scaun pentru copil, aniversare..."
+          placeholder="Masă la fereastră, scaun pentru copil, aniversare..."
           {...form.register('noteClient')}
         />
       </div>
@@ -260,7 +260,7 @@ export function FormularPublic({
             )}
           />
           <Label htmlFor="gdpr" className="text-sm leading-snug font-normal">
-            Accept ca datele mele sa fie folosite pentru gestionarea rezervarii.
+            Accept ca datele mele să fie folosite pentru gestionarea rezervării.
           </Label>
         </div>
         {form.formState.errors.gdpr && (
@@ -290,7 +290,7 @@ function CampProprii({
   if (!camp.cheie) return null
   const nume = `campuriCustom.${camp.cheie}` as const
   const id = `camp-${camp.cheie}`
-  const eticheta = `${camp.eticheta ?? camp.cheie}${camp.obligatoriu ? '' : ' (optional)'}`
+  const eticheta = `${camp.eticheta ?? camp.cheie}${camp.obligatoriu ? '' : ' (opțional)'}`
   const optiuni = Array.isArray(camp.optiuni) ? (camp.optiuni as string[]) : []
 
   if (camp.tip === 'checkbox') {

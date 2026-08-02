@@ -1,6 +1,6 @@
 import { Loader2Icon } from 'lucide-react'
 
-export function EcranIncarcare({ mesaj = 'Se incarca...' }: { mesaj?: string }) {
+export function EcranIncarcare({ mesaj = 'Se încarcă...' }: { mesaj?: string }) {
   return (
     <div
       className="flex min-h-svh flex-col items-center justify-center gap-3 bg-background"
