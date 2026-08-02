@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2Icon } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { AlertTriangleIcon, Loader2Icon } from 'lucide-react'
 import { z } from 'zod'
 
 import { CampText } from '@/components/formular/CampText'
@@ -28,6 +29,7 @@ import { useNotificari } from '@/hooks/useNotificari'
 import { useMutatiiRezervari } from '@/hooks/useRezervari'
 import { formatFus, instantDinZiSiOra } from '@/lib/timp'
 import { numeSchema, telefonSchema } from '@/lib/validari'
+import { getClientDupaTelefon } from '@/services/clienti'
 import type { Zona } from '@/services/mese'
 
 const DURATE = [
@@ -127,6 +129,22 @@ export function DialogRezervare({
   const zoneId = useWatch({ control: form.control, name: 'zoneId' })
   const oraText = useWatch({ control: form.control, name: 'oraText' })
   const durata = useWatch({ control: form.control, name: 'durata' })
+  const telefon = useWatch({ control: form.control, name: 'telefon' })
+
+  /**
+   * §7.2 — Red Flag LA CREARE: cand numarul tastat apartine unui client cu 2+
+   * neprezentari, dialogul avertizeaza. Doar semnal (§19.1): nimic nu se
+   * blocheaza, personalul decide. Cautarea porneste abia de la 6 cifre, ca sa
+   * nu intrebe baza la fiecare tasta.
+   */
+  const telefonCurat = (telefon ?? '').trim()
+  const fisaClient = useQuery({
+    queryKey: ['client-telefon', restaurantId, telefonCurat],
+    queryFn: () => getClientDupaTelefon(restaurantId, telefonCurat),
+    enabled: deschis && telefonCurat.length >= 6,
+    staleTime: 60_000,
+  })
+  const redFlag = (fisaClient.data?.nr_no_show ?? 0) >= 2
 
   const instant = useMemo(() => {
     if (!/^\d{2}:\d{2}$/.test(oraText ?? '')) return null
@@ -201,6 +219,17 @@ export function DialogRezervare({
               {...form.register('telefon')}
             />
           </div>
+
+          {redFlag && (
+            <p className="flex items-start gap-2 rounded-md border border-status-ocupat bg-status-ocupat-soft px-3 py-2 text-sm">
+              <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span>
+                <strong>{fisaClient.data?.nume ?? 'Acest numar'}</strong> are{' '}
+                <span className="tabular-nums">{fisaClient.data?.nr_no_show}</span> neprezentari.
+                Poti crea rezervarea oricum — decizia e a ta.
+              </span>
+            </p>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-3">
             <CampText

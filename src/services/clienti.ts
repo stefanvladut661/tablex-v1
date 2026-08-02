@@ -37,6 +37,25 @@ export type RezervareClient = Pick<
 >
 
 /** Istoricul unui client, pentru panoul de detaliu. */
+/**
+ * Fisa clientului dupa telefon — pentru Red Flag-ul din §7.2: la crearea unei
+ * rezervari, numarul cu 2+ neprezentari primeste un avertisment VIZUAL, atat.
+ * Decizia ramane a personalului (§19.1 interzice auto-blocarea).
+ */
+export async function getClientDupaTelefon(
+  restaurantId: string,
+  telefon: string,
+): Promise<Client | null> {
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .eq('telefon', telefon.trim())
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export async function getRezervariClient(customerId: string): Promise<RezervareClient[]> {
   const { data, error } = await supabase
     .from('reservations')

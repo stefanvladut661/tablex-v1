@@ -271,6 +271,30 @@ export function SheetRezervare({ rezervare, onInchide, restaurantId, fus }: Prop
                   </Button>
                 )}
 
+                {/* §7.5 — sala e plina si masa nu s-a eliberat la timp: un
+                    mesaj scurt de intarziere catre client, pe credite (§14:
+                    simulat — consuma 1 credit si intra in jurnal). */}
+                {rezervare.status === 'confirmata' && rezervare.telefon && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      void trimiteWhatsAppSimulat(
+                        rezervare.telefon!,
+                        'Intarziere scurta',
+                        `${rezervare.client_nume}, masa ta se elibereaza cu o mica intarziere. Ne cerem scuze — te asteptam!`,
+                        rezervare.id,
+                      ).then((trimis) =>
+                        trimis
+                          ? notificari.succes('Mesajul de intarziere a fost consemnat.')
+                          : notificari.atentie('Fara credite WhatsApp: mesajul nu a plecat.'),
+                      )
+                    }}
+                  >
+                    <ClockIcon />
+                    Anunta intarziere scurta
+                  </Button>
+                )}
+
                 {rezervare.status !== 'anulata' && rezervare.status !== 'no_show' && (
                   <div className="grid grid-cols-2 gap-2">
                     <Button

@@ -216,8 +216,14 @@ export function ClientiPage() {
                   <TableCell className="tabular-nums">{client.telefon}</TableCell>
                   <TableCell className="text-right tabular-nums">{client.nr_vizite}</TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {client.nr_no_show > 0 ? (
-                      // Semnal, nu judecata: personalul decide ce face cu el.
+                    {client.nr_no_show >= 2 ? (
+                      // §19.1 — Red Flag STRICT informativ, de la pragul 2+:
+                      // personalul decide manual, nu exista auto-blocare.
+                      <span className="inline-flex items-center gap-1 rounded-md bg-status-ocupat px-1.5 py-0.5 text-xs font-semibold text-status-ocupat-foreground">
+                        <AlertTriangleIcon className="size-3" aria-hidden="true" />
+                        {client.nr_no_show}
+                      </span>
+                    ) : client.nr_no_show > 0 ? (
                       <span className="rounded-md bg-status-ocupat-soft px-1.5 py-0.5 text-foreground">
                         {client.nr_no_show}
                       </span>
