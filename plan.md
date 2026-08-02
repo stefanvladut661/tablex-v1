@@ -6,14 +6,24 @@
      consuma_credit legat de fluxuri + reminder 2h pe pg_cron, §20.3 suspendarea in RLS,
      §16.2 notificari din List View, §24.7 confirmari, §22.1 retentie GDPR automata,
      §22.2 export CRM. Analiza pe spec: 12/12 module. -->
-<!-- NEXT_TASK: au ramas DOAR minore din analiza pe spec, in ordinea valorii:
-     1) §51.1 demo interactiv pe landing (mesele nu sunt clickabile acolo —
-        HartaZona e apelata fara onSelecteazaMasa; interactiunea completa
-        exista doar pe /demo); 2) §24.8 empty states cu ilustratie + CTA;
-     3) §0 mesajul de pret agresiv pe landing; 4) §52 CUI cerut inca de la
-     signup; 5) §33 starea de citit a notificarilor per UTILIZATOR (azi e per
-     restaurant: cine citeste, marcheaza pentru toti — cere coloana user_id).
+<!-- NEXT_TASK: au ramas doua minore:
+     1) §52 CUI cerut inca de la signup (azi se cere abia la onboarding, in
+        creeaza_restaurant; signup-ul creeaza doar contul auth, deci CUI-ul ar
+        trebui purtat pana la onboarding prin user_metadata);
+     2) §33 starea de citit a notificarilor per UTILIZATOR (azi e per
+        restaurant: cine citeste, marcheaza pentru toti — cere coloana
+        user_id + politica noua).
      NU Stripe — §14 il exclude din v1.
+
+     INCADRAREA HARTII (cerinta din 3 august, livrata): zoom-ul interactiv
+     exista DOAR in Canvas Builder-ul echipei. Adminul, ospatarul si widgetul
+     public vad planul la `zones.zoom_implicit`, fixat de echipa din slider-ul
+     de Incadrare. Impus si in baza, prin trigger — politica
+     zones_scriere_manager da managerului toate coloanele zonei. -->
+<!-- ATENTIE la testarea in baza: zones_scriere_manager cere si
+     are_floor_plan(), deci un test cu restaurant pe planul Start pare ca
+     „trigger-ul n-a blocat" cand de fapt RLS a filtrat randul si UPDATE-ul a
+     atins ZERO randuri, fara eroare. Testeaza pe pro_floor. -->
      ATENTIE: cont de test auth NECONFIRMAT creat manual
      (savuvladut002+admintest@yahoo.com) + login.json/signup.json netracked
      in radacina — ale utilizatorului, nu se sterg automat. -->
