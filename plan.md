@@ -6,13 +6,12 @@
      consuma_credit legat de fluxuri + reminder 2h pe pg_cron, §20.3 suspendarea in RLS,
      §16.2 notificari din List View, §24.7 confirmari, §22.1 retentie GDPR automata,
      §22.2 export CRM. Analiza pe spec: 12/12 module. -->
-<!-- NEXT_TASK: au ramas doua minore:
-     1) §52 CUI cerut inca de la signup (azi se cere abia la onboarding, in
-        creeaza_restaurant; signup-ul creeaza doar contul auth, deci CUI-ul ar
-        trebui purtat pana la onboarding prin user_metadata);
-     2) §33 starea de citit a notificarilor per UTILIZATOR (azi e per
-        restaurant: cine citeste, marcheaza pentru toti — cere coloana
-        user_id + politica noua).
+<!-- NEXT_TASK: a ramas UN singur punct din analiza pe spec:
+     §33 — starea de citit a notificarilor e per RESTAURANT, nu per
+     utilizator: cine deschide clopotelul marcheaza pentru toti. Forma
+     curata: tabel de legatura notificari_citite(notificare_id, user_id,
+     citita_la) + politici, iar `necitite` devine „nu exista rand pentru
+     mine". Atinge ClopotelNotificari, ClopotelEchipa si services/notificari.
      NU Stripe — §14 il exclude din v1.
 
      INCADRAREA HARTII (cerinta din 3 august, livrata): zoom-ul interactiv
