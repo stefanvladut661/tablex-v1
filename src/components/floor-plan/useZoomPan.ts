@@ -113,12 +113,22 @@ export function useZoomPan() {
   const micsoreaza = useCallback(() => scaleaza(1 / PAS), [scaleaza])
   const reseteaza = useCallback(() => setVedere({ scara: 1, x: 0, y: 0 }), [])
 
+  /**
+   * Pan cu delta explicita, in coordonatele viewBox-ului — pentru gazde care
+   * isi tin singure gesturile (EditorZona imparte pointerdown-ul intre
+   * tragerea meselor si tragerea vederii, deci nu poate folosi `handlers`).
+   */
+  const deplaseaza = useCallback((dx: number, dy: number) => {
+    setVedere((v) => ({ ...v, x: v.x + dx, y: v.y + dy }))
+  }, [])
+
   return {
     refSvg,
     vedere,
     mareste,
     micsoreaza,
     reseteaza,
+    deplaseaza,
     handlers: {
       onPointerDown: laPointerDown,
       onPointerMove: laPointerMove,

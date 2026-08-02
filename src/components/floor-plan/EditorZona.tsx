@@ -1,7 +1,10 @@
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { MaximizeIcon, MinusIcon, PlusIcon } from 'lucide-react'
 
 import { ElementStructura } from '@/components/floor-plan/ElementStructura'
 import { Masa } from '@/components/floor-plan/Masa'
+import { useZoomPan } from '@/components/floor-plan/useZoomPan'
+import { Button } from '@/components/ui/button'
 import { aliniazaLaGrid, inCanvas as limiteazaInCanvas, pozitieFinala } from '@/lib/geometrie-plan'
 import { cn } from '@/lib/utils'
 import type {
@@ -105,7 +108,10 @@ export function EditorZona({
   onAdauga,
   className,
 }: Props) {
-  const refSvg = useRef<SVGSVGElement | null>(null)
+  // Zoom-ul (rotita + butoane) vine din hook; pan-ul NU ii folosim handler-ele:
+  // pointerdown-ul e deja impartit intre tragerea meselor si a rezervarilor,
+  // asa ca vederea se trage doar cand gestul porneste pe canvas gol.
+  const { refSvg, vedere, mareste, micsoreaza, reseteaza, deplaseaza } = useZoomPan()
   const idGrid = useId()
 
   // Sursa de adevar a gestului e ref-ul, nu starea: la o tragere scurta, cu un
@@ -113,6 +119,8 @@ export function EditorZona({
   // citit gresit ca un simplu clic. Starea exista doar pentru previzualizare.
   const refGest = useRef<Gest | null>(null)
   const refGestRezervare = useRef<GestRezervare | null>(null)
+  /** Tragerea VEDERII, pornita pe canvas gol. `miscat` desparte pan de clic. */
+  const refPan = useRef<{ pointerId: number; x: number; y: number; miscat: boolean } | null>(null)
   const [tragereRezervare, setTragereRezervare] = useState<{ x: number; y: number } | null>(null)
   const [previzualizare, setPrevizualizare] = useState<{
     strat: Strat
@@ -127,7 +135,7 @@ export function EditorZona({
    * trebuit pageY): getScreenCTM() lucreaza tot in spatiul clientului, deci
    * derularea paginii se anuleaza de ambele parti ale transformarii.
    */
-  function laCanvas(eveniment: { clientX: number; clientY: number }) {
+  function laViewBox(eveniment: { clientX: number; clientY: number }) {
     const svg = refSvg.current
     if (!svg) return null
     const ctm = svg.getScreenCTM()
@@ -137,6 +145,20 @@ export function EditorZona({
     punct.y = eveniment.clientY
     const { x, y } = punct.matrixTransform(ctm.inverse())
     return { x, y }
+  }
+
+  /**
+   * Coordonatele CONTINUTULUI: viewBox minus transformarea de zoom/pan.
+   * Toata aritmetica gesturilor (aliniere, limitare, decalaje) lucreaza aici —
+   * altfel o masa trasa la zoom 2x ar sari la dublul distantei.
+   */
+  function laCanvas(eveniment: { clientX: number; clientY: number }) {
+    const punct = laViewBox(eveniment)
+    if (!punct) return null
+    return {
+      x: (punct.x - vedere.x) / vedere.scara,
+      y: (punct.y - vedere.y) / vedere.scara,
+    }
   }
 
   // Aritmetica de aliniere si limitare sta in lib/geometrie-plan.ts, ca sa fie
@@ -201,9 +223,24 @@ export function EditorZona({
     if (!tinta) {
       if (modAdaugare && punct && onAdauga) {
         onAdauga(aliniaza(punct.x), aliniaza(punct.y))
-      } else {
-        onSelecteazaMasa(null)
-        onSelecteazaStructura(null)
+        return
+      }
+      // Canvas gol: gestul devine tragerea vederii. Deselectarea se muta pe
+      // pointerup si se face doar daca vederea NU s-a miscat — un clic curat
+      // ramane clic, o tragere ramane pan.
+      const punctVedere = laViewBox(eveniment)
+      if (punctVedere) {
+        refPan.current = {
+          pointerId: eveniment.pointerId,
+          x: punctVedere.x,
+          y: punctVedere.y,
+          miscat: false,
+        }
+        try {
+          eveniment.currentTarget.setPointerCapture(eveniment.pointerId)
+        } catch {
+          // ignorat intentionat
+        }
       }
       return
     }
@@ -241,6 +278,17 @@ export function EditorZona({
   }
 
   function laPointerMove(eveniment: PointerEvent<SVGSVGElement>) {
+    const pan = refPan.current
+    if (pan && pan.pointerId === eveniment.pointerId) {
+      const punct = laViewBox(eveniment)
+      if (!punct) return
+      // Delta in coordonatele viewBox-ului — acelasi spatiu in care hook-ul
+      // isi tine translatia, deci pan-ul nu depinde de scara curenta.
+      deplaseaza(punct.x - pan.x, punct.y - pan.y)
+      refPan.current = { ...pan, x: punct.x, y: punct.y, miscat: true }
+      return
+    }
+
     const gestRez = refGestRezervare.current
     if (gestRez && gestRez.pointerId === eveniment.pointerId) {
       const punct = laCanvas(eveniment)
@@ -269,6 +317,22 @@ export function EditorZona({
   }
 
   function laPointerUp(eveniment: PointerEvent<SVGSVGElement>) {
+    const pan = refPan.current
+    if (pan && pan.pointerId === eveniment.pointerId) {
+      refPan.current = null
+      try {
+        eveniment.currentTarget.releasePointerCapture(eveniment.pointerId)
+      } catch {
+        // deja eliberata
+      }
+      // Clic curat pe gol (fara pan): pastram comportamentul vechi.
+      if (!pan.miscat) {
+        onSelecteazaMasa(null)
+        onSelecteazaStructura(null)
+      }
+      return
+    }
+
     const gestRez = refGestRezervare.current
     if (gestRez && gestRez.pointerId === eveniment.pointerId) {
       refGestRezervare.current = null
@@ -414,7 +478,15 @@ export function EditorZona({
           </pattern>
         </defs>
 
-        <rect width="100%" height="100%" fill={`url(#${idGrid})`} />
+        {/* Tot continutul sta sub transformarea de zoom/pan; gridul primeste
+            dimensiunile canvasului explicit — "100%" ar insemna viewport-ul,
+            nu canvasul, si la pan ar ramane lipit de ecran. */}
+        <g transform={`translate(${vedere.x} ${vedere.y}) scale(${vedere.scara})`}>
+        <rect
+          width={zona.canvas_latime}
+          height={zona.canvas_inaltime}
+          fill={`url(#${idGrid})`}
+        />
 
         {/* ── Layer 1 ── */}
         <g className={editezStructura ? undefined : 'pointer-events-none'}>
@@ -568,7 +640,22 @@ export function EditorZona({
             </text>
           </g>
         )}
+        </g>
       </svg>
+
+      {/* Aceleasi comenzi de zoom ca pe viewer (HartaZona): rotita face
+          acelasi lucru, butoanele raman pentru tableta (§32). */}
+      <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
+        <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mareste">
+          <PlusIcon />
+        </Button>
+        <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micsoreaza">
+          <MinusIcon />
+        </Button>
+        <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Incadreaza harta">
+          <MaximizeIcon />
+        </Button>
+      </div>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { supabase } from '@/lib/supabase'
+import { CHEI_MESE } from '@/services/mese'
 import { CHEI_NOTIFICARI } from '@/services/notificari'
 import { CHEI_REZERVARI } from '@/services/rezervari'
 
@@ -47,6 +48,45 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.lista(restaurantId) })
+        },
+      )
+      // Publicarea din Floor Plan Studio ajunge pe harta FARA reload
+      // (§9.2.2 pasul 4): echipa scrie structura, zonele si mesele, iar
+      // panoul restaurantului le reincarca pe fiecare.
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'floor_plan_layers',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: CHEI_MESE.structura(restaurantId) })
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'zones',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: CHEI_MESE.zone(restaurantId) })
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tables',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: CHEI_MESE.mese(restaurantId) })
         },
       )
       .subscribe()

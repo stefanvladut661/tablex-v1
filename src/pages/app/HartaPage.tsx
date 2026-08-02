@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useAuth } from '@/hooks/useAuth'
-import { useMese, useZone } from '@/hooks/useMese'
+import { useMese, useStructura, useZone } from '@/hooks/useMese'
 import { useNotificari } from '@/hooks/useNotificari'
 import { useMutatiiRezervari } from '@/hooks/useRezervari'
 import { useRezervari } from '@/hooks/useRezervari'
@@ -153,6 +153,7 @@ export function HartaPage() {
   })
   const zone = useZone(restaurant?.id)
   const mese = useMese(restaurant?.id)
+  const structura = useStructura(restaurant?.id)
   const rezervari = useRezervari(
     restaurant?.id,
     inceputZi(zi, fus),
@@ -283,10 +284,11 @@ export function HartaPage() {
                     const masa = meseZona.find((m) => m.id === peMasa)
                     if (rezervare && masa) setDeMutat({ rezervare, masa })
                   }}
-                  // Layer 1 nu se incarca inca in panou: harta restaurantului
-                  // a aratat dintotdeauna doar mesele. Cand structura publicata
-                  // va fi adusa aici, se pune direct — canvasul o deseneaza deja.
-                  structura={[]}
+                  // Layer 1 publicat de echipa TableX (§8.4): pereti, usi,
+                  // bar. Vine prin aceeasi vedere ca widgetul public, deci
+                  // panoul nu vede niciodata lucrul in curs al echipei, iar
+                  // publicarea apare live — realtime pe floor_plan_layers.
+                  structura={structura.data?.[zonaCurenta.id] ?? []}
                   mese={meseZona}
                   statusuri={statusuri}
                   masaSelectata={masaDeEditat}
