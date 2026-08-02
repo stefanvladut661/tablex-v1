@@ -18,7 +18,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
  * secret generat tot in baza. Secretul se valideaza inapoi in Postgres
  * (verifica_secret_webhook), nu il tinem aici: asa rotirea lui nu cere
  * redesfasurarea functiei, iar functia nu are cum sa-l divulge.
- * In acest mod tipul e limitat la 'rezervare_noua' — nimic altceva.
+ * In acest mod tipurile sunt limitate la anunturile de cerere noua — catre
+ * client (rezervare_noua) si catre restaurant (rezervare_noua_admin, §21.1).
  *
  * Furnizorul e opțional: fara RESEND_API_KEY functia ruleaza in mod SIMULAT,
  * raspunde 200 si logheaza ce ar fi trimis. Aplicatia functioneaza complet,
@@ -34,6 +35,7 @@ type TipEmail =
   | 'rezervare_confirmata'
   | 'rezervare_respinsa'
   | 'rezervare_noua'
+  | 'rezervare_noua_admin'
 
 type Cerere = { tip: TipEmail; id: string }
 
@@ -139,13 +141,14 @@ Deno.serve(async (req) => {
     esteWebhook = true
   }
 
-  // 'rezervare_noua' merge spre un client anonim, deci NU poate fi cerut de un
+  // Tipurile declansate de o cerere ANONIMA din widget nu pot fi cerute de un
   // apelant obisnuit; si invers, webhook-ul nu are voie sa ceara altceva.
-  if (cerere.tip === 'rezervare_noua' && !esteWebhook) {
+  const TIPURI_WEBHOOK = ['rezervare_noua', 'rezervare_noua_admin']
+  if (TIPURI_WEBHOOK.includes(cerere.tip) && !esteWebhook) {
     return raspuns({ eroare: 'Acest tip se trimite doar automat, din baza.' }, 403)
   }
-  if (esteWebhook && cerere.tip !== 'rezervare_noua') {
-    return raspuns({ eroare: 'Webhook-ul poate trimite doar rezervare_noua.' }, 403)
+  if (esteWebhook && !TIPURI_WEBHOOK.includes(cerere.tip)) {
+    return raspuns({ eroare: 'Webhook-ul poate trimite doar anunturile de cerere noua.' }, 403)
   }
 
   // In mod webhook citim cu service_role: clientul anonim nu are — corect — voie
@@ -189,6 +192,68 @@ Deno.serve(async (req) => {
             `Invitatia expira pe ${new Date(data.expira_la).toLocaleDateString('ro-RO')}.`,
           ],
           { text: 'Accepta invitatia', url: link },
+        ),
+      }
+    } else if (cerere.tip === 'rezervare_noua_admin') {
+      // §21.1 — anuntul catre RESTAURANT la o cerere noua din widget. Ruleaza
+      // doar in mod webhook, deci citim cu service_role; destinatarul e
+      // emailul de contact al restaurantului sau, in lipsa, al managerului.
+      const { data, error } = await supabase
+        .from('reservations')
+        .select(
+          'client_nume, telefon, nr_persoane, data_ora, status, restaurant:restaurants(id, nume, fus_orar, email_contact)',
+        )
+        .eq('id', cerere.id)
+        .single()
+      if (error) throw error
+
+      const restaurant = data.restaurant as {
+        id: string
+        nume: string
+        fus_orar: string
+        email_contact: string | null
+      } | null
+
+      let catre = restaurant?.email_contact ?? null
+      if (!catre && restaurant?.id) {
+        const { data: manager } = await supabase
+          .from('admin_users')
+          .select('email')
+          .eq('restaurant_id', restaurant.id)
+          .eq('rol', 'manager')
+          .eq('activ', true)
+          .limit(1)
+          .maybeSingle()
+        catre = manager?.email ?? null
+      }
+
+      if (!catre) {
+        return raspuns({ trimis: false, motiv: 'Restaurantul nu are un email de contact.' })
+      }
+
+      const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
+      const cand = dataLocala(data.data_ora, fus)
+      // Linkul deschide List View pe ziua rezervarii (§25.4 stie de ?data=).
+      const ziISO = new Intl.DateTimeFormat('en-CA', {
+        timeZone: fus,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date(data.data_ora))
+
+      mesaj = {
+        catre,
+        subiect: `Cerere noua de rezervare: ${data.client_nume}, ${cand}`,
+        html: sablon(
+          data.status === 'pending' ? 'Ai o cerere noua in asteptare' : 'Rezervare noua confirmata',
+          [
+            `<strong>${scapa(data.client_nume)}</strong> a cerut o masa pentru <strong>${data.nr_persoane}</strong> persoane, <strong>${cand}</strong>.`,
+            data.status === 'pending'
+              ? 'Cererea asteapta acceptarea in List View.'
+              : 'Aprobarea automata a confirmat-o deja; o gasesti in List View.',
+            data.telefon ? `Telefon: ${scapa(data.telefon)}.` : '',
+          ].filter(Boolean),
+          { text: 'Deschide List View', url: `${URL_APP}/app/rezervari?data=${ziISO}` },
         ),
       }
     } else if (cerere.tip === 'invitatie') {

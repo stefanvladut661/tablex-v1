@@ -18,6 +18,17 @@ export const CHEI_REZERVARI = {
   toate: (restaurantId: string) => ['rezervari', restaurantId] as const,
 }
 
+/** Doar momentul rezervarii — clopotelul (§24.5) navigheaza pe ziua ei. */
+export async function getDataRezervare(id: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('reservations')
+    .select('data_ora')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return data?.data_ora ?? null
+}
+
 /**
  * Rezervarile care SE SUPRAPUN cu intervalul cerut, nu doar cele care incep in
  * el: altfel o rezervare de la 23:30 ar dispărea din ziua urmatoare, iar o masa

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -68,10 +69,16 @@ const schema = z.object({
 
 type FormSetari = z.infer<typeof schema>
 
+const TABURI_SETARI = ['restaurant', 'echipa', 'whatsapp', 'abonament', 'suport']
+
 export function SetariPage() {
   const { profil, reincarcaProfil } = useAuth()
   const notificari = useNotificari()
   const [conflicte, setConflicte] = useState<ConflictBuffer[] | null>(null)
+
+  const [parametri] = useSearchParams()
+  const tabCerut = parametri.get('tab') ?? ''
+  const tabInitial = TABURI_SETARI.includes(tabCerut) ? tabCerut : 'restaurant'
 
   const restaurant = profil?.tip === 'admin' ? profil.restaurant : null
 
@@ -150,8 +157,10 @@ export function SetariPage() {
   return (
     <div className="p-4 sm:p-6">
       {/* §30.1 — Setarile pe tab-uri. Echipa a fost pana acum pagina separata
-          in sidebar; spec-ul o cere aici, langa celelalte configurari. */}
-      <Tabs defaultValue="restaurant">
+          in sidebar; spec-ul o cere aici, langa celelalte configurari.
+          ?tab= vine din clopotel (§24.5): notificarea de credite epuizate
+          aterizeaza direct pe tabul WhatsApp, cea de tichet pe Suport. */}
+      <Tabs defaultValue={tabInitial}>
         <TabsList className="mx-auto flex max-w-3xl">
           <TabsTrigger value="restaurant">Restaurant</TabsTrigger>
           <TabsTrigger value="echipa">Echipa</TabsTrigger>

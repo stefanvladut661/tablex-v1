@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { useNotificari } from '@/hooks/useNotificari'
+import { sunetAlerta } from '@/lib/sunet'
 import { supabase } from '@/lib/supabase'
 import { CHEI_MESE } from '@/services/mese'
 import { CHEI_NOTIFICARI } from '@/services/notificari'
@@ -20,6 +22,7 @@ import { CHEI_REZERVARI } from '@/services/rezervari'
  */
 export function useRealtimeRestaurant(restaurantId: string | undefined) {
   const queryClient = useQueryClient()
+  const notificariUi = useNotificari()
 
   useEffect(() => {
     if (!restaurantId) return
@@ -34,8 +37,20 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
           table: 'reservations',
           filter: `restaurant_id=eq.${restaurantId}`,
         },
-        () => {
+        (schimbare) => {
           queryClient.invalidateQueries({ queryKey: CHEI_REZERVARI.toate(restaurantId) })
+
+          // §24.6 — toast + sunet scurt cand pica o cerere noua din widget,
+          // cat timp personalul e logat. Doar la INSERT si doar pentru
+          // widget: propriile actiuni din panou nu au de ce sa sune.
+          const noua = schimbare.new as { sursa?: string; status?: string; client_nume?: string }
+          if (schimbare.eventType === 'INSERT' && noua?.sursa === 'widget') {
+            sunetAlerta()
+            notificariUi.info(
+              noua.status === 'pending' ? 'Cerere noua de rezervare' : 'Rezervare noua confirmata',
+              { descriere: noua.client_nume ?? undefined },
+            )
+          }
         },
       )
       .on(
@@ -94,7 +109,8 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
     return () => {
       void supabase.removeChannel(canal)
     }
-  }, [restaurantId, queryClient])
+    // Valoarea contextului de notificari e memoizata in provider.
+  }, [restaurantId, queryClient, notificariUi])
 }
 
 /**

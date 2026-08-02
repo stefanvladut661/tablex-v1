@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BellIcon, CheckCheckIcon } from 'lucide-react'
 
@@ -9,13 +10,33 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useNotificari } from '@/hooks/useNotificari'
+import { RUTE } from '@/lib/rute'
+import { formatFus } from '@/lib/timp'
 import {
   CHEI_NOTIFICARI,
   getNotificari,
   marcheazaCitita,
   marcheazaToateCitite,
+  type Notificare,
 } from '@/services/notificari'
+import { getDataRezervare } from '@/services/rezervari'
 import type { Enums } from '@/types/database'
+
+/**
+ * §24.5 — clic pe notificare = drum spre locul relevant. Notificarile de
+ * rezervare poarta reservation_id si aterizeaza in List View pe ziua lor;
+ * restul navigheaza dupa tip. 'sistem' nu duce nicaieri — e doar informativ.
+ */
+const TINTE_TIP: Partial<Record<Enums<'notificare_tip'>, string>> = {
+  rezervare_noua: RUTE.appRezervari,
+  rezervare_pending: RUTE.appRezervari,
+  masa_expirare: RUTE.appHarta,
+  floor_plan_status: RUTE.appHarta,
+  floor_plan_request: RUTE.appHarta,
+  conflict_layer: RUTE.appHarta,
+  credite_epuizate: `${RUTE.appSetari}?tab=whatsapp`,
+  ticket_suport: `${RUTE.appSetari}?tab=suport`,
+}
 
 /** §21: rosu = urgent, galben = cere o decizie, albastru = informativ. */
 const CLASE_URGENTA: Record<Enums<'notificare_urgenta'>, string> = {
@@ -33,9 +54,10 @@ function candDinISO(iso: string): string {
   return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })
 }
 
-export function ClopotelNotificari({ restaurantId }: { restaurantId: string }) {
+export function ClopotelNotificari({ restaurantId, fus }: { restaurantId: string; fus: string }) {
   const queryClient = useQueryClient()
   const notificariUi = useNotificari()
+  const navigheaza = useNavigate()
 
   const lista = useQuery({
     queryKey: CHEI_NOTIFICARI.lista(restaurantId),
@@ -60,8 +82,33 @@ export function ClopotelNotificari({ restaurantId }: { restaurantId: string }) {
 
   const necitite = (lista.data ?? []).filter((n) => !n.citita_la)
 
+  /** Clic pe notificare (§24.5): marcheaza citita si NAVIGHEAZA la tinta. */
+  async function deschide(notificare: Notificare) {
+    if (!notificare.citita_la) citesteUna.mutate(notificare.id)
+
+    if (notificare.reservation_id) {
+      try {
+        const dataOra = await getDataRezervare(notificare.reservation_id)
+        if (dataOra) {
+          navigheaza(`${RUTE.appRezervari}?data=${formatFus(dataOra, 'yyyy-MM-dd', fus)}`)
+          return
+        }
+      } catch {
+        // rezervarea nu mai exista — cadem pe tinta de tip
+      }
+    }
+
+    const tinta = TINTE_TIP[notificare.tip]
+    if (tinta) navigheaza(tinta)
+  }
+
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      // §24.5 — necititele se marcheaza automat citite la deschiderea listei.
+      onOpenChange={(deschis) => {
+        if (deschis && necitite.length > 0) citesteToate.mutate()
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon-sm" className="relative" aria-label="Notificari">
           <BellIcon />
@@ -102,7 +149,7 @@ export function ClopotelNotificari({ restaurantId }: { restaurantId: string }) {
                 <li key={notificare.id}>
                   <button
                     type="button"
-                    onClick={() => !notificare.citita_la && citesteUna.mutate(notificare.id)}
+                    onClick={() => void deschide(notificare)}
                     className={`flex w-full gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-accent/50 ${
                       notificare.citita_la ? 'opacity-60' : ''
                     }`}

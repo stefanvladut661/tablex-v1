@@ -153,7 +153,10 @@ export function LayoutApp() {
           </div>
 
           <div className="flex items-center gap-1">
-            <ClopotelNotificari restaurantId={profil.restaurant.id} />
+            <ClopotelNotificari
+              restaurantId={profil.restaurant.id}
+              fus={profil.restaurant.fus_orar}
+            />
             <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comuta tema">
               {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
             </Button>
