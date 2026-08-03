@@ -505,6 +505,54 @@ export function EditorZona({
     comita(pozitie.x, pozitie.y)
   }
 
+  /**
+   * Auto-centrarea se calculeaza AICI, nu in pagina: componenta e singura care
+   * stie si continutul, si viewBox-ul in care trebuie sa incapa.
+   */
+  const incadreazaContinut = useCallback(() => {
+    const dreptunghiuri = [
+      ...structura.map((element) => ({
+        x: element.x,
+        y: element.y,
+        latime: element.latime,
+        inaltime: element.inaltime,
+      })),
+      ...mese.map((masa) => ({
+        x: masa.pozitie_x,
+        y: masa.pozitie_y,
+        latime: masa.latime,
+        inaltime: masa.inaltime,
+      })),
+    ]
+    incadreaza(
+      incadrareContinut(dreptunghiuri, {
+        latime: zona.canvas_latime,
+        inaltime: zona.canvas_inaltime,
+      }),
+    )
+  }, [structura, mese, zona.canvas_latime, zona.canvas_inaltime, incadreaza])
+
+  // Raportarea trece prin efect, nu prin randare: apelantul o pastreaza intr-un
+  // ref, deci ciclul se opreste aici (vezi comentariul din EditorPlanPage).
+  useEffect(() => {
+    onVedere?.({ scara: vedere.scara, laScara, incadreazaContinut })
+  }, [onVedere, vedere.scara, laScara, incadreazaContinut])
+
+  /**
+   * Drop-ul din paleta. Coordonatele vin din acelasi `laCanvas` ca gesturile de
+   * mutare, deci obiectul ateriza exact sub cursor la orice zoom si pan —
+   * altfel, la 250%, ar cadea cu jumatate de sala mai incolo.
+   */
+  function laDrop(eveniment: DragEvent<HTMLDivElement>) {
+    if (!onDropObiect) return
+    eveniment.preventDefault()
+    setTragereDeasupra(false)
+    const obiect = eveniment.dataTransfer.getData(TIP_TRANSFER_OBIECT)
+    if (!obiect) return
+    const punct = laCanvas(eveniment)
+    if (punct) onDropObiect(obiect, punct)
+  }
+
   // Ordinea de desenare rămâne cea din viewer: grid → structura → mese.
   // Sortarea pe z se face pe o COPIE indexata, ca indicii din array-ul salvat
   // sa nu se schimbe — ei sunt identitatea elementelor la editare.
