@@ -292,10 +292,6 @@ export function EditorZona({
     const punct = laCanvas(eveniment)
 
     if (!tinta) {
-      if (modAdaugare && punct && onAdauga) {
-        onAdauga(aliniaza(punct.x), aliniaza(punct.y))
-        return
-      }
       // Canvas gol: gestul devine tragerea vederii. Deselectarea se muta pe
       // pointerup si se face doar daca vederea NU s-a miscat — un clic curat
       // ramane clic, o tragere ramane pan.
@@ -462,12 +458,13 @@ export function EditorZona({
     const punct = laCanvas(eveniment)
     if (!masura || !punct) return
 
-    const final = pozitieFinala(
-      { latime: masura.latime, inaltime: masura.inaltime },
-      canvas,
-      zona.grid_marime,
-      { x: punct.x - gest.decalajX, y: punct.y - gest.decalajY },
-    )
+    // Cu snapping-ul oprit ramane doar limitarea in canvas: pozitia libera e
+    // tot ce a cerut degetul, dar in afara salii tot nu are voie sa iasa.
+    const bruta = { x: punct.x - gest.decalajX, y: punct.y - gest.decalajY }
+    const dimensiuni = { latime: masura.latime, inaltime: masura.inaltime }
+    const final = snapLaGrid
+      ? pozitieFinala(dimensiuni, canvas, zona.grid_marime, bruta)
+      : limiteazaInCanvas(dimensiuni, canvas, bruta)
 
     // Un clic simplu (fara deplasare) nu trebuie sa produca o scriere inutila.
     // In panoul restaurantului insa, el are alt inteles: deschide rezervarea de
