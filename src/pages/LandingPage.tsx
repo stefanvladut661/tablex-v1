@@ -18,6 +18,8 @@ import {
 
 import { HartaZona } from '@/components/floor-plan/HartaZona'
 import { LegendaStatus } from '@/components/floor-plan/LegendaStatus'
+import { useAuth } from '@/hooks/useAuth'
+import { ruteDupaLogin } from '@/lib/rute'
 import { Button } from '@/components/ui/button'
 import { CtaBand } from '@/components/ui/cta-band'
 import { FAQ, type IntrebareFaq } from '@/components/ui/faq-tabs'
@@ -312,6 +314,20 @@ export function LandingPage() {
   const [masaAleasa, setMasaAleasa] = useState<string | null>(null)
   const detaliiMasa = mese.find((m) => m.id === masaAleasa) ?? null
 
+  /**
+   * Navbarul stia deja sa schimbe „Autentificare" cu „Deschide panoul" pentru
+   * cine e conectat; SUBSOLUL nu stia, fiindca pagina asta nu se uita deloc la
+   * sesiune. Rezultatul era o pagina care se contrazicea singura: sus scria ca
+   * esti conectat, jos te invita sa-ti faci cont.
+   */
+  const { esteAutentificat, profil } = useAuth()
+  const numeCont =
+    profil?.tip === 'admin'
+      ? profil.restaurant.nume
+      : profil?.tip === 'super_admin'
+        ? 'echipa TableX'
+        : null
+
   return (
     <div className="min-h-svh bg-background">
       <Navbar />
@@ -586,16 +602,32 @@ export function LandingPage() {
                     Demonstrație
                   </Link>
                 </li>
-                <li>
-                  <Link to={RUTE.login} className="hover:text-foreground">
-                    Autentificare
-                  </Link>
-                </li>
-                <li>
-                  <Link to={RUTE.signup} className="hover:text-foreground">
-                    Cont nou
-                  </Link>
-                </li>
+                {esteAutentificat ? (
+                  <li>
+                    <Link
+                      to={ruteDupaLogin(profil?.tip ?? null)}
+                      className="font-medium text-foreground hover:underline"
+                    >
+                      Deschide panoul
+                    </Link>
+                    {numeCont && (
+                      <span className="block text-xs">Conectat ca {numeCont}</span>
+                    )}
+                  </li>
+                ) : (
+                  <>
+                    <li>
+                      <Link to={RUTE.login} className="hover:text-foreground">
+                        Autentificare
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to={RUTE.signup} className="hover:text-foreground">
+                        Cont nou
+                      </Link>
+                    </li>
+                  </>
+                )}
                 <li>
                   <Link to={RUTE.confidentialitate} className="hover:text-foreground">
                     Confidențialitate
