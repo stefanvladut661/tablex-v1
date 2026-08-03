@@ -18,7 +18,26 @@
      implementat integral. Cand verifici din nou, mergi pe cerinte, nu pe
      module — altfel obtii acelasi fals „gata".
 
-     NEXT_TASK: cele 7 lipsuri care BLOCHEAZA lansarea, in ordine:
+     STARE (3 august, seara): din cele 7 blocante, CINCI sunt livrate —
+     1 (bara orara), 3 (pretul de pe landing), 4 (mentenanta in baza),
+     5 (pagina de confidentialitate), 7 (confirmare la suspendare).
+     RAMAN DOUA: 2 (verificarea emailului impusa in baza) si 6 (detectia
+     conflictului Layer1/Layer2).
+
+     PROIECTAREA LOR E DEJA FACUTA si verificata in tranzactii anulate pe baza
+     reala, inclusiv SQL-ul gata de aplicat. Nu o re-deriva — citeste raportul:
+     C:\Users\Vladut\AppData\Local\Temp\claude\C--Users-Vladut-Favorites-Downloads-tablex-v1-claude\d5609fc8-f5b1-4f45-af79-a284f4c66ee2\tasks\wqsvnz5q2.output
+     Acolo stau, complet: email_confirmat() + continutul minim al lui
+     supabase/config.toml; detectia de conflict cu formula pentru pereti
+     descrisi prin segmente; revoke-ul pe coloana ai_rezultat (§14.3, cu
+     ordinea corecta: revoke pe TABELA, apoi grant pe coloanele ramase, plus
+     vederea cereri_plan_ai pentru echipa si cele 3 locuri din client care
+     trebuie trecute pe coloane explicite); si trigger-ul extins pentru
+     campurile de sistem ale formularului (§16.1). Daca fisierul temporar a
+     disparut, re-ruleaza workflow-ul din
+     .claude/.../workflows/scripts/blocante-in-baza-wf_f18659a2-f0e.js
+
+     Cele 7 lipsuri care BLOCHEAZA lansarea, in ordine:
      1. §28.12 bara orara e inghetata. HartaPage.tsx:134 — `useState` cu
         initializator lenes, deci `oraAfisata` nu avanseaza NICIODATA. Harta
         arata sala de la incarcarea paginii si afiseaza fals bannerul
