@@ -112,7 +112,17 @@ export function HartaZona({
   }, [incadrareAutomata, mese, structura, zona.canvas_latime, zona.canvas_inaltime])
 
   return (
-    <div className={cn('relative overflow-hidden rounded-lg border border-border', className)}>
+    /**
+     * Harta ramane pe tema inchisa indiferent de tema aplicatiei: clasa `dark`
+     * de aici rescrie variabilele din index.css doar pentru ce e inauntru, deci
+     * nicio culoare nu se scrie de mana (regula 2).
+     *
+     * Motivul e ca planul se citeste dintr-o privire, de la distanta, in sala:
+     * pe fundal inchis mesele colorate ies in fata, iar tableta nu mai arunca
+     * lumina alba in ochii clientilor la o masa de seara. Restul interfetei isi
+     * pastreaza tema aleasa de utilizator.
+     */
+    <div className={cn('dark relative overflow-hidden rounded-lg border border-border', className)}>
       <svg
         ref={refSvg}
         viewBox={`${incadrare.x} ${incadrare.y} ${incadrare.latime} ${incadrare.inaltime}`}

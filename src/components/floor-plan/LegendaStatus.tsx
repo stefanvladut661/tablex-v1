@@ -13,7 +13,12 @@ export function LegendaStatus({ className }: { className?: string }) {
     <ul className={`flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs ${className ?? ''}`}>
       {PASTILE.map(({ status, clasa }) => (
         <li key={status} className="flex items-center gap-1.5">
-          <span className={`size-2.5 rounded-full ${clasa}`} aria-hidden="true" />
+          {/* `dark` doar pe bulina, nu si pe text: harta e mereu pe tema
+              inchisa, deci bulina trebuie sa iasa din ACELEASI variabile ca
+              masa pe care o explica. Altfel „inactiv" — singura culoare care
+              difera intre teme — ar arata deschis in legenda si inchis pe
+              harta. Eticheta ramane in tema paginii, ca sa se citeasca. */}
+          <span className={`dark size-2.5 rounded-full ${clasa}`} aria-hidden="true" />
           <span className="text-muted-foreground">{ETICHETE_STATUS[status]}</span>
         </li>
       ))}

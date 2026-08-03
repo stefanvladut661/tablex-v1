@@ -476,7 +476,13 @@ export function EditorZona({
   const editezStructura = stratActiv === 'structura'
 
   return (
-    <div className={cn('relative overflow-hidden rounded-lg border border-border', className)}>
+    /**
+     * Aceeasi tema inchisa ca in HartaZona, si aici din acelasi motiv practic:
+     * echipa care deseneaza planul trebuie sa vada exact ce vede restaurantul.
+     * Un canvas alb la editare si unul inchis in sala ar insemna ca se aleg
+     * pozitii si dimensiuni pe o imagine pe care n-o vede nimeni in realitate.
+     */
+    <div className={cn('dark relative overflow-hidden rounded-lg border border-border', className)}>
       <svg
         ref={refSvg}
         viewBox={`0 0 ${zona.canvas_latime} ${zona.canvas_inaltime}`}
