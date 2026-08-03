@@ -5,24 +5,64 @@
      toggle + logo + AnuntEveniment partajat), Calendar §25.4-25.6 (walk-in pe harta),
      consuma_credit legat de fluxuri + reminder 2h pe pg_cron, §20.3 suspendarea in RLS,
      §16.2 notificari din List View, §24.7 confirmari, §22.1 retentie GDPR automata,
-     §22.2 export CRM. Analiza pe spec: 12/12 module. -->
-<!-- NEXT_TASK: a ramas UN singur punct din analiza pe spec:
-     §33 — starea de citit a notificarilor e per RESTAURANT, nu per
-     utilizator: cine deschide clopotelul marcheaza pentru toti. Forma
-     curata: tabel de legatura notificari_citite(notificare_id, user_id,
-     citita_la) + politici, iar `necitite` devine „nu exista rand pentru
-     mine". Atinge ClopotelNotificari, ClopotelEchipa si services/notificari.
+     §22.2 export CRM. Analiza pe spec: 12/12 module.
+     3 august: §33 starea de citit devenita personala (tabel de legatura
+     notificari_citite + vedere notificari_mele cu security_invoker + doua RPC
+     SECURITY INVOKER care intorc cate au RAMAS necitite); hartile trecute pe
+     tema inchisa; statusul wa 'fara_credite' chiar se scrie. Analiza pe spec
+     e INCHISA. -->
+<!-- NEXT_TASK: analiza pe spec e INCHISA — §33 a fost ultimul punct si s-a
+     livrat pe 3 august. Nu mai exista lipsuri cunoscute fata de specificatie.
      NU Stripe — §14 il exclude din v1.
+
+     Ce ramane, gasit pe drum, in ordinea utilitatii (niciunul nu e cerut de spec):
+     1. candDinISO e duplicat litera cu litera in ambele clopotele si foloseste
+        Math.round: 90 de minute se afiseaza „acum 2 h". Extras in lib/timp.ts
+        + teste pe granite (59/60/89/90/1439/1440), cu `acum` injectabil.
+     2. Notificarile n-au retentie. notificari_citite creste ca
+        N_utilizatori x N_notificari; un job pe 90 de zile ar fi cuminte.
+     3. Pachetele de credite WhatsApp (whatsapp_credit_packages) nu au ecran de
+        administrare nicaieri — pretul se schimba doar prin SQL. RLS le apara
+        deja corect (doar super_admin deplin scrie).
+     4. Toate trei pachetele sunt la 0,10 EUR/credit: niciun discount de volum,
+        deci nimeni n-are motiv financiar sa ia pachetul Mare. Decizie de
+        business, nu bug.
+     5. Enumurile notificare_tip 'conflict_layer' si 'sistem' nu sunt produse de
+        nicio functie, desi §17.1 cere alerta de conflict in Command Center.
+     6. §21.1 cere badge de notificari si in sidebar / List View, nu doar in
+        clopotel. Nu exista.
+     7. Finance & Monetization arata „Credite WhatsApp 130 EUR" dintr-un tabel
+        demo hardcodat, in timp ce Overview calculeaza aceeasi suma REAL din
+        whatsapp_tranzactii. Pagina spune explicit ca nicio cifra nu e reala
+        (§44.3), deci nu e o scapare — dar cele doua ecrane se vor contrazice.
 
      INCADRAREA HARTII (cerinta din 3 august, livrata): zoom-ul interactiv
      exista DOAR in Canvas Builder-ul echipei. Adminul, ospatarul si widgetul
      public vad planul la `zones.zoom_implicit`, fixat de echipa din slider-ul
      de Incadrare. Impus si in baza, prin trigger — politica
-     zones_scriere_manager da managerului toate coloanele zonei. -->
+     zones_scriere_manager da managerului toate coloanele zonei.
+
+     HARTILE PE DARK (cerinta din 3 august, livrata): clasa `dark` pe
+     containerul din HartaZona si EditorZona, deci tokenii se rescriu doar
+     inauntru si nicio culoare nu e hardcodata. Bulinele din LegendaStatus intra
+     si ele in `dark` — „inactiv" e singurul status cu alta valoare intre teme
+     (#94a3b8 fata de #475569), deci fara asta legenda ar fi mintit. -->
 <!-- ATENTIE la testarea in baza: zones_scriere_manager cere si
      are_floor_plan(), deci un test cu restaurant pe planul Start pare ca
      „trigger-ul n-a blocat" cand de fapt RLS a filtrat randul si UPDATE-ul a
      atins ZERO randuri, fara eroare. Testeaza pe pro_floor. -->
+<!-- ATENTIE, aceeasi lectie in alta haina (3 august): baza remote e GOALA de
+     date de lucru — zero restaurante, zero notificari. Un test care apeleaza o
+     functie „pe primul restaurant gasit" primeste NULL si functia iese pe prima
+     linie, iar rezultatul (false / 0 randuri) arata exact ca un refuz reusit.
+     S-a intamplat la consuma_credit_intern: parea ca refuza lipsa creditelor,
+     de fapt nu ajunsese acolo. Construieste fixtura de la zero in tranzactie
+     (auth.users + restaurants + admin_users + randurile testate) si verifica la
+     final ca rollback-ul chiar a curatat. -->
+<!-- ATENTIE la MCP execute_sql: intoarce DOAR primul set de rezultate dintr-un
+     lot de instructiuni. Un test cu mai multe SELECT-uri pare ca „n-a intors
+     nimic" pentru pasii de la 2 in sus. Aduna rezultatele intr-un tabel si fa
+     un singur SELECT la final. -->
      ATENTIE: cont de test auth NECONFIRMAT creat manual
      (savuvladut002+admintest@yahoo.com) + login.json/signup.json netracked
      in radacina — ale utilizatorului, nu se sterg automat. -->
@@ -34,11 +74,11 @@
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** modulele mari complete; raman lipsurile punctuale gasite de analiza pe spec
+**Status:** analiza pe spec inchisa — nicio lipsa cunoscuta fata de specificatie
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 / Fable 5 (faze complexe)
-**Ultima sesiune:** 2026-08-02 — Faza 8: Super-Admin Command Center complet (§9, §38-§47)
+**Ultima sesiune:** 2026-08-03 — §33 (citit per utilizator), hartile pe tema inchisa
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
-**Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote, pana la drepturi_functii_echipa)
+**Supabase:** proiect `xrwyscszfpiqeupqnahy` (migratii aplicate remote, pana la realtime_notificari_citite)
 
 ---
 
