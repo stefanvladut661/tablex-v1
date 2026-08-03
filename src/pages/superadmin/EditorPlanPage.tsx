@@ -26,7 +26,9 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import { useNotificari } from '@/hooks/useNotificari'
+import { importaGeometrie, type GeometrieImportata } from '@/lib/import-geometrie'
 import { RUTE } from '@/lib/rute'
 import {
   CHEIE_ISTORIC,
@@ -236,6 +238,22 @@ export function EditorPlanPage() {
   const [schitaVizibila, setSchitaVizibila] = useState(true)
   const [arataAI, setArataAI] = useState(true)
 
+  /**
+   * Import de geometrie (§41.3, alternativa la Generarea AI).
+   *
+   * Generarea automata cere o cheie de API facturata separat, pe care nu orice
+   * instalare o are. Formatul e insa acelasi, deci geometria poate veni de
+   * oriunde — inclusiv dintr-o conversatie cu un asistent, pe abonamentul pe
+   * care echipa il are deja. Ecranul ramane al echipei, ca si Best Guess-ul:
+   * §14.3 cere ca rezultatul sa nu ajunga niciodata la Admin, iar aici nici nu
+   * se salveaza nicaieri — se aplica direct pe straturile reale, sub ochii
+   * celui care importa.
+   */
+  const [importDeschis, setImportDeschis] = useState(false)
+  const [textImport, setTextImport] = useState('')
+  const [eroriImport, setEroriImport] = useState<string[]>([])
+  const [importInLucru, setImportInLucru] = useState(false)
+
   const cerereStudio = useQuery({
     queryKey: CHEI_STUDIO_AI.cerere(restaurantId),
     queryFn: () => getCerereStudio(restaurantId),
@@ -305,6 +323,52 @@ export function EditorPlanPage() {
       notificari.eroare(eroare)
     },
   })
+
+  /**
+   * Aplica geometria importata pe straturile REALE, nu intr-un „best guess".
+   * Structura merge intr-o singura salvare (stratul e un jsonb, deci o scriere);
+   * mesele cer cate un insert, fiindca numerotarea se face in serviciu, din
+   * baza, cu reincercare la coliziune. Daca o masa cade, ne oprim si spunem
+   * cate au intrat — mai bine un import partial anuntat decat unul complet
+   * raportat gresit.
+   */
+  async function aplicaImportul(date: GeometrieImportata) {
+    if (!zonaCurenta) return
+    setImportInLucru(true)
+    let meseIntrate = 0
+    try {
+      if (date.structura.length) {
+        await salveazaStructura.mutateAsync({ elemente: [...elemente, ...date.structura] })
+      }
+      for (const masa of date.mese) {
+        await creeazaMasa({
+          restaurantId,
+          zoneId: zonaCurenta.id,
+          capacitate: masa.capacitate,
+          pozitieX: masa.x,
+          pozitieY: masa.y,
+        })
+        meseIntrate += 1
+      }
+      reincarcaMese()
+      notificari.succes(
+        `Import gata: ${date.structura.length} elemente de structură, ${meseIntrate} mese.`,
+        { descriere: 'Verifică pozițiile pe plan înainte de publicare.' },
+      )
+      setImportDeschis(false)
+      setTextImport('')
+      setEroriImport([])
+    } catch (eroare) {
+      reincarcaMese()
+      setEroriImport([
+        meseIntrate > 0
+          ? `Import oprit după ${meseIntrate} mese: ${(eroare as Error).message}`
+          : (eroare as Error).message,
+      ])
+    } finally {
+      setImportInLucru(false)
+    }
+  }
 
   const masaNoua = useMutation({
     // Numerotarea se face in serviciu, din baza: constrangerea de unicitate e
@@ -581,6 +645,15 @@ export function EditorPlanPage() {
                   </>
                 )}
               </div>
+            )}
+
+            {/* Importul NU e conditionat de existenta schitei: rostul lui e
+                tocmai sa mearga acolo unde generarea AI nu poate (fara cheie de
+                API), iar geometria poate veni si dintr-un plan pe hartie. */}
+            {zonaCurenta && (
+              <Button variant="outline" size="sm" onClick={() => setImportDeschis(true)}>
+                Importă geometrie
+              </Button>
             )}
 
             {/* Incadrarea planului: se seteaza AICI si se aplica pentru
@@ -899,6 +972,72 @@ export function EditorPlanPage() {
           )}
         </div>
       </main>
+
+      {importDeschis && zonaCurenta && (
+        <Dialog open onOpenChange={(deschis) => !deschis && !importInLucru && setImportDeschis(false)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Importă geometrie în „{zonaCurenta.nume}"</DialogTitle>
+              <DialogDescription>
+                Lipește geometria în format JSON. Structura se adaugă peste ce există deja, iar
+                mesele se creează numerotate automat. Nimic nu se publică — verifici pe plan
+                înainte.
+              </DialogDescription>
+            </DialogHeader>
+
+            <Textarea
+              rows={10}
+              value={textImport}
+              onChange={(e) => {
+                setTextImport(e.target.value)
+                if (eroriImport.length) setEroriImport([])
+              }}
+              placeholder={'{\n  "structura": [{ "tip": "perete", "x": 0, "y": 0, "latime": 600, "inaltime": 10 }],\n  "mese": [{ "forma": "rotunda", "x": 80, "y": 120, "latime": 70, "inaltime": 70, "capacitate": 4 }]\n}'}
+              className="font-mono text-xs"
+            />
+
+            {eroriImport.length > 0 && (
+              <ul className="grid gap-1 rounded-lg border border-destructive/50 bg-status-ocupat-soft px-3 py-2 text-xs">
+                {eroriImport.slice(0, 6).map((eroare) => (
+                  <li key={eroare}>{eroare}</li>
+                ))}
+                {eroriImport.length > 6 && <li>și încă {eroriImport.length - 6}...</li>}
+              </ul>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                disabled={importInLucru}
+                onClick={() => setImportDeschis(false)}
+              >
+                Renunță
+              </Button>
+              <Button
+                disabled={importInLucru || !textImport.trim()}
+                onClick={() => {
+                  const rezultat = importaGeometrie(textImport, {
+                    latime: zonaCurenta.canvas_latime,
+                    inaltime: zonaCurenta.canvas_inaltime,
+                  })
+                  if (!rezultat.ok) {
+                    setEroriImport(rezultat.erori)
+                    return
+                  }
+                  // Avertismentele nu opresc importul, dar se spun: un element
+                  // in afara canvasului nu se vede, si ar parea pierdut.
+                  for (const avertisment of rezultat.avertismente) {
+                    notificari.info(avertisment)
+                  }
+                  void aplicaImportul(rezultat.date)
+                }}
+              >
+                {importInLucru ? 'Se aplică...' : 'Aplică pe plan'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {dialogZonaNoua && (
         <DialogZonaNoua
