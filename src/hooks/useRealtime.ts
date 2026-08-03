@@ -20,12 +20,15 @@ import { CHEI_REZERVARI } from '@/services/rezervari'
  * evenimentele lui; filtrul pe restaurant_id e o optimizare, nu o masura de
  * securitate.
  */
-export function useRealtimeRestaurant(restaurantId: string | undefined) {
+export function useRealtimeRestaurant(
+  restaurantId: string | undefined,
+  userId: string | undefined,
+) {
   const queryClient = useQueryClient()
   const notificariUi = useNotificari()
 
   useEffect(() => {
-    if (!restaurantId) return
+    if (!restaurantId || !userId) return
 
     const canal = supabase
       .channel(`restaurant-${restaurantId}`)
@@ -62,7 +65,24 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
           filter: `restaurant_id=eq.${restaurantId}`,
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.lista(restaurantId) })
+          queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.lista(restaurantId, userId) })
+        },
+      )
+      // Starea de citit e personala (§33) si sta in alta tabela, deci are
+      // nevoie de canalul ei. Rostul: managerul care marcheaza pe telefon
+      // vede bulina stinsa si pe tableta din sala — ACELASI cont, doua
+      // dispozitive. Tabelul nu are restaurant_id (se leaga prin notificare),
+      // deci filtrul e pe utilizator.
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notificari_citite',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.lista(restaurantId, userId) })
         },
       )
       // Publicarea din Floor Plan Studio ajunge pe harta FARA reload
@@ -110,7 +130,7 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
       void supabase.removeChannel(canal)
     }
     // Valoarea contextului de notificari e memoizata in provider.
-  }, [restaurantId, queryClient, notificariUi])
+  }, [restaurantId, userId, queryClient, notificariUi])
 }
 
 /**
@@ -120,20 +140,42 @@ export function useRealtimeRestaurant(restaurantId: string | undefined) {
  *
  * Intoarce starea conexiunii pentru indicatorul din footer (§9.3).
  */
-export function useRealtimeEchipa(activ: boolean): boolean {
+export function useRealtimeEchipa(activ: boolean, userId: string | undefined): boolean {
   const queryClient = useQueryClient()
   const [conectat, setConectat] = useState(false)
 
   useEffect(() => {
-    if (!activ) return
+    if (!activ || !userId) return
 
     const canal = supabase
       .channel('echipa-tablex')
+      // Filtrul pe destinatie nu e o masura de securitate (RLS o face), ci de
+      // liniste: fara el, fiecare notificare a fiecarui restaurant din retea
+      // reinterorga clopotelul echipei, desi acolo nu se vede niciuna.
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'notificari' },
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notificari',
+          filter: 'destinatie=eq.super_admin',
+        },
         () => {
-          void queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.echipa })
+          void queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.echipa(userId) })
+        },
+      )
+      // Acelasi motiv ca la clopotelul restaurantului: citirea facuta pe alt
+      // dispozitiv al aceluiasi cont trebuie sa stinga bulina si aici.
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notificari_citite',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.echipa(userId) })
         },
       )
       .on(
@@ -158,7 +200,7 @@ export function useRealtimeEchipa(activ: boolean): boolean {
       setConectat(false)
       void supabase.removeChannel(canal)
     }
-  }, [activ, queryClient])
+  }, [activ, userId, queryClient])
 
   return conectat
 }

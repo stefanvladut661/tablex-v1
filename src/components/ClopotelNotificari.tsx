@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useNotificari } from '@/hooks/useNotificari'
+import { etichetaBulina, necititeDin } from '@/lib/notificari-citit'
 import { RUTE } from '@/lib/rute'
 import { formatFus } from '@/lib/timp'
 import {
@@ -54,33 +55,49 @@ function candDinISO(iso: string): string {
   return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })
 }
 
-export function ClopotelNotificari({ restaurantId, fus }: { restaurantId: string; fus: string }) {
+/**
+ * `userId` nu e decorativ: starea de citit e a persoanei (§33), deci si cheia
+ * de cache trebuie sa fie a ei. Fara el, doua conturi care se succed in acelasi
+ * tab ar imparti aceeasi intrare de cache.
+ */
+export function ClopotelNotificari({
+  restaurantId,
+  userId,
+  fus,
+}: {
+  restaurantId: string
+  userId: string
+  fus: string
+}) {
   const queryClient = useQueryClient()
   const notificariUi = useNotificari()
   const navigheaza = useNavigate()
 
   const lista = useQuery({
-    queryKey: CHEI_NOTIFICARI.lista(restaurantId),
+    queryKey: CHEI_NOTIFICARI.lista(restaurantId, userId),
     queryFn: () => getNotificari(restaurantId),
     // Realtime face invalidarea; polling-ul e doar plasa de siguranta.
     refetchInterval: 5 * 60_000,
   })
 
   const invalideaza = () =>
-    queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.lista(restaurantId) })
+    queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.lista(restaurantId, userId) })
 
   const citesteUna = useMutation({
     mutationFn: marcheazaCitita,
     onSuccess: invalideaza,
     onError: (eroare) => notificariUi.eroare(eroare),
   })
+  // Restaurantul nu se mai trimite: ce am voie sa marchez decide RLS-ul, nu
+  // clientul. Destinatia ramane, fiindca acelasi cont nu are cum sa fie si in
+  // echipa TableX (§20.1), dar functia din baza serveste ambele clopotele.
   const citesteToate = useMutation({
-    mutationFn: () => marcheazaToateCitite(restaurantId),
+    mutationFn: () => marcheazaToateCitite('admin'),
     onSuccess: invalideaza,
     onError: (eroare) => notificariUi.eroare(eroare),
   })
 
-  const necitite = (lista.data ?? []).filter((n) => !n.citita_la)
+  const necitite = necititeDin(lista.data ?? [])
 
   /** Clic pe notificare (§24.5): marcheaza citita si NAVIGHEAZA la tinta. */
   async function deschide(notificare: Notificare) {
@@ -114,7 +131,7 @@ export function ClopotelNotificari({ restaurantId, fus }: { restaurantId: string
           <BellIcon />
           {necitite.length > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-status-ocupat text-[10px] font-semibold text-status-ocupat-foreground tabular-nums">
-              {necitite.length > 9 ? '9+' : necitite.length}
+              {etichetaBulina(necitite.length)}
             </span>
           )}
         </Button>

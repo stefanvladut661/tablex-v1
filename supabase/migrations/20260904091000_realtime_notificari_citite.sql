@@ -1,0 +1,14 @@
+-- Citirea facuta pe un dispozitiv stinge bulina si pe celalalt
+--
+-- `notificari` era deja in publicatie, dar dupa migratia anterioara marcarea nu
+-- mai atinge randul notificarii — insereaza in `notificari_citite`. Fara tabela
+-- asta in publicatie, canalul Realtime n-ar mai avea ce sa auda la marcare:
+-- managerul care citeste notificarea pe telefon ar continua sa vada bulina
+-- aprinsa pe tableta din sala, pana la reincarcarea paginii sau pana la
+-- polling-ul de 5 minute.
+--
+-- Publicatia nu ocoleste RLS: Postgres Changes evalueaza politicile pentru
+-- fiecare abonat, iar `notificari_citite_citire` lasa fiecare cont sa vada doar
+-- randurile lui. Filtrul `user_id=eq.<uid>` din client e o economie de trafic,
+-- nu o masura de securitate.
+alter publication supabase_realtime add table public.notificari_citite;

@@ -129,7 +129,10 @@ export function LayoutSuperAdmin() {
   const [meniuDeschis, setMeniuDeschis] = useState(false)
 
   // Hook-urile nu au voie sa depinda de un return: apel neconditionat.
-  const realtimeConectat = useRealtimeEchipa(profil?.tip === 'super_admin')
+  const realtimeConectat = useRealtimeEchipa(
+    profil?.tip === 'super_admin',
+    profil?.tip === 'super_admin' ? profil.cont.user_id : undefined,
+  )
 
   if (!profil || profil.tip !== 'super_admin') return null
   const rol = profil.cont.rol
@@ -208,7 +211,7 @@ export function LayoutSuperAdmin() {
 
           <div className="flex items-center gap-1">
             <ServerHealth />
-            <ClopotelEchipa />
+            <ClopotelEchipa userId={profil.cont.user_id} />
             <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comută tema">
               {temaEfectiva === 'dark' ? <SunIcon /> : <MoonIcon />}
             </Button>

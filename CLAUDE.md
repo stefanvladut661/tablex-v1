@@ -75,6 +75,20 @@ Toate deliberate — daca schimbi una, schimba si randul ei de aici:
   (Inter peste tot, rounded-md, umbre subtile). Alegeri de directie vizuala
   facute la constructia landing-ului, comentate in `src/index.css`; schimba
   tokenii de acolo daca vrei alinierea la litera spec-ului.
+- **Harta salii e mereu pe tema inchisa**, indiferent de tema aleasa in rest.
+  Clasa `dark` sta pe containerul din `HartaZona` si `EditorZona`, deci rescrie
+  tokenii doar inauntru. Planul se citeste de la distanta, in sala: pe fundal
+  inchis mesele colorate ies in fata, iar tableta nu arunca lumina alba in ochii
+  clientilor. Bulinele din `LegendaStatus` intra si ele in `dark`, altfel
+  „inactiv" — singurul status care difera intre teme — ar arata alta culoare in
+  legenda decat pe harta.
+- **Starea de citit a notificarilor sta intr-un tabel de legatura**
+  (`notificari_citite`), nu ca `user_id` pe randul notificarii, cum arata
+  definitia din §33. Forma din spec implica fan-out la generare: cele sapte
+  functii care scriu notificari (SECURITY DEFINER, unele din pg_cron) ar trebui
+  sa stie echipa restaurantului si sa scrie N randuri, un angajat nou n-ar mai
+  vedea nimic din trecut, iar unul plecat ar lasa randuri orfane. Textul e
+  identic pentru toti; difera doar cine a citit.
 
 ## Cum se verifica o functionalitate
 

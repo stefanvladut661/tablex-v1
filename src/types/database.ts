@@ -1,8 +1,3 @@
-// ═══════════════════════════════════════════════════════════════════════
-// GENERAT AUTOMAT — nu edita manual.
-// Sursa: schema publica a proiectului Supabase (migratiile din supabase/migrations).
-// Regenerare: npx supabase gen types typescript --project-id <ref> > src/types/database.ts
-// ═══════════════════════════════════════════════════════════════════════
 export type Json =
   | string
   | number
@@ -757,7 +752,6 @@ export type Database = {
       }
       notificari: {
         Row: {
-          citita_la: string | null
           created_at: string
           destinatie: Database["public"]["Enums"]["notificare_destinatie"]
           id: string
@@ -769,7 +763,6 @@ export type Database = {
           urgenta: Database["public"]["Enums"]["notificare_urgenta"]
         }
         Insert: {
-          citita_la?: string | null
           created_at?: string
           destinatie?: Database["public"]["Enums"]["notificare_destinatie"]
           id?: string
@@ -781,7 +774,6 @@ export type Database = {
           urgenta?: Database["public"]["Enums"]["notificare_urgenta"]
         }
         Update: {
-          citita_la?: string | null
           created_at?: string
           destinatie?: Database["public"]["Enums"]["notificare_destinatie"]
           id?: string
@@ -812,6 +804,39 @@ export type Database = {
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificari_citite: {
+        Row: {
+          citita_la: string
+          notificare_id: string
+          user_id: string
+        }
+        Insert: {
+          citita_la?: string
+          notificare_id: string
+          user_id?: string
+        }
+        Update: {
+          citita_la?: string
+          notificare_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificari_citite_notificare_id_fkey"
+            columns: ["notificare_id"]
+            isOneToOne: false
+            referencedRelation: "notificari"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificari_citite_notificare_id_fkey"
+            columns: ["notificare_id"]
+            isOneToOne: false
+            referencedRelation: "notificari_mele"
             referencedColumns: ["id"]
           },
         ]
@@ -2051,6 +2076,45 @@ export type Database = {
           },
         ]
       }
+      notificari_mele: {
+        Row: {
+          citita_la: string | null
+          created_at: string | null
+          destinatie:
+            | Database["public"]["Enums"]["notificare_destinatie"]
+            | null
+          id: string | null
+          mesaj: string | null
+          reservation_id: string | null
+          restaurant_id: string | null
+          tip: Database["public"]["Enums"]["notificare_tip"] | null
+          titlu: string | null
+          urgenta: Database["public"]["Enums"]["notificare_urgenta"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificari_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificari_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurante_publice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificari_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurante_indisponibile: {
         Row: {
           slug: string | null
@@ -2286,6 +2350,16 @@ export type Database = {
           persoane_azi: number
           rezervari_azi: number
         }[]
+      }
+      marcheaza_notificari_citite: {
+        Args: { p_ids: string[] }
+        Returns: number
+      }
+      marcheaza_toate_citite: {
+        Args: {
+          p_destinatie: Database["public"]["Enums"]["notificare_destinatie"]
+        }
+        Returns: number
       }
       mese_libere_pentru_rezervare: {
         Args: {

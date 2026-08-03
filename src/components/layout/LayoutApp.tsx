@@ -84,7 +84,10 @@ export function LayoutApp() {
   const [meniuDeschis, setMeniuDeschis] = useState(false)
 
   // Trebuie apelat necondiționat: hook-urile nu au voie sa depinda de un return.
-  useRealtimeRestaurant(profil?.tip === 'admin' ? profil.restaurant.id : undefined)
+  useRealtimeRestaurant(
+    profil?.tip === 'admin' ? profil.restaurant.id : undefined,
+    profil?.tip === 'admin' ? profil.cont.user_id : undefined,
+  )
 
   if (profil?.tip !== 'admin') return null
 
@@ -155,6 +158,7 @@ export function LayoutApp() {
           <div className="flex items-center gap-1">
             <ClopotelNotificari
               restaurantId={profil.restaurant.id}
+              userId={profil.cont.user_id}
               fus={profil.restaurant.fus_orar}
             />
             <Button variant="ghost" size="icon-sm" onClick={comutaTema} aria-label="Comută tema">

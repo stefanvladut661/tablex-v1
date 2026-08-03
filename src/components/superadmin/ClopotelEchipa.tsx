@@ -10,11 +10,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useNotificari } from '@/hooks/useNotificari'
+import { etichetaBulina, necititeDin } from '@/lib/notificari-citit'
 import {
   CHEI_NOTIFICARI,
   getNotificariEchipa,
   marcheazaCitita,
-  marcheazaToateCititeEchipa,
+  marcheazaToateCitite,
   type Notificare,
 } from '@/services/notificari'
 import type { Enums } from '@/types/database'
@@ -49,18 +50,24 @@ function candDinISO(iso: string): string {
   return new Date(iso).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })
 }
 
-export function ClopotelEchipa() {
+/**
+ * `userId` intra in cheia de cache fiindca starea de citit e a persoanei (§33).
+ * Consecinta de comportament, intentionata: „Marchează tot" nu mai stinge
+ * bulina colegilor din echipa TableX, cum facea pana acum.
+ */
+export function ClopotelEchipa({ userId }: { userId: string }) {
   const queryClient = useQueryClient()
   const notificariUi = useNotificari()
 
   const lista = useQuery({
-    queryKey: CHEI_NOTIFICARI.echipa,
+    queryKey: CHEI_NOTIFICARI.echipa(userId),
     queryFn: getNotificariEchipa,
     // Realtime face invalidarea; polling-ul e doar plasa de siguranta.
     refetchInterval: 5 * 60_000,
   })
 
-  const invalideaza = () => queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.echipa })
+  const invalideaza = () =>
+    queryClient.invalidateQueries({ queryKey: CHEI_NOTIFICARI.echipa(userId) })
 
   const citesteUna = useMutation({
     mutationFn: marcheazaCitita,
@@ -68,12 +75,12 @@ export function ClopotelEchipa() {
     onError: (eroare) => notificariUi.eroare(eroare),
   })
   const citesteToate = useMutation({
-    mutationFn: marcheazaToateCititeEchipa,
+    mutationFn: () => marcheazaToateCitite('super_admin'),
     onSuccess: invalideaza,
     onError: (eroare) => notificariUi.eroare(eroare),
   })
 
-  const necitite = (lista.data ?? []).filter((n) => !n.citita_la)
+  const necitite = necititeDin(lista.data ?? [])
 
   const grupuri = useMemo(() => {
     const toate = lista.data ?? []
@@ -116,7 +123,7 @@ export function ClopotelEchipa() {
           <BellIcon />
           {necitite.length > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-status-ocupat text-[10px] font-semibold text-status-ocupat-foreground tabular-nums">
-              {necitite.length > 9 ? '9+' : necitite.length}
+              {etichetaBulina(necitite.length)}
             </span>
           )}
         </Button>
