@@ -1,18 +1,10 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LinkIcon, PlusIcon, Trash2Icon, UnlinkIcon } from 'lucide-react'
+import { LinkIcon, UnlinkIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -24,13 +16,7 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useNotificari } from '@/hooks/useNotificari'
-import {
-  actualizeazaMasa,
-  creeazaMasa,
-  desparteGrup,
-  stergeMasa,
-  unesteMese,
-} from '@/services/editor-plan'
+import { actualizeazaMasa, desparteGrup, unesteMese } from '@/services/editor-plan'
 import { CHEI_MESE } from '@/services/mese'
 import type { Enums } from '@/types/database'
 import type { MasaHarta, ZonaHarta } from '@/types/floor-plan'
@@ -54,26 +40,26 @@ const FORME: Array<{ valoare: Enums<'masa_forma'>; eticheta: string }> = [
  */
 export function PanouMeseAdmin({
   restaurantId,
-  zona,
   masa,
   mese,
-  onSelecteaza,
 }: {
   restaurantId: string
-  zona: ZonaHarta
+  /**
+   * Zona ramane in interfata desi panoul nu o mai citeste: pana acum ii trebuia
+   * ca sa aseze mesele nou create. Adaugarea a trecut la echipa, iar prop-ul se
+   * pastreaza fiindca apelantul il are oricum si un panou de mese fara zona ar
+   * fi ciudat de reintrodus mai tarziu.
+   */
+  zona?: ZonaHarta
   /** Masa selectata pe harta, daca exista. */
   masa: MasaHarta | null
-  /** Toate mesele zonei — pentru grupuri si pentru pozitionarea celei noi. */
+  /** Toate mesele zonei — pentru grupuri. */
   mese: MasaHarta[]
-  onSelecteaza: (id: string | null) => void
+  onSelecteaza?: (id: string | null) => void
 }) {
   const notificari = useNotificari()
   const queryClient = useQueryClient()
   const [deUnit, setDeUnit] = useState<string[]>([])
-  /** §24.7 — stergerea mesei e distructiva: cere confirmare explicita. */
-  const [confirmaStergere, setConfirmaStergere] = useState(false)
-
-  const meseInZona = mese.length
 
   // Colegii de grup ai mesei selectate, si candidatii pentru un grup nou.
   const colegiDeGrup = masa?.grup_unire_id
@@ -91,28 +77,17 @@ export function PanouMeseAdmin({
   const reincarca = () =>
     void queryClient.invalidateQueries({ queryKey: CHEI_MESE.mese(restaurantId) })
 
-  const adauga = useMutation({
-    mutationFn: () =>
-      creeazaMasa({
-        restaurantId,
-        zoneId: zona.id,
-        capacitate: 4,
-        // Asezata in coltul din stanga-sus, decalata cu cate un pas de grid
-        // pentru fiecare masa deja existenta: doua mese nou create nu se
-        // suprapun perfect, deci a doua nu pare ca lipseste.
-        pozitieX: zona.grid_marime * (2 + (meseInZona % 8)),
-        pozitieY: zona.grid_marime * (2 + Math.floor(meseInZona / 8)),
-      }),
-    onSuccess: (creata) => {
-      notificari.succes(`Masa ${creata.numar_masa} a fost adăugată.`, {
-        descriere: 'Trage-o pe hartă unde îi e locul.',
-      })
-      onSelecteaza(creata.id)
-      reincarca()
-    },
-    onError: (eroare) => notificari.eroare(eroare),
-  })
-
+  /**
+   * Adaugarea si stergerea meselor au disparut de aici, si sunt inchise si in
+   * baza (migratia 20260907090000): mobilarea salii e treaba echipei TableX,
+   * care deseneaza planul si raspunde de el. Adminul mUTA si GRUPEAZA — atat.
+   *
+   * Motivul nu e ierarhic. O masa adaugata de Admin nu trece prin niciun
+   * control de plan: apare pe harta publica, intra in disponibilitate si se
+   * poate rezerva, desi nu exista in sala desenata. Iar una stearsa din
+   * greseala ia cu ea istoricul alocarilor. Cine vrea o masa scoasa din uz o
+   * marcheaza indisponibila — reversibil, si fara sa piarda trecutul.
+   */
   const salveaza = useMutation({
     mutationFn: (modificari: Parameters<typeof actualizeazaMasa>[1]) =>
       actualizeazaMasa(masa!.id, modificari),
@@ -141,26 +116,11 @@ export function PanouMeseAdmin({
     onError: (eroare) => notificari.eroare(eroare),
   })
 
-  const sterge = useMutation({
-    mutationFn: () => stergeMasa(masa!.id),
-    onSuccess: () => {
-      notificari.succes('Masa a fost ștearsă.')
-      onSelecteaza(null)
-      reincarca()
-    },
-    // Migratia 19 refuza stergerea unei mese cu rezervari viitoare, cu un mesaj
-    // care spune deja ce sa faci in loc. Il aratam ca atare.
-    onError: (eroare) => notificari.eroare(eroare),
-  })
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+      <CardHeader>
         <CardTitle className="text-base">Mesele sălii</CardTitle>
-        <Button size="xs" variant="outline" disabled={adauga.isPending} onClick={() => adauga.mutate()}>
-          <PlusIcon className="size-3.5" />
-          Adaugă
-        </Button>
       </CardHeader>
       <CardContent className="grid gap-3">
         {!masa ? (
@@ -358,45 +318,12 @@ export function PanouMeseAdmin({
               )}
             </div>
 
-            <Button
-              variant="outline"
-              size="xs"
-              className="justify-self-start text-destructive"
-              disabled={sterge.isPending}
-              onClick={() => setConfirmaStergere(true)}
-            >
-              <Trash2Icon className="size-3.5" />
-              Șterge masa
-            </Button>
+            {/* Mesele nu se mai adauga si nu se mai sterg de aici: baza le
+                inchide (migratia 20260907090000), iar un buton care esueaza e
+                mai rau decat unul care lipseste. Ce nu mai e in uz se
+                marcheaza indisponibil, mai sus — reversibil, si fara sa piarda
+                istoricul alocarilor. */}
 
-            {confirmaStergere && (
-              <Dialog open onOpenChange={(deschis) => !deschis && setConfirmaStergere(false)}>
-                <DialogContent className="sm:max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle>Ștergi masa {masa.numar_masa}?</DialogTitle>
-                    <DialogDescription>
-                      Masa dispare de pe plan. Baza refuză oricum ștergerea dacă masa are
-                      rezervări viitoare.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setConfirmaStergere(false)}>
-                      Renunță
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      disabled={sterge.isPending}
-                      onClick={() => {
-                        sterge.mutate()
-                        setConfirmaStergere(false)
-                      }}
-                    >
-                      Șterge masa
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
           </>
         )}
       </CardContent>
