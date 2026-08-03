@@ -1,5 +1,6 @@
-import type { KeyboardEvent } from 'react'
+import { useMemo, type KeyboardEvent } from 'react'
 
+import { geometrieScaune } from '@/lib/scaune'
 import { ETICHETE_STATUS, type MasaHarta, type StatusMasa } from '@/types/floor-plan'
 
 /** Traffic Light System (§3, §7.4): umplere soft + contur saturat. */
@@ -9,6 +10,22 @@ const CLASE_STATUS: Record<StatusMasa, string> = {
   expirare: 'fill-status-expirare-soft stroke-status-expirare',
   eveniment: 'fill-status-eveniment-soft stroke-status-eveniment',
   inactiv: 'fill-status-inactiv-soft stroke-status-inactiv',
+}
+
+/**
+ * Spatarul: un arc putin mai lung decat o semicircumferinta, in spatele
+ * sezutului. Desenul canonic priveste spre STANGA (directia exterioara e +x),
+ * ca rotatia scaunului sa fie exact `unghi`-ul intors de `geometrieScaune`.
+ */
+function caleSpatar(raza: number): string {
+  const razaSpatar = raza * 1.5
+  const capat = (grade: number) => {
+    const radiani = (grade * Math.PI) / 180
+    return `${(razaSpatar * Math.cos(radiani)).toFixed(2)} ${(razaSpatar * Math.sin(radiani)).toFixed(2)}`
+  }
+  // Deschiderea de 200° (large-arc-flag 1) lasa varfurile spatarului sa treaca
+  // putin de linia sezutului, ca in modelul desenat de proprietar.
+  return `M ${capat(-100)} A ${razaSpatar} ${razaSpatar} 0 1 1 ${capat(100)}`
 }
 
 type Props = {
@@ -26,6 +43,17 @@ export function Masa({ masa, status, selectata = false, interactiva = false, onS
   const rotunda = forma === 'rotunda'
 
   const selectabila = interactiva && status !== 'inactiv'
+
+  /**
+   * Scaunele se recalculeaza doar cand se schimba masa, nu la fiecare randare:
+   * harta live se re-deseneaza la fiecare tic al barei orare, iar geometria
+   * scaunelor nu depinde de ora.
+   */
+  const { raza, scaune } = useMemo(
+    () => geometrieScaune({ latime: w, inaltime: h, capacitate: masa.capacitate, forma }),
+    [w, h, masa.capacitate, forma],
+  )
+  const spatar = caleSpatar(raza)
 
   function alege() {
     if (selectabila) onSelecteaza?.(masa.id)
@@ -55,6 +83,23 @@ export function Masa({ masa, status, selectata = false, interactiva = false, onS
         selectabila ? 'hover:[&>.forma]:stroke-[3]' : '',
       ].join(' ')}
     >
+      {/* Scaunele (§8.4, §9.2.2, §28.5, §42.7), desenate INAINTEA mesei ca
+          blatul sa ramana deasupra, si niciodata cu pointer-events: un deget
+          care nimereste un scaun trebuie sa selecteze tot masa. */}
+      <g className="pointer-events-none" aria-hidden="true">
+        {scaune.map((scaun, indice) => (
+          <g key={indice} transform={`translate(${scaun.x} ${scaun.y}) rotate(${scaun.unghi})`}>
+            <path
+              d={spatar}
+              className="fill-none stroke-canvas-scaun"
+              strokeWidth={raza * 0.3}
+              strokeLinecap="round"
+            />
+            <circle r={raza} className="fill-canvas-scaun" />
+          </g>
+        ))}
+      </g>
+
       {rotunda ? (
         <ellipse
           className={`forma transition-[stroke-width] ${CLASE_STATUS[status]} ${

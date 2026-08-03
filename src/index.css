@@ -87,6 +87,10 @@
   --canvas-planta: #16a34a;
   --canvas-piscina: #38bdf8;
   --canvas-selectie: #1d4ed8;
+  /* Scaunele generate in jurul meselor (§8.4). Gri neutru, intentionat: masa
+     poarta culoarea de status, scaunele trebuie sa se citeasca drept mobilier,
+     nu ca inca un semnal in Traffic Light. */
+  --canvas-scaun: #64748b;
 
   /* ── Hero landing (spec "Hero animat") ───────────────────────────── */
   /* --signal apare intr-un SINGUR loc pe ecran: underline-ul din H1. */
@@ -160,6 +164,10 @@
   --canvas-planta: #4ade80;
   --canvas-piscina: #7dd3fc;
   --canvas-selectie: #60a5fa;
+  /* Harta e mereu pe tema inchisa (vezi HartaZona), deci asta e valoarea care
+     conteaza in sala: destul de deschisa cat sa se vada silueta scaunului pe
+     fundalul de noapte, fara sa concureze cu mesele colorate. */
+  --canvas-scaun: #94a3b8;
 
   --signal: #ff7a47;
   --cloud: #2b3a52;
@@ -235,6 +243,7 @@
   --color-canvas-planta: var(--canvas-planta);
   --color-canvas-piscina: var(--canvas-piscina);
   --color-canvas-selectie: var(--canvas-selectie);
+  --color-canvas-scaun: var(--canvas-scaun);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

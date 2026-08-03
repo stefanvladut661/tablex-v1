@@ -13,6 +13,20 @@ const CLASE: Record<TipStructura, string> = {
   piscina: 'fill-canvas-piscina',
 }
 
+/**
+ * Planta, vazuta de sus: cinci petale in jurul unui miez, ca in modelul de la
+ * proprietar. Un cerc simplu (ce se desena inainte) se confunda de la distanta
+ * cu o masa rotunda mica — exact confuzia pe care o rezolva silueta asta.
+ *
+ * Raportele sunt fata de raza exterioara: petala se termina fix pe ea, deci
+ * floarea incape in dreptunghiul primit, oricat de mare ar fi elementul.
+ */
+const PETALE = 5
+const PETALA_DISTANTA = 0.68
+const PETALA_LUNGIME = 0.32
+const PETALA_LATIME = 0.22
+const MIEZ = 0.24
+
 /** Etichetele se scriu pe elementele mari; pe un perete ar fi ilizibile. */
 const CU_ETICHETA: TipStructura[] = ['bar', 'dj', 'vip', 'intrare', 'bucatarie', 'piscina']
 
@@ -45,17 +59,24 @@ export function ElementStructura({ element }: { element: Element }) {
 
   const centruX = latime / 2
   const centruY = inaltime / 2
+  const raza = Math.min(latime, inaltime) / 2
 
   return (
     <g transform={`translate(${x} ${y}) rotate(${rotatie} ${centruX} ${centruY})`}>
       {tip === 'planta' ? (
-        <circle
-          cx={centruX}
-          cy={centruY}
-          r={Math.min(latime, inaltime) / 2}
-          className={clasa}
-          opacity={0.85}
-        />
+        <g transform={`translate(${centruX} ${centruY})`} className={clasa} opacity={0.85}>
+          {Array.from({ length: PETALE }, (_, indice) => (
+            <ellipse
+              key={indice}
+              rx={raza * PETALA_LATIME}
+              ry={raza * PETALA_LUNGIME}
+              // Petala se deseneaza in origine, urca pe raza si abia apoi se
+              // roteste: asa axa ei lunga ramane mereu radiala.
+              transform={`rotate(${(indice * 360) / PETALE}) translate(0 ${-raza * PETALA_DISTANTA})`}
+            />
+          ))}
+          <circle r={raza * MIEZ} />
+        </g>
       ) : (
         <rect
           width={latime}
