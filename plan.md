@@ -11,11 +11,64 @@
      SECURITY INVOKER care intorc cate au RAMAS necitite); hartile trecute pe
      tema inchisa; statusul wa 'fara_credite' chiar se scrie. Analiza pe spec
      e INCHISA. -->
-<!-- NEXT_TASK: analiza pe spec e INCHISA — §33 a fost ultimul punct si s-a
-     livrat pe 3 august. Nu mai exista lipsuri cunoscute fata de specificatie.
+<!-- CORECTIE (3 august, a doua verificare): afirmatia „analiza pe spec e
+     inchisa" a fost GRESITA. Prima analiza a verificat la nivel de MODUL
+     („exista Evenimente?"), nu de CERINTA („§28.12 avanseaza ora?"). A doua
+     trecere, pe ~392 de cerinte individuale, a gasit ~55 de goluri: 82%
+     implementat integral. Cand verifici din nou, mergi pe cerinte, nu pe
+     module — altfel obtii acelasi fals „gata".
+
+     NEXT_TASK: cele 7 lipsuri care BLOCHEAZA lansarea, in ordine:
+     1. §28.12 bara orara e inghetata. HartaPage.tsx:134 — `useState` cu
+        initializator lenes, deci `oraAfisata` nu avanseaza NICIODATA. Harta
+        arata sala de la incarcarea paginii si afiseaza fals bannerul
+        „Previzualizare pentru ora X". Spec-ul o numeste critica si obligatorie.
+     2. §49.1 verificarea de email nu e impusa nici in cod, nici in baza —
+        `email_confirmed_at` apare doar in textul spec-ului. Depinde exclusiv de
+        un comutator din dashboard-ul Supabase, care nu e versionat (nu exista
+        supabase/config.toml). Regula 5.
+     3. §10.2 contradictie comerciala: LandingPage.tsx:233 si pricing-section
+        promit „fara taxa de configurare si fara tarif pe masa", iar
+        OnboardingPage.tsx:193 calculeaza real setupTotal = 100 + (mese-50)*2.
+     4. §9.2.7/§47.2 Maintenance Mode aparat doar in React: rezerva_public nu
+        citeste app_settings.maintenance_mode, deci un widget deja incarcat scrie
+        mai departe. Regula 5.
+     5. §22.1 nu exista pagina de Politica de Confidentialitate, desi checkbox-ul
+        GDPR trimite la ea. Expunere juridica la lansare publica.
+     6. §17.1 detectia conflictului Layer1/Layer2 nu exista: enumul
+        `conflict_layer` si ruta din clopotel exista, dar nimic nu calculeaza
+        suprapunerea. O masa poate ramane in zid fara sa afle nimeni.
+     7. §24.7 suspendarea unui cont de staff n-are confirmare —
+        EchipaPage.tsx:256 executa direct pe onCheckedChange.
+
+     DUPA lansare, in ordinea cat de des doare (lista lunga in raportul de
+     verificare): re-aloca/prelungeste lipsesc din panoul mesei (§7.5, §26.3,
+     §28.2) · zoom/pinch/tap-and-hold indisponibile pe tableta (§28.8-9, §32.3)
+     · scaunele nu se deseneaza deloc, desi 4 sectiuni le cer · calendarul n-are
+     indicator de zi plina (§8.1, §25.3) · alocarea meselor pe ospatari lipseste
+     integral, desi e vanduta in Pro Floor (§10.1) · iframe pentru Harta 2D
+     (§8.4) · diacritice lipsa pe texte vizibile, incalca regula 1
+     (types/floor-plan.ts:68-72, OnboardingPage.tsx:39, LayoutApp.tsx:114,144) ·
+     CUI/Nume Firma needitabile dupa onboarding desi signup promite contrariul
+     (§52) · super adminul n-are schimbare de parola sau confirmare la logout
+     (§49.3, §49.9) · PWA fara iconite PNG, neinstalabila pe iPad (§32.4).
+
+     DATORIE INTERNA (Floor Plan Studio, §42 — nu o vede niciun restaurant):
+     Undo/Redo inexistent · adaugare click-then-place in loc de drag-and-drop,
+     model interzis explicit · peretii fara snapping · NU exista Salveaza
+     Draft / Publica, iar mesele se scriu direct in `tables`, deci apar INSTANT
+     la restaurant fara publicare (valoarea `draft` din enum e moarta) ·
+     versionarea contrazice §40.2 in trei feluri · explorer de foldere absent.
+
+     TREI REGULI APARATE DOAR IN INTERFATA (cate o linie de SQL fiecare):
+     `ai_rezultat` e citibil de manager prin REST — lipseste
+     `revoke select (ai_rezultat)` (§14.3) · emailul poate fi facut obligatoriu
+     printr-un PATCH, protejeaza_camp_telefon acopera doar telefonul (§16.1) ·
+     Maintenance Mode (punctul 4).
+
      NU Stripe — §14 il exclude din v1.
 
-     Ce ramane, gasit pe drum, in ordinea utilitatii (niciunul nu e cerut de spec):
+     Ce ramane in plus, gasit pe drum (niciunul nu e cerut de spec):
      1. candDinISO e duplicat litera cu litera in ambele clopotele si foloseste
         Math.round: 90 de minute se afiseaza „acum 2 h". Extras in lib/timp.ts
         + teste pe granite (59/60/89/90/1439/1440), cu `acum` injectabil.
@@ -74,7 +127,7 @@
 <!-- BRANCH: main (NU master) -->
 
 **Data creării:** 2026-07-29
-**Status:** analiza pe spec inchisa — nicio lipsa cunoscuta fata de specificatie
+**Status:** ~82% din cerintele spec-ului implementate; 7 lipsuri blocheaza lansarea
 **Model:** Haiku 4.5 (context <100k pe sesiune) | Opus 5 / Fable 5 (faze complexe)
 **Ultima sesiune:** 2026-08-03 — §33 (citit per utilizator), hartile pe tema inchisa
 **GitHub:** https://github.com/stefanvladut661/tablex-v1 (synced)
