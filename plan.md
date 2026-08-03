@@ -18,6 +18,51 @@
      implementat integral. Cand verifici din nou, mergi pe cerinte, nu pe
      module — altfel obtii acelasi fals „gata".
 
+     CERERE NOUA (3 august, seara) — Floor Plan Studio, reproiectare. LIVRAT
+     din ea doar punctul D. Restul, in ordinea in care a cerut-o:
+
+     A. StudioPage: doua sectiuni, „Queue" si „Projects". Queue = DOAR cereri
+        noi, pentru recunoastere rapida. Cand o cerere e preluata in lucru,
+        trece in Projects.
+        Actiuni in Queue: Genereaza AI · Preia in lucru (deschide builderul) ·
+        Respinge (panou cu motiv OBLIGATORIU).
+        Coloane in Projects: data solicitarii + data preluarii · restaurant
+        (nume + link, ca acum) · status plata · status proiect (in lucru /
+        publicat + data publicarii) · Editor (deschide builderul).
+        In AMBELE: datele de contact ale Adminului care a facut cererea, subtil
+        dar vizibile — pentru cand trebuie sunat repede.
+
+     B. In builder dispar butonul „Zona noua" si dropdown-ul de alegere a
+        zonei. Adminul specifica zona ceruta la cerere (etaj 1, terasa, orice
+        nume), iar FIECARE ZONA E UN PROIECT IN SINE — deci nu are ce alege.
+        Atentie: schimbarea asta atinge modelul de date, nu doar interfata
+        (azi zonele se creeaza din builder, iar cererea nu poarta zona ceruta
+        ca entitate proprie).
+
+     C. Builder, layout nou. Tot ecranul e zona de lucru, mai putin bara de sus
+        (inapoi in Super Admin · titlu · nota de salvare automata). Toate
+        panourile devin OVERLAY peste canvas, usor transparente:
+          - stanga: paleta de obiecte (mese, pereti, zone, text etc.), cu
+            DRAG AND DROP in canvas;
+          - dreapta: proprietatile elementului selectat, specifice tipului;
+          - sus, subtil: slider de zoom manual, opacitate schita, Genereaza AI,
+            Importa geometrie.
+        Plus: buton auto-centrare si auto-zoom 100% care sa NU fie bugged;
+        toggle de grid pentru snapping si aliniere pixel-perfect.
+        BUG DE REPARAT: la drop, elementul revine o secunda in pozitia veche si
+        abia apoi se „teleporteaza" — se vede ca un lag.
+        DESIGNUL ELEMENTELOR: C:\Users\Vladut\Favorites\Downloads\elemente\elemente\
+        (masa cu 6 scaune.png, planta.png) — silueta plata monocroma, vedere de
+        sus, scaune ca cercuri cu spatar in arc. Adoptarea lor rezolva si golul
+        de spec „scaunele nu se deseneaza niciodata" (§8.4, §9.2.2, §28.5,
+        §42.7 — patru sectiuni cer acelasi lucru).
+
+     D. LIVRAT (commit 2b35d4e): Adminul muta si grupeaza mese, nu le mai
+        adauga si nu le mai sterge. Impus in baza, politica devenita FOR UPDATE.
+
+     E. Landing: cand Adminul e deja autentificat, butonul „Autentificare" sa
+        devina „Deschide admin", iar starea de conectat sa se vada.
+
      STARE (3 august, seara): din cele 7 blocante, CINCI sunt livrate —
      1 (bara orara), 3 (pretul de pe landing), 4 (mentenanta in baza),
      5 (pagina de confidentialitate), 7 (confirmare la suspendare).
