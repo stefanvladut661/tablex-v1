@@ -23,6 +23,13 @@
 -- pending si abia mai tarziu e preluata. La fel, o cerere republicata isi
 -- pastreaza prima data de publicare doar daca nu suprascriem orbeste; de aceea
 -- stampilam doar cand valoarea lipseste.
+--
+-- ATENTIE, corectat de migratia 20260909090000: versiunea de mai jos DOAR
+-- completeaza cand valoarea e NULL — nu respinge una trimisa de client. Iar
+-- protejeaza_status_cerere_fp nu acopera coloanele astea noi, deci politica
+-- floor_plan_requests_personal lasa Adminul sa scrie `preluat_la` cu orice data
+-- pe propria cerere. Promisiunea „nu pot fi falsificate" a devenit adevarata
+-- abia in migratia urmatoare, care rescrie trigger-ul.
 
 alter table public.floor_plan_requests
   add column if not exists motiv_respingere text,

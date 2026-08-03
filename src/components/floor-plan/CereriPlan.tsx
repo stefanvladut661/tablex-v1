@@ -148,6 +148,14 @@ export function CereriPlan({ restaurantId }: { restaurantId: string }) {
                     trimisă {new Date(cerere.created_at).toLocaleDateString('ro-RO')}
                     {cerere.schita_image_url ? ' · cu schiță' : ''}
                   </p>
+                  {/* Motivul respingerii e singurul lucru care face refuzul
+                      util: fara el, Adminul stie ca cererea a picat, dar nu ce
+                      sa schimbe ca sa o retrimita. Nu se trunchiaza. */}
+                  {cerere.status === 'respins' && cerere.motiv_respingere && (
+                    <p className="mt-1 text-xs text-foreground">
+                      Motivul respingerii: {cerere.motiv_respingere}
+                    </p>
+                  )}
                 </div>
                 <span
                   className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${CLASE_STATUS[cerere.status]}`}

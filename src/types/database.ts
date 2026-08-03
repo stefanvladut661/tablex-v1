@@ -621,7 +621,10 @@ export type Database = {
           created_at: string
           descriere: string | null
           id: string
+          motiv_respingere: string | null
+          preluat_la: string | null
           procesat_de: string | null
+          publicat_la: string | null
           restaurant_id: string
           schita_image_url: string | null
           status: Database["public"]["Enums"]["fp_request_status"]
@@ -635,7 +638,10 @@ export type Database = {
           created_at?: string
           descriere?: string | null
           id?: string
+          motiv_respingere?: string | null
+          preluat_la?: string | null
           procesat_de?: string | null
+          publicat_la?: string | null
           restaurant_id: string
           schita_image_url?: string | null
           status?: Database["public"]["Enums"]["fp_request_status"]
@@ -649,7 +655,10 @@ export type Database = {
           created_at?: string
           descriere?: string | null
           id?: string
+          motiv_respingere?: string | null
+          preluat_la?: string | null
           procesat_de?: string | null
+          publicat_la?: string | null
           restaurant_id?: string
           schita_image_url?: string | null
           status?: Database["public"]["Enums"]["fp_request_status"]
