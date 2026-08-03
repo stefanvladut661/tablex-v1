@@ -120,3 +120,44 @@ export function incadrareContinut(
 
   return { x, y, latime, inaltime }
 }
+
+/** Transformarea aplicata continutului canvasului: `translate(x y) scale(s)`. */
+export type Vedere = { scara: number; x: number; y: number }
+
+/**
+ * Vederea care aduce `dreptunghi` in mijlocul viewBox-ului, la cea mai mare
+ * scara la care incape intreg — adica butonul de auto-centrare.
+ *
+ * Sta aici, si nu in hook, fiindca e exact genul de aritmetica ce se strica
+ * TACUT: o inmultire uitata nu arunca nimic, doar aseaza planul cu jumatate de
+ * ecran alaturi, iar cine se uita crede ca a pierdut mesele.
+ *
+ * Deducerea translatiei: un punct `p` al continutului ajunge la `x + p*scara`.
+ * Vrem ca marginea stanga a dreptunghiului sa cada la jumatatea spatiului
+ * ramas, deci `x + dreptunghi.x*scara = (viewBox.latime - dreptunghi.latime*scara) / 2`.
+ */
+export function vedereIncadrata(
+  dreptunghi: Dreptunghi,
+  viewBox: { latime: number; inaltime: number },
+  limite: { min: number; max: number } = { min: 0.4, max: 4 },
+): Vedere {
+  const masuri = [dreptunghi.x, dreptunghi.y, dreptunghi.latime, dreptunghi.inaltime, viewBox.latime, viewBox.inaltime]
+  const utilizabil =
+    masuri.every((masura) => Number.isFinite(masura)) &&
+    dreptunghi.latime > 0 &&
+    dreptunghi.inaltime > 0 &&
+    viewBox.latime > 0 &&
+    viewBox.inaltime > 0
+  // Fara masuri valide nu inventam o incadrare: lasam vederea neutra, adica
+  // exact canvasul asa cum a fost desenat.
+  if (!utilizabil) return { scara: 1, x: 0, y: 0 }
+
+  const potrivita = Math.min(viewBox.latime / dreptunghi.latime, viewBox.inaltime / dreptunghi.inaltime)
+  const scara = Math.min(limite.max, Math.max(limite.min, potrivita))
+
+  return {
+    scara,
+    x: (viewBox.latime - dreptunghi.latime * scara) / 2 - dreptunghi.x * scara,
+    y: (viewBox.inaltime - dreptunghi.inaltime * scara) / 2 - dreptunghi.y * scara,
+  }
+}

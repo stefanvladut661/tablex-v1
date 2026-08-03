@@ -84,7 +84,7 @@ export function razaScaun(latime: number, inaltime: number): number {
  *
  * Nu e acelasi lucru cu plafonul din §17.4: acela e o regula de business, asta e
  * o constatare geometrica. O masa de 40x40 cu 12 locuri e valida in baza, dar pe
- * hartă cele 12 cercuri s-ar suprapune.
+ * harta cele 12 cercuri s-ar suprapune.
  */
 function scauneCareIncap(masa: MasaCuScaune, raza: number, departare: number): number {
   const { latime, inaltime, forma } = masa

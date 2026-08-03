@@ -22,10 +22,11 @@ const CLASE: Record<TipStructura, string> = {
  * floarea incape in dreptunghiul primit, oricat de mare ar fi elementul.
  */
 const PETALE = 5
-const PETALA_DISTANTA = 0.68
-const PETALA_LUNGIME = 0.32
-const PETALA_LATIME = 0.22
-const MIEZ = 0.24
+const PETALA_DISTANTA = 0.6
+const PETALA_LUNGIME = 0.4
+const PETALA_LATIME = 0.24
+/** Miezul e mai lat decat capatul interior al petalei, ca floarea sa fie legata. */
+const MIEZ = 0.26
 
 /** Etichetele se scriu pe elementele mari; pe un perete ar fi ilizibile. */
 const CU_ETICHETA: TipStructura[] = ['bar', 'dj', 'vip', 'intrare', 'bucatarie', 'piscina']

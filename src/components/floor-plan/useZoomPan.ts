@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as EvenimentPointer } from 'react'
 
-const SCARA_MIN = 0.4
-const SCARA_MAX = 4
+import { vedereIncadrata, type Dreptunghi, type Vedere } from '@/lib/geometrie-plan'
+
+export const SCARA_MIN = 0.4
+export const SCARA_MAX = 4
 const PAS = 1.25
 
 type Punct = { x: number; y: number }
-type Vedere = { scara: number; x: number; y: number }
 
 function limiteaza(scara: number) {
   return Math.min(SCARA_MAX, Math.max(SCARA_MIN, scara))
@@ -182,6 +183,50 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
 
   const mareste = useCallback(() => scaleaza(PAS), [scaleaza])
   const micsoreaza = useCallback(() => scaleaza(1 / PAS), [scaleaza])
+
+  /** Dimensiunile viewBox-ului — spatiul in care traieste toata aritmetica. */
+  const masuraViewBox = useCallback(() => {
+    const svg = refSvg.current
+    if (!svg) return null
+    return { latime: svg.viewBox.baseVal.width, inaltime: svg.viewBox.baseVal.height }
+  }, [])
+
+  /**
+   * Sare la o scara ANUME (slider-ul manual, butonul „100%"), pastrand fix
+   * centrul viewport-ului. Fara ancora, trecerea de la 250% la 100% ar arunca
+   * privirea in coltul stanga-sus — exact „saritura" pe care proprietarul o
+   * reclama la butoanele vechi.
+   */
+  const laScara = useCallback(
+    (scaraCeruta: number) => {
+      if (!interactiv) return
+      const masura = masuraViewBox()
+      const centru = masura ? { x: masura.latime / 2, y: masura.inaltime / 2 } : { x: 0, y: 0 }
+      setVedere((v) => {
+        const scaraNoua = limiteaza(scaraCeruta)
+        if (scaraNoua === v.scara) return v
+        const raport = scaraNoua / v.scara
+        return {
+          scara: scaraNoua,
+          x: centru.x - (centru.x - v.x) * raport,
+          y: centru.y - (centru.y - v.y) * raport,
+        }
+      })
+    },
+    [interactiv, masuraViewBox],
+  )
+
+  /** Auto-centrare: aduce dreptunghiul dat exact in mijloc, cat de mare incape. */
+  const incadreaza = useCallback(
+    (dreptunghi: Dreptunghi) => {
+      if (!interactiv) return
+      const masura = masuraViewBox()
+      if (!masura) return
+      setVedere(vedereIncadrata(dreptunghi, masura, { min: SCARA_MIN, max: SCARA_MAX }))
+    },
+    [interactiv, masuraViewBox],
+  )
+
   /** Revine la incadrarea SALVATA, nu la 1: aia e „normalul" planului. */
   const reseteaza = useCallback(
     () => setVedere({ scara: limiteaza(scaraInitiala), x: 0, y: 0 }),
@@ -202,6 +247,8 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
     vedere,
     mareste,
     micsoreaza,
+    laScara,
+    incadreaza,
     reseteaza,
     deplaseaza,
     handlers: {

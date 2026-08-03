@@ -1,11 +1,24 @@
-import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react'
 import { MaximizeIcon, MinusIcon, PlusIcon } from 'lucide-react'
 
 import { ElementStructura } from '@/components/floor-plan/ElementStructura'
 import { Masa } from '@/components/floor-plan/Masa'
 import { useZoomPan } from '@/components/floor-plan/useZoomPan'
 import { Button } from '@/components/ui/button'
-import { aliniazaLaGrid, inCanvas as limiteazaInCanvas, pozitieFinala } from '@/lib/geometrie-plan'
+import {
+  incadrareContinut,
+  inCanvas as limiteazaInCanvas,
+  pozitieFinala,
+} from '@/lib/geometrie-plan'
 import { cn } from '@/lib/utils'
 import type {
   ElementStructura as Element,
@@ -17,6 +30,26 @@ import type {
 /** Se editeaza un singur strat odata — altfel testul de lovire e ambiguu:
  *  mesele se deseneaza PESTE structura si i-ar fura mereu clicul. */
 export type Strat = 'mese' | 'structura'
+
+/**
+ * Tipul MIME al obiectelor trase din paleta pe canvas (§42.4). Propriu
+ * aplicatiei, nu `text/plain`: asa o bucata de text trasa din alt tab nu poate
+ * ateriza pe plan ca „perete".
+ */
+export const TIP_TRANSFER_OBIECT = 'application/x-tablex-obiect'
+
+/**
+ * Comenzile de vedere, raportate in sus. Zoom-ul traieste in acest hook, dar
+ * butoanele lui stau in bara plutitoare a paginii — deci componenta le ofera,
+ * iar pagina le apasa.
+ */
+export type ComenziVedere = {
+  scara: number
+  /** Sare la o scara anume, pastrand centrul (slider-ul manual, „100%"). */
+  laScara: (scara: number) => void
+  /** Auto-centrare: incadreaza mesele si structura in ecran. */
+  incadreazaContinut: () => void
+}
 
 type Props = {
   zona: ZonaHarta
@@ -58,9 +91,21 @@ type Props = {
   structuraSelectata: number | null
   onSelecteazaStructura: (indice: number | null) => void
   onMutaStructura: (indice: number, x: number, y: number) => void
-  /** Cand e activ, un clic pe canvas gol adauga in stratul activ. */
-  modAdaugare?: boolean
-  onAdauga?: (x: number, y: number) => void
+  /**
+   * Alinierea la grid, PORNITA implicit. Cand e oprita, obiectele raman exact
+   * unde le lasi — pentru colturile pe care un pas de 20 nu le prinde niciodata.
+   * Priveste doar comiterea gestului: previzualizarea a fost mereu libera.
+   */
+  snapLaGrid?: boolean
+  /**
+   * Un obiect din paleta a fost lasat pe canvas (§42.4 interzice explicit
+   * modelul „armezi butonul, apoi dai clic pe plan"). Punctul e in coordonatele
+   * CONTINUTULUI, deci gata de folosit; alinierea si limitarea le face
+   * apelantul, care stie ce dimensiuni are obiectul.
+   */
+  onDropObiect?: (obiect: string, punct: { x: number; y: number }) => void
+  /** Primeste comenzile de vedere, ca butoanele sa poata sta in afara canvasului. */
+  onVedere?: (comenzi: ComenziVedere) => void
   /**
    * Zoom-ul interactiv, OPRIT implicit. Adminul si ospatarul vad planul la
    * incadrarea fixata de echipa (`zones.zoom_implicit`) — aceeasi pentru toti,
@@ -126,8 +171,9 @@ export function EditorZona({
   structuraSelectata,
   onSelecteazaStructura,
   onMutaStructura,
-  modAdaugare = false,
-  onAdauga,
+  snapLaGrid = true,
+  onDropObiect,
+  onVedere,
   permiteZoom = false,
   fundal = null,
   overlayAI = null,
@@ -137,11 +183,11 @@ export function EditorZona({
   // pointerdown-ul e deja impartit intre tragerea meselor si a rezervarilor,
   // asa ca vederea se trage doar cand gestul porneste pe canvas gol.
   const zoomSalvat = (zona as { zoom_implicit?: number }).zoom_implicit ?? 1
-  const { refSvg, vedere, mareste, micsoreaza, reseteaza, deplaseaza } = useZoomPan(
-    zoomSalvat,
-    permiteZoom,
-  )
+  const { refSvg, vedere, mareste, micsoreaza, laScara, incadreaza, reseteaza, deplaseaza } =
+    useZoomPan(zoomSalvat, permiteZoom)
   const idGrid = useId()
+  /** Un obiect din paleta e purtat peste canvas: aratam unde va ateriza. */
+  const [tragereDeasupra, setTragereDeasupra] = useState(false)
 
   // Sursa de adevar a gestului e ref-ul, nu starea: la o tragere scurta, cu un
   // singur pointermove, setState nu e inca vizibil in handler si gestul ar fi
@@ -193,10 +239,6 @@ export function EditorZona({
   // Aritmetica de aliniere si limitare sta in lib/geometrie-plan.ts, ca sa fie
   // testabila fara DOM — vezi comentariul de acolo.
   const canvas = { latime: zona.canvas_latime, inaltime: zona.canvas_inaltime }
-
-  function aliniaza(valoare: number): number {
-    return aliniazaLaGrid(valoare, zona.grid_marime)
-  }
 
   function inCanvas(latime: number, inaltime: number, x: number, y: number) {
     return limiteazaInCanvas({ latime, inaltime }, canvas, { x, y })
