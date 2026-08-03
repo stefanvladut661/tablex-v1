@@ -201,7 +201,7 @@ const INTREBARI: Record<string, IntrebareFaq[]> = {
     {
       intrebare: 'Cine îmi desenează planul sălii?',
       raspuns:
-        'Tu trimiți o schiță sau o poză a sălii, iar echipa TableX construiește planul 2D și îl publică în contul tău. Nu trebuie să desenezi nimic și nu se plătește separat: e inclus în abonamentul Pro.',
+        'Tu trimiți o schiță sau o poză a sălii, iar echipa TableX construiește planul 2D și îl publică în contul tău. Nu trebuie să desenezi nimic. Desenarea se plătește o singură dată, la configurare, separat de abonament — suma exactă se calculează după numărul de mese și ți se arată la înregistrare, înainte să confirmi ceva.',
     },
   ],
   functionalitati: [
@@ -230,7 +230,7 @@ const INTREBARI: Record<string, IntrebareFaq[]> = {
     {
       intrebare: 'Planul 2D al sălii costă separat?',
       raspuns:
-        'Nu. Desenarea planului de către echipa TableX intră în abonamentul Pro, fără taxă de configurare și fără tarif pe masă.',
+        'Da, o singură dată. Abonamentul Pro acoperă folosirea hărții; desenarea inițială a sălii de către echipa TableX are o taxă de configurare, plus un tarif pe masă peste un anumit număr de mese. Totul se calculează și se afișează la înregistrare, înainte de confirmare — nu apare nimic pe factură fără să fi văzut suma întâi.',
     },
   ],
   date: [
@@ -594,6 +594,11 @@ export function LandingPage() {
                 <li>
                   <Link to={RUTE.signup} className="hover:text-foreground">
                     Cont nou
+                  </Link>
+                </li>
+                <li>
+                  <Link to={RUTE.confidentialitate} className="hover:text-foreground">
+                    Confidențialitate
                   </Link>
                 </li>
               </ul>

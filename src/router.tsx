@@ -59,6 +59,10 @@ export const router = createBrowserRouter([
     lazy: pagina(() => import('@/pages/MentenantaPage'), 'MentenantaPage'),
   },
   { path: RUTE.demoHarta, lazy: pagina(() => import('@/pages/DemoHartaPage'), 'DemoHartaPage') },
+  {
+    path: RUTE.confidentialitate,
+    lazy: pagina(() => import('@/pages/ConfidentialitatePage'), 'ConfidentialitatePage'),
+  },
   // Widgetul public de rezervare, pe slug-ul restaurantului.
   {
     path: '/r/:slug',

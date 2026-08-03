@@ -7,6 +7,7 @@ import { ZapIcon } from 'lucide-react'
 
 import { BlocajPlan } from '@/components/BlocajPlan'
 import { BaraOrara } from '@/components/floor-plan/BaraOrara'
+import { useOraCurenta } from '@/hooks/useOraCurenta'
 import { DialogWalkInHarta } from '@/components/rezervari/DialogWalkInHarta'
 import { CereriPlan } from '@/components/floor-plan/CereriPlan'
 import { EditorZona } from '@/components/floor-plan/EditorZona'
@@ -131,10 +132,22 @@ export function HartaPage() {
     [zi, restaurant?.program_standard, fus],
   )
 
-  const [oraAfisata, setOraAfisata] = useState(() => {
-    const acum = oraZecimala(new Date(), fus)
-    return Math.min(Math.max(acum, program.deLa), program.panaLa)
-  })
+  /**
+   * §28.12 — ora afisata e DERIVATA, nu stocata.
+   *
+   * Pana acum sta intr-un useState initializat o singura data, deci harta
+   * ramanea pe ora la care fusese deschisa pagina: tableta de la receptie arata
+   * sala de acum o ora si, dupa primul minut, aprindea si un banner fals de
+   * previzualizare, desi nimeni nu atinsese nimic. Statusul meselor e tot
+   * produsul, si era invechit prin constructie.
+   *
+   * Acum se tine doar DECIZIA omului — o ora fixata, sau nimic. „Nimic"
+   * inseamna „urmeaza prezentul", iar prezentul se reactualizeaza singur.
+   */
+  const acum = useOraCurenta(fus)
+  const oraLive = Math.min(Math.max(acum, program.deLa), program.panaLa)
+  const [oraFixata, setOraFixata] = useState<number | null>(null)
+  const oraAfisata = oraFixata ?? oraLive
   const [zonaId, setZonaId] = useState<string | null>(null)
   const [selectata, setSelectata] = useState<Rezervare | null>(null)
   const [masaLibera, setMasaLibera] = useState<{ zoneId: string; tableId: string } | null>(null)
@@ -258,9 +271,10 @@ export function HartaPage() {
         {/* §28.12 — bara de sloturi, pe toata latimea, deasupra canvasului. */}
         <BaraOrara
           program={program}
-          fus={fus}
           oraAfisata={oraAfisata}
-          onSchimba={setOraAfisata}
+          oraLive={oraLive}
+          urmarestePrezentul={oraFixata === null}
+          onSchimba={setOraFixata}
         />
 
         {seIncarca ? (

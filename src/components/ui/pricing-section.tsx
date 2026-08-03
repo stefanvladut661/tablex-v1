@@ -16,8 +16,13 @@ import { cn } from '@/lib/utils'
  * da planurile deja calculate, ca sa poata fi montata si intr-un demo, si peste
  * datele reale din app_settings.
  *
- * Model de facturare: exclusiv lunar. Nu exista plata anuala si nici servicii
- * facturate separat — configurarea planului 2D intra in abonamentul Pro.
+ * Model de facturare: abonamentul e exclusiv lunar, fara plata anuala. Exista
+ * insa si o taxa UNICA de configurare pentru desenarea planului 2D (§10.2),
+ * calculata dupa numarul de mese si aratata in onboarding inainte de
+ * confirmare. Comentariul de aici spunea pana acum ca nu exista servicii
+ * facturate separat, iar textul de pe landing repeta minciuna, desi calculatorul
+ * din onboarding chiar incasa. Preturile reale stau in app_settings; nu le
+ * rescrie de mana nicaieri.
  */
 
 export interface PlanPreturi {

@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react'
 import { RotateCcwIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import type { IntervalProgram } from '@/lib/program'
-import { oraZecimala } from '@/lib/timp'
 
 /** Un slot la 30 de minute: destul de fin ca sa prinzi un schimb de tura. */
 const PAS_ORE = 0.5
@@ -24,33 +22,32 @@ function formateazaOra(oraZecim: number): string {
  * oameni?". Fara bara, raspunsul cere deschiderea calendarului si socoteala in
  * cap peste durate si buffere.
  *
- * Ora curenta se reactualizeaza singura din minut in minut. Cat timp esti pe
- * „acum", harta te urmeaza; din clipa in care alegi alta ora, nu se mai misca
- * sub tine — altfel previzualizarea ar sari inapoi in mijlocul unei decizii.
+ * Cat timp esti pe „acum", harta te urmeaza; din clipa in care alegi alta ora,
+ * nu se mai misca sub tine — altfel previzualizarea ar sari inapoi in mijlocul
+ * unei decizii.
+ *
+ * Bara NU-si mai tine propriul ceas. „Acum" vine de sus, din acelasi hook din
+ * care il ia si harta: cand fiecare si-l calcula singur, cele doua divergeau
+ * dupa un minut si bara declara „previzualizare" o harta pe care n-o atinsese
+ * nimeni. La fel, „esti pe prezent" nu se mai deduce comparand numere in
+ * virgula mobila, ci se stie: `urmarestePrezentul` e adevarat exact cat timp
+ * nu s-a fixat nicio ora.
  */
 export function BaraOrara({
   program,
-  fus,
   oraAfisata,
+  oraLive,
+  urmarestePrezentul,
   onSchimba,
 }: {
   program: IntervalProgram
-  fus: string
   oraAfisata: number
-  onSchimba: (ora: number) => void
+  /** Ora reala, acum, deja incadrata in programul zilei. */
+  oraLive: number
+  urmarestePrezentul: boolean
+  /** `null` inseamna „revino la acum si urmareste-l mai departe". */
+  onSchimba: (ora: number | null) => void
 }) {
-  const [acum, setAcum] = useState(() => oraZecimala(new Date(), fus))
-
-  useEffect(() => {
-    const id = setInterval(() => setAcum(oraZecimala(new Date(), fus)), 60_000)
-    return () => clearInterval(id)
-  }, [fus])
-
-  const oraLive = Math.min(Math.max(acum, program.deLa), program.panaLa)
-  // Toleranta de o secunda: comparatia pe numere in virgula mobila nu are voie
-  // sa decida daca esti „pe acum" sau in previzualizare.
-  const pePrezent = Math.abs(oraAfisata - oraLive) < 1 / 3600
-
   const sloturi: number[] = []
   for (let o = Math.floor(program.deLa); o <= program.panaLa; o += PAS_ORE) sloturi.push(o)
 
@@ -88,7 +85,7 @@ export function BaraOrara({
         })}
       </div>
 
-      {!pePrezent && (
+      {!urmarestePrezentul && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-status-expirare bg-status-expirare-soft px-3 py-2">
           <p className="text-sm">
             <span className="font-medium">Previzualizare pentru ora {formateazaOra(oraAfisata)}</span>
@@ -97,7 +94,7 @@ export function BaraOrara({
               — mesele arată cum vor fi atunci, nu cum sunt acum.
             </span>
           </p>
-          <Button size="xs" variant="outline" onClick={() => onSchimba(oraLive)}>
+          <Button size="xs" variant="outline" onClick={() => onSchimba(null)}>
             <RotateCcwIcon className="size-3.5" />
             Revino la acum
           </Button>

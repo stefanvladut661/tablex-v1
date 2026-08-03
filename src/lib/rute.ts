@@ -16,6 +16,8 @@ export const RUTE = {
   mentenanta: '/mentenanta',
   /** Demonstratie publica a hartii 2D, cu date fictive. */
   demoHarta: '/demo',
+  /** §22.1 — documentul spre care trimit bifele de consimtamant. */
+  confidentialitate: '/confidentialitate',
 
   /**
    * Panoul restaurantului (Manager / Ospatar). Radacina lui e pagina Acasa

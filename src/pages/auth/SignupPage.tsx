@@ -186,7 +186,18 @@ export function SignupPage() {
               )}
             />
             <Label htmlFor="termeni" className="text-sm font-normal leading-snug">
-              Sunt de acord cu termenii și cu prelucrarea datelor conform GDPR.
+              Sunt de acord cu termenii și cu{' '}
+              {/* §22.1 — bifa trimitea la un document care nu exista. Un
+                  consimtamant pentru ceva ce nu se poate citi nu e consimtamant. */}
+              <Link
+                to={RUTE.confidentialitate}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                Politica de Confidențialitate
+              </Link>
+              .
             </Label>
           </div>
           {form.formState.errors.termeni && (

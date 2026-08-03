@@ -69,6 +69,16 @@ export function EchipaPage() {
   const invitatii = useInvitatii(restaurantId)
   const { invita, anuleaza, comutaActiv, schimbaRol, sterge } = useMutatiiEchipa(restaurantId)
   const [deSters, setDeSters] = useState<{ id: string; nume: string } | null>(null)
+  /**
+   * §24.7 — suspendarea cere confirmare, reactivarea nu.
+   *
+   * Comutatorul executa pana acum direct la atingere. Pe o tableta tinuta in
+   * mana, in sala plina, un deget alunecat scotea ospatarul din tura in mijlocul
+   * serviciului, iar el afla abia cand nu mai putea deschide o masa. Repunerea
+   * accesului nu strica nimic, deci nu merita o intrebare in plus — se confirma
+   * doar directia care doare.
+   */
+  const [deSuspendat, setDeSuspendat] = useState<{ id: string; nume: string } | null>(null)
   /** §49.8 — parola generata se arata O data, apoi dispare cu dialogul. */
   const [parolaNoua, setParolaNoua] = useState<{ ospatar: string; parola: string } | null>(null)
   const [resetInLucru, setResetInLucru] = useState<string | null>(null)
@@ -257,12 +267,19 @@ export function EchipaPage() {
                               checked={membru.activ}
                               disabled={esteEu}
                               aria-label={`Acces pentru ${membru.email}`}
-                              onCheckedChange={(activ) =>
+                              onCheckedChange={(activ) => {
+                                if (!activ) {
+                                  setDeSuspendat({
+                                    id: membru.id,
+                                    nume: membru.nume ?? membru.email ?? 'acest cont',
+                                  })
+                                  return
+                                }
                                 comutaActiv.mutate(
-                                  { id: membru.id, activ },
+                                  { id: membru.id, activ: true },
                                   { onError: (eroare) => notificari.eroare(eroare) },
                                 )
-                              }
+                              }}
                             />
                             {/* §49.8 — parola noua se genereaza pe server si se
                                 arata o singura data; managerul i-o dicteaza. */}
@@ -424,6 +441,44 @@ export function EchipaPage() {
             </div>
             <DialogFooter>
               <Button onClick={() => setParolaNoua(null)}>Am notat-o</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {deSuspendat && (
+        <Dialog open onOpenChange={(deschis) => !deschis && setDeSuspendat(null)}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Oprești accesul pentru {deSuspendat.nume}?</DialogTitle>
+              <DialogDescription>
+                Se deconectează imediat și nu mai poate deschide mese sau rezervări. Contul rămâne,
+                cu tot istoricul — îi poți reda accesul oricând, din același comutator.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeSuspendat(null)}>
+                Renunță
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={comutaActiv.isPending}
+                onClick={() =>
+                  comutaActiv.mutate(
+                    { id: deSuspendat.id, activ: false },
+                    {
+                      onSuccess: () => {
+                        notificari.succes('Accesul a fost oprit.')
+                        setDeSuspendat(null)
+                      },
+                      onError: (eroare) => notificari.eroare(eroare),
+                    },
+                  )
+                }
+              >
+                {comutaActiv.isPending && <Loader2Icon className="animate-spin" />}
+                Oprește accesul
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
