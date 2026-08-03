@@ -259,6 +259,22 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Banda de social proof de sub hero. Durata si gap-ul vin din clasele puse
+     pe instanta ([--duration:38s]), ca sa poata merge un rand mai incet decat
+     celalalt; valorile implicite sunt in componenta Marquee. */
+  --animate-marquee: marquee var(--duration) linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* 100% din latimea unui set + gap-ul dintre seturi: exact cat trebuie ca
+       setul urmator sa ajunga pe pozitia celui iesit. */
+    transform: translateX(calc(-100% - var(--gap)));
+  }
 }
 
 @layer base {

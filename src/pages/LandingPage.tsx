@@ -11,6 +11,7 @@ import {
   MousePointerClickIcon,
   PencilRulerIcon,
   PhoneCallIcon,
+  SmartphoneIcon,
   UserPlusIcon,
   UsersIcon,
   ZapIcon,
@@ -26,6 +27,7 @@ import { FAQ, type IntrebareFaq } from '@/components/ui/faq-tabs'
 import { Hero } from '@/components/hero/Hero'
 import { Navbar } from '@/components/hero/Navbar'
 import {
+  ComparatieMetode,
   DarkBand,
   FeatureRow,
   ProblemCards,
@@ -33,10 +35,12 @@ import {
   SectionHeading,
   TrustChips,
   PILULA,
+  type PerechieComparatie,
   type Problema,
   type RandFunctionalitate,
   type Testimonial,
 } from '@/components/ui/landing-blocks'
+import { SocialProof, type RecenzieScurta } from '@/components/ui/social-proof'
 import { PricingSection, type PlanPreturi } from '@/components/ui/pricing-section'
 import { StepsSection, type PasFlux } from '@/components/ui/steps-section'
 import { TimelineContent } from '@/components/ui/timeline-animation'
@@ -47,6 +51,55 @@ import { RUTE } from '@/lib/rute'
 
 /** Preturile din app_settings sunt numerice, fara moneda. Un singur loc. */
 const MONEDA = '€'
+
+/**
+ * ATENTIE — continut de inlocuit inainte de lansare, la fel ca TESTIMONIALE.
+ * Sunt substitute de asezare in pagina, nu clienti reali. O recenzie inventata
+ * cu nume si stele e o afirmatie comerciala falsa, nu un lorem ipsum: nu urca
+ * pagina in productie cu randurile astea.
+ */
+const RECENZII: RecenzieScurta[] = [
+  {
+    nume: 'Nume client',
+    locatie: 'Restaurant, oraș',
+    text: 'Substitut — ce s-a schimbat concret de cand foloseste TableX, in cuvintele lui.',
+  },
+  {
+    nume: 'Nume client',
+    locatie: 'Bistro, oraș',
+    text: 'Substitut — de preferat despre rezervarile duble care au disparut.',
+  },
+  {
+    nume: 'Nume client',
+    locatie: 'Terasă, oraș',
+    text: 'Substitut — de preferat de la o locatie cu mai multe zone sau cu terasa.',
+  },
+  {
+    nume: 'Nume client',
+    locatie: 'Pub, oraș',
+    text: 'Substitut — despre cum arata serviciul de vineri seara acum.',
+  },
+  {
+    nume: 'Nume client',
+    locatie: 'Braserie, oraș',
+    text: 'Substitut — despre walk-in si lista de asteptare la ora de varf.',
+  },
+  {
+    nume: 'Nume client',
+    locatie: 'Trattoria, oraș',
+    text: 'Substitut — despre harta 2D si cat de repede se vede ce e liber.',
+  },
+  {
+    nume: 'Nume client',
+    locatie: 'Cafenea, oraș',
+    text: 'Substitut — despre timpul castigat de la telefon in fiecare zi.',
+  },
+  {
+    nume: 'Nume client',
+    locatie: 'Restaurant, oraș',
+    text: 'Substitut — despre ce a insemnat mutarea de pe agenda de hartie.',
+  },
+]
 
 const PROBLEME: Problema[] = [
   {
@@ -66,45 +119,68 @@ const PROBLEME: Problema[] = [
   },
 ]
 
+/**
+ * Comparatia se tine de ce face produsul, nu de cifre.
+ * Fara procente inventate („reduce no-show-ul cu 80%"): n-avem masuratoare in
+ * spate, iar o cifra ratunda si nesustinuta e primul lucru pe care un
+ * proprietar de restaurant il verifica si nu-l gaseste.
+ */
+const PERECHI_COMPARATIE: PerechieComparatie[] = [
+  {
+    inainte: 'Pierzi clienți fiindcă nu răspunde nimeni la telefon la ora de vârf.',
+    dupa: 'Clientul rezervă singur, de pe telefonul lui, prin widgetul de pe site sau din bio-ul de Instagram.',
+  },
+  {
+    inainte: 'Rezervări suprapuse și greșeli scrise de mână în caiet.',
+    dupa: 'Evidență clară, în timp real, pe harta 2D — iar baza de date refuză suprapunerile pe aceeași masă.',
+  },
+  {
+    inainte: 'Comision plătit unei platforme terțe la fiecare rezervare.',
+    dupa: 'Preț fix pe lună și 0% comision. Clienții rămân ai tăi, nu ai platformei.',
+  },
+  {
+    inainte: 'Nu știi nimic despre cine a mai fost la tine și cine nu s-a prezentat.',
+    dupa: 'Fișă de client construită automat: vizite, preferințe, alergii și no-show-uri.',
+  },
+  {
+    inainte: 'Ospătarul întreabă la recepție ce masă e liberă, iar clientul așteaptă în ușă.',
+    dupa: 'Sala e pe tabletă, cu statusul fiecărei mese la minutul afișat.',
+  },
+]
+
 const RANDURI_FUNCTIONALITATI: RandFunctionalitate[] = [
   {
     eticheta: 'Harta 2D',
     titlu: 'Sala ta, desenată la scară',
-    text: 'Planul real al locației, cu mesele pe pozițiile lor. Culoarea unei mese nu e o setare, ci rezultatul rezervărilor din momentul afișat: liberă, ocupată sau se eliberează în 20 de minute.',
-    media: 'Captură: harta 2D cu mese colorate pe status',
+    text: 'Salonul, terasa și zona VIP, desenate vectorial de echipa noastră, cu mesele pe pozițiile lor reale. Culoarea unei mese nu e o setare, ci rezultatul rezervărilor din momentul afișat: liberă, ocupată sau se eliberează în 20 de minute. Muți mesele pe plan și le alipești pentru grupuri mari.',
+    media: 'Video 5s: mutarea meselor (drag & drop) și unirea lor',
     actiuni: [
       { text: 'Creează cont', to: RUTE.signup },
       { text: 'Vezi demonstrația', to: RUTE.demoHarta, variant: 'outline' },
     ],
   },
   {
-    eticheta: 'Calendar',
-    titlu: 'Rezervările în trei perspective',
-    text: 'Zi, săptămână și lună, cu drag & drop între mese și intervale. Muți o rezervare cu degetul, iar sala se actualizează pe toate ecranele deschise.',
-    media: 'Captură: calendarul pe zi, cu rezervări pe intervale',
+    eticheta: 'WhatsApp',
+    // §14 — in v1 WhatsApp e interfata si jurnal simulat, fara Meta Cloud API.
+    // Insigna e obligatorie cat timp nu pleaca mesaje reale: fara ea, randul
+    // asta ar promite pe pagina publica ceva ce produsul inca nu face.
+    insigna: 'În curând',
+    titlu: 'Confirmări și remindere trimise singure',
+    text: 'Clientul primește confirmarea rezervării pe WhatsApp și un reminder cu două ore înainte de oră. Fără telefoane date de la recepție și cu mult mai puține mese rezervate care rămân goale.',
+    media: 'Mockup: ecran de telefon cu conversația de confirmare',
     actiuni: [
       { text: 'Creează cont', to: RUTE.signup },
       { text: 'Vezi prețurile', to: `${RUTE.acasa}#preturi`, variant: 'outline' },
     ],
   },
   {
-    eticheta: 'Walk-in',
-    titlu: 'Clientul intră fără rezervare',
-    text: 'Alegi masa direct pe hartă, notezi numărul de persoane și gata. Dacă nu e nimic liber, intră pe lista de așteptare și îl chemi când se eliberează ceva.',
-    media: 'Captură: walk-in și lista de așteptare',
+    eticheta: 'Widget public',
+    titlu: 'Formularul de rezervare, pe site-ul tău',
+    text: 'Un iframe pe care îl lipești pe site, în bio-ul de Instagram sau pe pagina de Facebook. Clientul alege data, ora și numărul de persoane în câteva secunde, iar cererea intră direct în calendarul tău.',
+    media: 'Previzualizare: widgetul de rezervare pe un smartphone',
     actiuni: [
       { text: 'Creează cont', to: RUTE.signup },
       { text: 'Vezi demonstrația', to: RUTE.demoHarta, variant: 'outline' },
-    ],
-  },
-  {
-    eticheta: 'CRM clienti',
-    titlu: 'Fiecare client, cu istoricul lui',
-    text: 'Vizite, preferințe, alergii, no-show-uri — construite automat din rezervările de zi cu zi. Când sună același om de pe alt număr, fișele se pot contopi într-una singură.',
-    media: 'Captură: fișa unui client, cu istoricul vizitelor',
-    actiuni: [
-      { text: 'Creează cont', to: RUTE.signup },
-      { text: 'Vezi prețurile', to: `${RUTE.acasa}#preturi`, variant: 'outline' },
     ],
   },
 ]
@@ -145,18 +221,18 @@ const CARACTERISTICI = [
 const PASI: PasFlux[] = [
   {
     icoana: UserPlusIcon,
-    titlu: 'Creezi contul',
-    text: 'Rezervările manuale, calendarul și CRM-ul funcționează imediat după înregistrare. Nu aștepți nimic ca să începi.',
+    titlu: 'Îți înregistrezi locația',
+    text: 'Completezi datele firmei și ale restaurantului, cât un formular scurt. Rezervările manuale, calendarul și CRM-ul funcționează din prima zi.',
   },
   {
     icoana: PencilRulerIcon,
-    titlu: 'Ne trimiți schița sălii',
-    text: 'O poză sau un desen pe hârtie e de ajuns. Echipa TableX construiește planul 2D și îl publică în contul tău.',
+    titlu: 'Îți activăm harta 2D',
+    text: 'Ne trimiți o poză sau o schiță a sălii — atât. Echipa TableX desenează planul complet, cu salon, terasă și zone, și îl publică în contul tău.',
   },
   {
-    icoana: LayoutGridIcon,
-    titlu: 'Vezi sala pe ecran',
-    text: 'Fiecare masă cu statusul ei, în timp real: liberă, ocupată sau se eliberează în 20 de minute.',
+    icoana: SmartphoneIcon,
+    titlu: 'Începi să primești rezervări',
+    text: 'Pui link-ul pe Instagram sau pe site și conduci toată sala de pe tabletă ori de pe telefon.',
   },
 ]
 
@@ -336,6 +412,16 @@ export function LandingPage() {
         {/* Hero — coregrafia completa: mana + telefon, atmosfera, text */}
         <Hero />
 
+        {/* Social proof, imediat sub hero: intai dovada, apoi argumentul.
+            Titlul e mic si banda nu cere nimic — e o confirmare in trecere,
+            nu o sectiune in care sa se opreasca cineva. */}
+        <section aria-label="Ce spun restaurantele" className="overflow-hidden py-10">
+          <p className="px-6 text-center font-mono text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase">
+            Restaurante care își țin sala pe TableX
+          </p>
+          <SocialProof recenzii={RECENZII} className="mt-6" />
+        </section>
+
         {/* Problema */}
         <section id="problema" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
           <SectionHeading
@@ -350,6 +436,22 @@ export function LandingPage() {
           />
           <div className="mt-10">
             <ProblemCards probleme={PROBLEME} />
+          </div>
+
+          {/* Aceleasi dureri, puse fata in fata cu ce se intampla in loc. */}
+          <div className="mt-14">
+            <SectionHeading
+              eticheta="Comparație"
+              titlu={
+                <>
+                  Vechile metode, <span className="text-primary">rând cu rând</span>
+                </>
+              }
+              subtitlu="Stânga e serviciul de vineri seara așa cum arată acum. Dreapta e același serviciu, cu TableX."
+            />
+            <div className="mt-10">
+              <ComparatieMetode perechi={PERECHI_COMPARATIE} />
+            </div>
           </div>
         </section>
 
@@ -386,9 +488,9 @@ export function LandingPage() {
         {/* Randuri de functionalitati */}
         <section id="functionalitati" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
           <SectionHeading
-            eticheta="Cum funcționează"
+            eticheta="Funcționalități"
             titlu="Tot ce îți trebuie ca să pornești"
-            subtitlu="Patru lucruri pe care le faci zilnic, toate în același ecran."
+            subtitlu="Trei lucruri care schimbă serviciul de mâine, toate în același cont."
           />
 
           <div className="mt-14 grid gap-20">

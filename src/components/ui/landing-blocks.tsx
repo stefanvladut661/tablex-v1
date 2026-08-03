@@ -1,6 +1,13 @@
 import { useRef, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { CheckIcon, ImageIcon, QuoteIcon, type LucideIcon } from 'lucide-react'
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  ImageIcon,
+  QuoteIcon,
+  XIcon,
+  type LucideIcon,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { TimelineContent } from '@/components/ui/timeline-animation'
@@ -197,6 +204,69 @@ export function ProblemCards({ probleme }: { probleme: Problema[] }) {
   )
 }
 
+/* ──────────────────── Vechile metode vs. TableX ───────────────────────── */
+
+export interface PerechieComparatie {
+  /** Cum se intampla azi, fara TableX. */
+  inainte: string
+  /** Ce se intampla in loc, cu TableX. */
+  dupa: string
+}
+
+/**
+ * Comparatia pe perechi. Fiecare rand e un card care tine cele doua jumatati
+ * lipite, in loc de doua coloane paralele: pe telefon coloanele s-ar desface
+ * una sub alta si nu s-ar mai vedea CE raspunde la CE. Asa perechea ramane
+ * perechie pe orice latime.
+ */
+export function ComparatieMetode({ perechi }: { perechi: PerechieComparatie[] }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  return (
+    <div ref={ref}>
+      {/* Capetele de coloana au acelasi grid ca randurile, ca sa cada peste ele. */}
+      <div className="hidden px-5 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+        <p className="text-sm font-semibold text-muted-foreground">Cum e acum</p>
+        <span className="size-4" aria-hidden />
+        <p className="text-sm font-semibold text-primary">Cu TableX</p>
+      </div>
+
+      <ul className="mt-3 grid gap-3">
+        {perechi.map(({ inainte, dupa }, indice) => (
+          <TimelineContent key={inainte} as="li" animationNum={indice} timelineRef={ref}>
+            <div className="grid gap-4 rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-lg sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+              <div className="flex items-start gap-3">
+                <span
+                  aria-hidden
+                  className="mt-0.5 grid size-6 shrink-0 place-content-center rounded-full bg-destructive"
+                >
+                  <XIcon className="size-3.5 text-destructive-foreground" />
+                </span>
+                <p className="text-sm text-muted-foreground text-pretty">{inainte}</p>
+              </div>
+
+              <ArrowRightIcon
+                aria-hidden
+                className="size-4 shrink-0 rotate-90 justify-self-center text-muted-foreground sm:rotate-0"
+              />
+
+              <div className="flex items-start gap-3">
+                <span
+                  aria-hidden
+                  className="mt-0.5 grid size-6 shrink-0 place-content-center rounded-full bg-status-liber"
+                >
+                  <CheckIcon className="size-3.5 text-status-liber-foreground" />
+                </span>
+                <p className="text-sm font-medium text-pretty">{dupa}</p>
+              </div>
+            </div>
+          </TimelineContent>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /* ───────────────────────── Rand de functionalitate ────────────────────── */
 
 interface ActiuneRand {
@@ -211,6 +281,11 @@ export interface RandFunctionalitate {
   text: string
   media: string
   actiuni: ActiuneRand[]
+  /**
+   * Marcaj langa eticheta, pentru ce nu e inca live (ex. „În curând").
+   * Exista ca sa nu fim nevoiti sa scriem la prezent despre ce nu functioneaza.
+   */
+  insigna?: string
 }
 
 export function FeatureRow({
@@ -219,6 +294,7 @@ export function FeatureRow({
   text,
   media,
   actiuni,
+  insigna,
   /** Alterneaza pozitia imaginii, ca sa nu iasa o coloana monotona. */
   inversat = false,
 }: RandFunctionalitate & { inversat?: boolean }) {
@@ -235,7 +311,14 @@ export function FeatureRow({
       </TimelineContent>
 
       <TimelineContent animationNum={1} timelineRef={ref}>
-        <Eyebrow>{eticheta}</Eyebrow>
+        <div className="flex flex-wrap items-center gap-3">
+          <Eyebrow>{eticheta}</Eyebrow>
+          {insigna && (
+            <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              {insigna}
+            </span>
+          )}
+        </div>
         <h3 className="mt-3 text-2xl font-extrabold tracking-[-0.03em] text-balance sm:text-3xl">
           {titlu}
         </h3>
