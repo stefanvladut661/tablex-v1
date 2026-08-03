@@ -60,8 +60,31 @@
      D. LIVRAT (commit 2b35d4e): Adminul muta si grupeaza mese, nu le mai
         adauga si nu le mai sterge. Impus in baza, politica devenita FOR UPDATE.
 
-     E. Landing: cand Adminul e deja autentificat, butonul „Autentificare" sa
-        devina „Deschide admin", iar starea de conectat sa se vada.
+     E. LIVRAT (commit 97955d6). Atentie la ce s-a dovedit: Navbarul FACEA deja
+        schimbarea corect (esteAutentificat -> „Deschide panoul", fara buton de
+        login). Gaura era in SUBSOLUL landing-ului, care nu se uita deloc la
+        sesiune, deci pagina se contrazicea singura. Daca reclamatia revine,
+        verifica intai daca omul chiar era autentificat in fereastra aia.
+
+     TEREN PENTRU A+B, masurat in baza pe 3 august (nu re-descoperi):
+       - floor_plan_requests are DEJA coloana `zone_nume`. Deci „adminul
+         specifica zona ceruta" exista ca date; lipseste doar consecinta —
+         builderul sa nu mai ofere alegerea si crearea de zone.
+       - Coloanele existente: id, restaurant_id, zone_nume, schita_image_url,
+         descriere, status, assigned_to, procesat_de, ai_rezultat,
+         ai_generat_la, created_at, updated_at.
+       - LIPSESC pentru cerinta A: `motiv_respingere` (text, obligatoriu la
+         respingere — impus in baza, nu doar in formular), `preluat_la`
+         (timestamptz, pentru coloana „data preluarii") si `publicat_la`.
+       - ATENTIE la enumuri: `fp_project_status` (draft, published, arhivat)
+         NU e enumul lui floor_plan_requests.status — acela foloseste
+         pending / in_progress (vezi services/studio-ai.ts, filtrul .in(...)).
+         Sunt doua lucruri diferite; nu le confunda cand faci Queue/Projects.
+       - Datele de contact ale Adminului nu stau pe cerere: vin din
+         admin_users (nume, email) pentru restaurantul cererii, plus telefonul
+         de pe restaurants. Cere un join, nu o coloana noua.
+       - Queue = status 'pending'; Projects = 'in_progress' + publicate.
+         Preluarea in lucru scrie assigned_to + preluat_la si muta cererea.
 
      STARE (3 august, seara): din cele 7 blocante, CINCI sunt livrate —
      1 (bara orara), 3 (pretul de pe landing), 4 (mentenanta in baza),
