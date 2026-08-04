@@ -33,7 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useNotificari } from '@/hooks/useNotificari'
-import { inCanvas, pozitieFinala } from '@/lib/geometrie-plan'
+import { esteInCanvas, inCanvas, pozitieFinala } from '@/lib/geometrie-plan'
 import { importaGeometrie, type GeometrieImportata } from '@/lib/import-geometrie'
 import { gasesteZonaDupaNume, normalizeazaNumeZona } from '@/lib/nume-zona'
 import { RUTE } from '@/lib/rute'
@@ -733,6 +733,223 @@ export function EditorPlanPage() {
       : { x: 0, y: 0 }
   }
 
+  /**
+   * Cate obiecte ies din canvas. De cand incadrarea publicata E canvasul, ce
+   * ramane afara nu se mai vede nici la Admin, nici in widget — si nimic din
+   * ecran n-ar spune-o. Se intampla la micsorarea canvasului, la import si la
+   * preluarea Best Guess-ului AI (care presupune 1200x800).
+   */
+  const canvasZona = useMemo(
+    () =>
+      zonaCurenta
+        ? { latime: zonaCurenta.canvas_latime, inaltime: zonaCurenta.canvas_inaltime }
+        : null,
+    [zonaCurenta],
+  )
+  const inAfara = useMemo(() => {
+    if (!canvasZona) return { mese: [] as string[], structura: [] as number[] }
+    return {
+      mese: meseZona
+        .filter(
+          (m) =>
+            !esteInCanvas(
+              { x: m.pozitie_x, y: m.pozitie_y, latime: m.latime, inaltime: m.inaltime },
+              canvasZona,
+            ),
+        )
+        .map((m) => m.id),
+      structura: elemente
+        .map((el, indice) => ({ el, indice }))
+        .filter(
+          ({ el }) =>
+            !el.puncte?.length &&
+            !esteInCanvas(
+              { x: el.x, y: el.y, latime: el.latime, inaltime: el.inaltime },
+              canvasZona,
+            ),
+        )
+        .map(({ indice }) => indice),
+    }
+  }, [meseZona, elemente, canvasZona])
+  const numarInAfara = inAfara.mese.length + inAfara.structura.length
+
+  /** Aduce inapoi in canvas tot ce a ramas afara, fara sa schimbe dimensiuni. */
+  function aduInCanvas() {
+    if (!canvasZona) return
+    for (const id of inAfara.mese) {
+      const masa = meseZona.find((m) => m.id === id)
+      if (!masa) continue
+      const pozitie = inCanvas(
+        { latime: masa.latime, inaltime: masa.inaltime },
+        canvasZona,
+        { x: masa.pozitie_x, y: masa.pozitie_y },
+      )
+      salveazaMasa.mutate({ id, modificari: { pozitie_x: pozitie.x, pozitie_y: pozitie.y } })
+    }
+    if (inAfara.structura.length) {
+      const setIndici = new Set(inAfara.structura)
+      schimbaStructura({
+        elemente: elemente.map((el, indice) => {
+          if (!setIndici.has(indice)) return el
+          const pozitie = inCanvas(
+            { latime: el.latime, inaltime: el.inaltime },
+            canvasZona,
+            { x: el.x, y: el.y },
+          )
+          return { ...el, x: pozitie.x, y: pozitie.y }
+        }),
+      })
+    }
+  }
+
+  /**
+   * Copy / paste / duplicare (Ctrl+C, Ctrl+V, Ctrl+D).
+   *
+   * Clipboardul e local paginii, nu al sistemului: obiectele sunt randuri si
+   * elemente jsonb, nu text, iar un JSON pus in clipboardul sistemului s-ar
+   * putea lipi din greseala intr-un alt camp. Copia ateriza decalata cu un pas
+   * de grid, ca sa se vada ca sunt doua obiecte, nu unul.
+   *
+   * Doar in builderul echipei: RLS da INSERT pe `tables` exclusiv rolului
+   * Studio, deci in panoul restaurantului lipirea ar produce doar o eroare.
+   */
+  const [clipboard, setClipboard] = useState<
+    | { tip: 'masa'; date: Pick<Masa, 'capacitate' | 'forma' | 'latime' | 'inaltime' | 'rotatie'> }
+    | { tip: 'structura'; date: ElementStructura }
+    | null
+  >(null)
+
+  function copiazaSelectia() {
+    if (strat === 'mese' && masa) {
+      setClipboard({
+        tip: 'masa',
+        date: {
+          capacitate: masa.capacitate,
+          forma: masa.forma,
+          latime: masa.latime,
+          inaltime: masa.inaltime,
+          rotatie: masa.rotatie,
+        },
+      })
+      notificari.info(`Masa ${masa.numar_masa} a fost copiată. Ctrl+V o duplică.`)
+      return
+    }
+    if (strat === 'structura' && element) {
+      setClipboard({ tip: 'structura', date: { ...element } })
+      notificari.info(`${SABLOANE_STRUCTURA[element.tip].eticheta} a fost copiat. Ctrl+V îl duplică.`)
+    }
+  }
+
+  /** Lipeste continutul clipboardului, decalat fata de `dela`. */
+  function lipeste(
+    continut: NonNullable<typeof clipboard>,
+    dela: { x: number; y: number } | null,
+  ) {
+    if (!zonaCurenta || !canvasZona) return
+    const pas = zonaCurenta.grid_marime || 20
+    const sursa = dela ?? { x: 0, y: 0 }
+
+    if (continut.tip === 'masa') {
+      const pozitie = inCanvas(
+        { latime: continut.date.latime, inaltime: continut.date.inaltime },
+        canvasZona,
+        { x: sursa.x + pas, y: sursa.y + pas },
+      )
+      setStrat('mese')
+      setStructuraSelectata(null)
+      masaNoua.mutate({
+        capacitate: continut.date.capacitate,
+        pozitieX: pozitie.x,
+        pozitieY: pozitie.y,
+        forma: continut.date.forma,
+        latime: continut.date.latime,
+        inaltime: continut.date.inaltime,
+        rotatie: continut.date.rotatie,
+      })
+      return
+    }
+
+    const pozitie = inCanvas(
+      { latime: continut.date.latime, inaltime: continut.date.inaltime },
+      canvasZona,
+      { x: sursa.x + pas, y: sursa.y + pas },
+    )
+    setStrat('structura')
+    setMasaSelectata(null)
+    setStructuraSelectata(elemente.length)
+    schimbaStructura({
+      elemente: [...elemente, { ...continut.date, x: pozitie.x, y: pozitie.y }],
+    })
+  }
+
+  /**
+   * Scurtaturile stau pe `document`, nu pe canvas: canvasul e un SVG care nu
+   * primeste focus de la sine, deci o combinatie apasata dupa un clic in panou
+   * n-ar fi ajuns niciodata la el. In schimb trebuie sarite campurile de text —
+   * altfel Ctrl+C dintr-un input ar duplica masa in loc sa copieze textul.
+   */
+  useEffect(() => {
+    function laTasta(eveniment: globalThis.KeyboardEvent) {
+      if (!eveniment.ctrlKey && !eveniment.metaKey) return
+      const tinta = eveniment.target as HTMLElement | null
+      if (
+        tinta?.isContentEditable ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(tinta?.tagName ?? '')
+      ) {
+        return
+      }
+
+      const tasta = eveniment.key.toLowerCase()
+      if (tasta === 'c') {
+        eveniment.preventDefault()
+        copiazaSelectia()
+        return
+      }
+      if (tasta === 'v') {
+        if (!clipboard) return
+        eveniment.preventDefault()
+        // Decalajul se ia fata de obiectul selectat daca e acelasi tip; altfel
+        // fata de mijlocul planului, ca sa nu aterizeze in coltul stanga-sus.
+        const sursa =
+          clipboard.tip === 'masa' && masa
+            ? { x: masa.pozitie_x, y: masa.pozitie_y }
+            : clipboard.tip === 'structura' && element
+              ? { x: element.x, y: element.y }
+              : null
+        lipeste(clipboard, sursa)
+        return
+      }
+      if (tasta === 'd') {
+        eveniment.preventDefault()
+        if (strat === 'mese' && masa) {
+          lipeste(
+            {
+              tip: 'masa',
+              date: {
+                capacitate: masa.capacitate,
+                forma: masa.forma,
+                latime: masa.latime,
+                inaltime: masa.inaltime,
+                rotatie: masa.rotatie,
+              },
+            },
+            { x: masa.pozitie_x, y: masa.pozitie_y },
+          )
+        } else if (strat === 'structura' && element) {
+          lipeste({ tip: 'structura', date: { ...element } }, { x: element.x, y: element.y })
+        }
+      }
+    }
+
+    document.addEventListener('keydown', laTasta)
+    return () => document.removeEventListener('keydown', laTasta)
+    // Fara lista de dependinte, INTENTIONAT: handler-ul citeste selectia
+    // curenta, stratul si clipboardul, adica aproape toata starea paginii. O
+    // lista ar fi trebuit sa le insire pe toate si ar fi ramas in urma la prima
+    // uitata — iar o scurtatura care lipeste obiectul selectat acum doua
+    // randari e mai rea decat una care se reataseaza la fiecare randare.
+  })
+
   if (!restaurantId) return null
 
   const areSchita = Boolean(cerereStudio.data?.schita_image_url)
@@ -778,6 +995,8 @@ export function EditorPlanPage() {
             // Singurul loc din aplicatie unde zoom-ul e interactiv: aici se
             // stabileste incadrarea pe care o vad apoi toti ceilalti.
             permiteZoom
+            // Ecranul e al planului: canvasul se incadreaza inauntru, nu invers.
+            umpleContainerul
             onVedere={preiaComenzileVederii}
             snapLaGrid={snapLaGrid}
             structura={elemente}
@@ -793,11 +1012,37 @@ export function EditorPlanPage() {
             onMutaMasa={(id, x, y) =>
               salveazaMasa.mutate({ id, modificari: { pozitie_x: x, pozitie_y: y } })
             }
+            onRedimensioneazaMasa={(id, cutie) =>
+              salveazaMasa.mutate({
+                id,
+                modificari: {
+                  pozitie_x: cutie.x,
+                  pozitie_y: cutie.y,
+                  latime: cutie.latime,
+                  inaltime: cutie.inaltime,
+                },
+              })
+            }
             structuraSelectata={structuraSelectata}
             onSelecteazaStructura={setStructuraSelectata}
             onMutaStructura={(indice, x, y) =>
               schimbaStructura({
                 elemente: elemente.map((el, i) => (i === indice ? { ...el, x, y } : el)),
+              })
+            }
+            onRedimensioneazaStructura={(indice, cutie) =>
+              schimbaStructura({
+                elemente: elemente.map((el, i) =>
+                  i === indice
+                    ? {
+                        ...el,
+                        x: cutie.x,
+                        y: cutie.y,
+                        latime: cutie.latime,
+                        inaltime: cutie.inaltime,
+                      }
+                    : el,
+                ),
               })
             }
             onDropObiect={asazaObiect}
@@ -845,11 +1090,11 @@ export function EditorPlanPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => comenziVedere.current?.incadreazaContinut()}
-                  title="Aduce mesele și structura în mijlocul ecranului."
+                  onClick={() => comenziVedere.current?.centreazaCanvas()}
+                  title="Aduce tot canvasul în ecran — exact încadrarea cu care se publică planul."
                 >
                   <ScanIcon />
-                  Auto-centrare
+                  Încadrează canvasul
                 </Button>
                 <Button
                   variant="ghost"
@@ -866,12 +1111,12 @@ export function EditorPlanPage() {
                   onClick={() => setSnapLaGrid((activ) => !activ)}
                   title={
                     snapLaGrid
-                      ? 'Alinierea la grid e pornită: obiectele se lipesc de linii.'
-                      : 'Aliniere liberă: obiectele rămân exact unde le lași.'
+                      ? `Magnet pornit: obiectele se lipesc de grid, la ${zonaCurenta.grid_marime} px. Ține Alt apăsat pentru o mutare liberă.`
+                      : 'Magnet oprit: obiectele rămân exact unde le lași.'
                   }
                 >
                   <MagnetIcon />
-                  Grid
+                  {snapLaGrid ? `Magnet ${zonaCurenta.grid_marime}` : 'Magnet oprit'}
                 </Button>
               </div>
 
@@ -949,6 +1194,22 @@ export function EditorPlanPage() {
               <Button variant="outline" size="sm" onClick={() => setImportDeschis(true)}>
                 Importă geometrie
               </Button>
+
+              {/* Ce iese din canvas nu se publica. Fara semnalul asta, un obiect
+                  ramas afara dupa micsorarea canvasului sau dupa un import ar
+                  disparea din sala fara ca nimeni sa afle de ce. */}
+              {numarInAfara > 0 && (
+                <div className="flex items-center gap-1.5 rounded-md bg-status-expirare-soft px-2 py-1">
+                  <span className="text-xs">
+                    {numarInAfara === 1
+                      ? 'Un obiect e în afara canvasului și nu se va publica.'
+                      : `${numarInAfara} obiecte sunt în afara canvasului și nu se vor publica.`}
+                  </span>
+                  <Button size="xs" variant="secondary" onClick={aduInCanvas}>
+                    Adu-le înăuntru
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="flex min-h-0 flex-1 items-stretch gap-3">
@@ -1022,8 +1283,9 @@ export function EditorPlanPage() {
                   {strat === 'mese'
                     ? `${meseZona.length} mese în zonă.`
                     : `${elemente.length} elemente de structură.`}{' '}
-                  Cu obiectul selectat, săgețile îl mută cu un pas de grid, iar Shift + săgeți cu un
-                  pixel.
+                  Cu obiectul selectat: săgețile îl mută cu un pas de grid, Shift + săgeți cu un
+                  pixel, pătrățelele din colțuri îl redimensionează (Shift păstrează proporția),
+                  Alt ține mutarea liberă, iar Ctrl+C / Ctrl+V / Ctrl+D îl duplică.
                 </p>
               </aside>
 
@@ -1035,6 +1297,7 @@ export function EditorPlanPage() {
                 {strat === 'mese' && masa ? (
                   <PanouMasa
                     masa={masa}
+                    zona={zonaCurenta}
                     onSalveaza={salveazaMasa.mutate}
                     onCereStergere={() =>
                       setStergere({ tip: 'masa', id: masa.id, nume: masa.numar_masa })
@@ -1043,6 +1306,7 @@ export function EditorPlanPage() {
                 ) : strat === 'structura' && element && structuraSelectata !== null ? (
                   <PanouStructura
                     element={element}
+                    zona={zonaCurenta}
                     onSalveaza={(modificari) =>
                       schimbaStructura({
                         elemente: elemente.map((el, i) =>
@@ -1373,28 +1637,11 @@ function PanouZona({
         />
       </div>
 
-      <div className="grid gap-1.5">
-        <Label htmlFor="zoom-implicit">Încadrarea publicată</Label>
-        <div className="flex items-center gap-2">
-          <input
-            id="zoom-implicit"
-            type="range"
-            min={40}
-            max={400}
-            step={5}
-            value={Math.round((zona.zoom_implicit ?? 1) * 100)}
-            onChange={(e) => salveaza({ zoom_implicit: Number(e.target.value) / 100 })}
-            className="w-32 accent-primary"
-            aria-label="Încadrarea cu care restaurantul vede planul"
-          />
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {Math.round((zona.zoom_implicit ?? 1) * 100)}%
-          </span>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Cu ea se deschide planul pentru restaurant și în widgetul public.
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        Canvasul e rama planului. La publicare el umple tot spațiul disponibil, păstrând raportul
+        {' '}{zona.canvas_latime}:{zona.canvas_inaltime} — deci restaurantul și widgetul public văd
+        exact ce încape în chenar. Ce rămâne în afara lui nu se publică.
+      </p>
 
       <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
         <Label htmlFor="zona-activa" className="text-sm">
@@ -1415,12 +1662,78 @@ function PanouZona({
   )
 }
 
+/**
+ * Cele doua coordonate ale obiectului selectat.
+ *
+ * Exista pentru cazul in care magnetul nu ajunge: cand doua mese trebuie sa fie
+ * la exact aceeasi inaltime, ochiul si degetul nu bat un numar scris. Campurile
+ * se re-monteaza la fiecare schimbare de valoare (cheia contine valoarea), ca
+ * dupa o tragere sa arate pozitia noua, nu pe cea de la selectare.
+ */
+function CampuriPozitie({
+  cheie,
+  x,
+  y,
+  latime,
+  inaltime,
+  canvas,
+  pas,
+  onSalveaza,
+}: {
+  cheie: string
+  x: number
+  y: number
+  latime: number
+  inaltime: number
+  canvas: { latime: number; inaltime: number }
+  pas: number
+  onSalveaza: (pozitie: { x: number; y: number }) => void
+}) {
+  function schimba(axa: 'x' | 'y', valoare: number) {
+    if (!Number.isFinite(valoare)) return
+    const ceruta = axa === 'x' ? { x: valoare, y } : { x, y: valoare }
+    // Aceeasi limitare ca la tragere: o coordonata scrisa de mana n-are voie sa
+    // scoata obiectul din canvas, altfel n-ar mai fi vizibil la publicare.
+    const pozitie = inCanvas({ latime, inaltime }, canvas, ceruta)
+    if (pozitie.x === x && pozitie.y === y) return
+    onSalveaza(pozitie)
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {(
+        [
+          ['x', 'X', x, Math.max(0, canvas.latime - latime)],
+          ['y', 'Y', y, Math.max(0, canvas.inaltime - inaltime)],
+        ] as const
+      ).map(([axa, eticheta, valoare, maxim]) => (
+        <div key={axa} className="grid gap-1.5">
+          <Label htmlFor={`poz-${axa}`}>{eticheta}</Label>
+          <Input
+            id={`poz-${axa}`}
+            type="number"
+            min={0}
+            max={maxim}
+            step={pas}
+            key={`poz-${axa}-${cheie}-${valoare}`}
+            defaultValue={String(valoare)}
+            className="h-8 tabular-nums"
+            onBlur={(e) => schimba(axa, Number(e.target.value))}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function PanouMasa({
   masa,
+  zona,
   onSalveaza,
   onCereStergere,
 }: {
   masa: Masa
+  zona: Zona
   onSalveaza: (argumente: { id: string; modificari: Parameters<typeof actualizeazaMasa>[1] }) => void
   onCereStergere: () => void
 }) {
@@ -1511,6 +1824,17 @@ function PanouMasa({
         ))}
       </div>
 
+      <CampuriPozitie
+        cheie={masa.id}
+        x={masa.pozitie_x}
+        y={masa.pozitie_y}
+        latime={masa.latime}
+        inaltime={masa.inaltime}
+        canvas={{ latime: zona.canvas_latime, inaltime: zona.canvas_inaltime }}
+        pas={zona.grid_marime}
+        onSalveaza={(pozitie) => salveaza({ pozitie_x: pozitie.x, pozitie_y: pozitie.y })}
+      />
+
       <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
         <Label htmlFor="masa-activa" className="text-sm">
           Masă activă
@@ -1542,10 +1866,12 @@ function PanouMasa({
  */
 function PanouStructura({
   element,
+  zona,
   onSalveaza,
   onSterge,
 }: {
   element: ElementStructura
+  zona: Zona
   onSalveaza: (modificari: Partial<ElementStructura>) => void
   onSterge: () => void
 }) {
@@ -1584,6 +1910,17 @@ function PanouStructura({
           </div>
         ))}
       </div>
+
+      <CampuriPozitie
+        cheie={cheie}
+        x={element.x}
+        y={element.y}
+        latime={element.latime}
+        inaltime={element.inaltime}
+        canvas={{ latime: zona.canvas_latime, inaltime: zona.canvas_inaltime }}
+        pas={zona.grid_marime}
+        onSalveaza={(pozitie) => onSalveaza(pozitie)}
+      />
 
       <div className="grid gap-1.5">
         <Label htmlFor="str-eticheta">Etichetă</Label>

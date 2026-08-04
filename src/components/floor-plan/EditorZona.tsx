@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useId,
   useRef,
@@ -15,9 +14,14 @@ import { Masa } from '@/components/floor-plan/Masa'
 import { useZoomPan } from '@/components/floor-plan/useZoomPan'
 import { Button } from '@/components/ui/button'
 import {
-  incadrareContinut,
+  ANCORE,
+  LATURA_MINIMA,
+  laPreciziaBazei,
   inCanvas as limiteazaInCanvas,
   pozitieFinala,
+  redimensioneaza,
+  type Ancora,
+  type Cutie,
 } from '@/lib/geometrie-plan'
 import { cn } from '@/lib/utils'
 import type {
@@ -38,6 +42,9 @@ export type Strat = 'mese' | 'structura'
  */
 export const TIP_TRANSFER_OBIECT = 'application/x-tablex-obiect'
 
+/** Latura manerului de redimensionare, in unitati de canvas la scara 1. */
+const MARIME_MANER = 9
+
 /**
  * Comenzile de vedere, raportate in sus. Zoom-ul traieste in acest hook, dar
  * butoanele lui stau in bara plutitoare a paginii — deci componenta le ofera,
@@ -47,8 +54,44 @@ export type ComenziVedere = {
   scara: number
   /** Sare la o scara anume, pastrand centrul (slider-ul manual, „100%"). */
   laScara: (scara: number) => void
-  /** Auto-centrare: incadreaza mesele si structura in ecran. */
-  incadreazaContinut: () => void
+  /**
+   * Aduce CANVASUL intreg in ecran, la scara 1 si fara translatie — adica
+   * exact incadrarea cu care planul se publica.
+   *
+   * Butonul facea pana acum altceva: strangea vederea pe dreptunghiul care
+   * cuprinde continutul. Cu o singura masa in zona, aia cerea o scara de 7x,
+   * plafonata la 4x — si „centrarea" ateriza in nasul unui scaun. Rostul
+   * butonului e sa arate sala, nu sa caute obiecte.
+   */
+  centreazaCanvas: () => void
+}
+
+/** Cursorul potrivit fiecarui maner, ca sageata sa arate ce se va intampla. */
+const CURSOR_MANER: Record<Ancora, string> = {
+  nv: 'cursor-nwse-resize',
+  se: 'cursor-nwse-resize',
+  ne: 'cursor-nesw-resize',
+  sv: 'cursor-nesw-resize',
+  n: 'cursor-ns-resize',
+  s: 'cursor-ns-resize',
+  e: 'cursor-ew-resize',
+  v: 'cursor-ew-resize',
+}
+
+/** Centrul manerului, in coordonatele cutiei. */
+function punctManer(cutie: Cutie, ancora: Ancora) {
+  return {
+    x: ancora.includes('v')
+      ? cutie.x
+      : ancora.includes('e')
+        ? cutie.x + cutie.latime
+        : cutie.x + cutie.latime / 2,
+    y: ancora.includes('n')
+      ? cutie.y
+      : ancora.includes('s')
+        ? cutie.y + cutie.inaltime
+        : cutie.y + cutie.inaltime / 2,
+  }
 }
 
 type Props = {
@@ -92,9 +135,21 @@ type Props = {
   onSelecteazaStructura: (indice: number | null) => void
   onMutaStructura: (indice: number, x: number, y: number) => void
   /**
+   * Redimensionarea prin manere. Lipsa lor ascunde manerele cu totul: in panoul
+   * restaurantului mobila se muta, dar nu se modifica (RLS ii refuza oricum
+   * scrierea, iar §8.4 lasa gabaritul in seama echipei).
+   */
+  onRedimensioneazaMasa?: (id: string, cutie: Cutie) => void
+  onRedimensioneazaStructura?: (indice: number, cutie: Cutie) => void
+  /**
    * Alinierea la grid, PORNITA implicit. Cand e oprita, obiectele raman exact
    * unde le lasi — pentru colturile pe care un pas de 20 nu le prinde niciodata.
-   * Priveste doar comiterea gestului: previzualizarea a fost mereu libera.
+   *
+   * Previzualizarea arata acum pozitia ALINIATA, nu cea libera. Inainte gestul
+   * urmarea degetul fidel si sarea pe grid abia la ridicare: de aici senzatia,
+   * raportata de proprietar, ca „ceva magnetic trage obiectele in alta parte".
+   * Magnetul era acolo tot timpul, doar ca se vedea prea tarziu. Cine vrea o
+   * singura mutare libera tine Alt apasat.
    */
   snapLaGrid?: boolean
   /**
@@ -113,6 +168,17 @@ type Props = {
    * Doar Canvas Builder-ul echipei porneste steagul.
    */
   permiteZoom?: boolean
+  /**
+   * Ignora raportul canvasului si umple cutia primita.
+   *
+   * Implicit componenta isi ia inaltimea din raportul canvasului, ca planul sa
+   * incapa intreg fara benzi goale. In builder insa canvasul e asezat cu
+   * `absolute inset-0` intr-un ecran intreg — si NU e adevarat ca `inset-0`
+   * anuleaza `aspect-ratio`: Chrome rezolva latimea din inset-uri si deduce
+   * inaltimea din raport, deci planul iesea pe sub marginea de jos. (Vazut in
+   * browser: container de 700px, element de 1024px.)
+   */
+  umpleContainerul?: boolean
   /**
    * Schita originala ca imagine de fundal (§42.5), sub grid si sub straturi:
    * url semnat + opacitate 0..1. null/undefined = fara fundal. Randare pura —
@@ -144,7 +210,34 @@ type Gest = {
    * altfel clicul pe masa n-ar mai face nimic pentru el.
    */
   blocat?: boolean
+  /**
+   * Manerul apucat. Prezenta lui schimba gestul din mutare in redimensionare;
+   * `cutieInitiala` e cutia de la inceputul tragerii, fiindca toata aritmetica
+   * se face fata de ea, nu fata de pasul anterior — altfel erorile s-ar aduna.
+   */
+  ancora?: Ancora
+  cutieInitiala?: Cutie
+  rotatie?: number
+  /**
+   * Punctul de pornire, in pixeli de ECRAN, si daca degetul a depasit pragul.
+   *
+   * Pana acum „s-a miscat?" se deducea comparand pozitia finala cu cea veche.
+   * Cu previzualizarea aliniata asta nu mai merge: un obiect asezat off-grid
+   * (venit din import sau din AI) ar fi fost mutat pe grid de un simplu CLIC,
+   * fara ca nimeni sa fi tras de el. Deci intrebam degetul, nu aritmetica.
+   */
+  pornire: { x: number; y: number }
+  miscat?: boolean
+  /**
+   * Ultima cutie previzualizata. La ridicare o comitem pe EA, nu una
+   * recalculata din pointerup: altfel ce s-a vazut si ce s-a salvat sunt doua
+   * socoteli diferite, care pot da doua rezultate.
+   */
+  ultima?: Cutie
 }
+
+/** Cat trebuie sa se miste degetul, in pixeli de ecran, ca sa nu fie clic. */
+const PRAG_MISCARE = 3
 
 /** Tragerea unei REZERVARI de pe o masa pe alta (§28.4) — alt gest, alt scop. */
 type GestRezervare = {
@@ -171,10 +264,13 @@ export function EditorZona({
   structuraSelectata,
   onSelecteazaStructura,
   onMutaStructura,
+  onRedimensioneazaMasa,
+  onRedimensioneazaStructura,
   snapLaGrid = true,
   onDropObiect,
   onVedere,
   permiteZoom = false,
+  umpleContainerul = false,
   fundal = null,
   overlayAI = null,
   className,
@@ -182,9 +278,15 @@ export function EditorZona({
   // Zoom-ul (rotita + butoane) vine din hook; pan-ul NU ii folosim handler-ele:
   // pointerdown-ul e deja impartit intre tragerea meselor si a rezervarilor,
   // asa ca vederea se trage doar cand gestul porneste pe canvas gol.
-  const zoomSalvat = (zona as { zoom_implicit?: number }).zoom_implicit ?? 1
-  const { refSvg, vedere, mareste, micsoreaza, laScara, incadreaza, reseteaza, deplaseaza } =
-    useZoomPan(zoomSalvat, permiteZoom)
+  //
+  // Scara de pornire e 1, nu `zones.zoom_implicit`: canvasul E incadrarea, iar
+  // la scara 1 el umple exact viewBox-ul. O scara salvata separat insemna doua
+  // surse de adevar pentru acelasi lucru, si de acolo venea diferenta dintre
+  // ce desena echipa si ce vedea restaurantul.
+  const { refSvg, vedere, mareste, micsoreaza, laScara, reseteaza, deplaseaza } = useZoomPan(
+    1,
+    permiteZoom,
+  )
   const idGrid = useId()
   /** Un obiect din paleta e purtat peste canvas: aratam unde va ateriza. */
   const [tragereDeasupra, setTragereDeasupra] = useState(false)
@@ -197,12 +299,10 @@ export function EditorZona({
   /** Tragerea VEDERII, pornita pe canvas gol. `miscat` desparte pan de clic. */
   const refPan = useRef<{ pointerId: number; x: number; y: number; miscat: boolean } | null>(null)
   const [tragereRezervare, setTragereRezervare] = useState<{ x: number; y: number } | null>(null)
-  const [previzualizare, setPrevizualizare] = useState<{
-    strat: Strat
-    cheie: string | number
-    x: number
-    y: number
-  } | null>(null)
+  /** Cutia sub deget, in timpul gestului. Mutarea nu-i schimba dimensiunile. */
+  const [previzualizare, setPrevizualizare] = useState<
+    ({ strat: Strat; cheie: string | number } & Cutie) | null
+  >(null)
 
   /**
    * Conversia din coordonate de ecran in coordonatele viewBox-ului.
@@ -254,15 +354,59 @@ export function EditorZona({
     return statusuri?.[masa.id] ?? ('liber' as const)
   }
 
-  /** Dimensiunile obiectului tras, indiferent de stratul din care vine. */
-  function masuraGest(gest: Gest) {
-    if (gest.strat === 'mese') {
-      const masa = mese.find((m) => m.id === gest.cheie)
-      return masa ? { latime: masa.latime, inaltime: masa.inaltime, x: masa.pozitie_x, y: masa.pozitie_y } : null
+  /** Cutia si rotatia obiectului tras, indiferent de stratul din care vine. */
+  function masuraObiect(
+    strat: Strat,
+    cheie: string | number,
+  ): (Cutie & { rotatie: number }) | null {
+    if (strat === 'mese') {
+      const masa = mese.find((m) => m.id === cheie)
+      if (!masa) return null
+      return {
+        x: masa.pozitie_x,
+        y: masa.pozitie_y,
+        latime: masa.latime,
+        inaltime: masa.inaltime,
+        rotatie: masa.rotatie,
+      }
     }
-    const element = structura[gest.cheie as number]
-    return element ? { latime: element.latime, inaltime: element.inaltime, x: element.x, y: element.y } : null
+    const element = structura[cheie as number]
+    if (!element) return null
+    return {
+      x: element.x,
+      y: element.y,
+      latime: element.latime,
+      inaltime: element.inaltime,
+      rotatie: element.rotatie ?? 0,
+    }
   }
+
+  function masuraGest(gest: Gest) {
+    return masuraObiect(gest.strat, gest.cheie)
+  }
+
+  /**
+   * Pasul de aliniere pentru gestul curent. Alt tinut apasat il anuleaza
+   * temporar: butonul din bara ramane pornit, dar mutarea asta e libera —
+   * exact pentru coltul pe care un pas de 20 nu-l prinde niciodata.
+   */
+  function pasulDeAliniere(eveniment: { altKey: boolean }) {
+    return snapLaGrid && !eveniment.altKey ? zona.grid_marime : 0
+  }
+
+  /** Cutia obiectului selectat pe stratul activ — pe ea stau manerele. */
+  const cheieSelectata = stratActiv === 'mese' ? masaSelectata : structuraSelectata
+  const poateRedimensiona =
+    stratActiv === 'mese'
+      ? Boolean(onRedimensioneazaMasa) && poateMutaMese
+      : Boolean(onRedimensioneazaStructura)
+  const masuraSelectata =
+    cheieSelectata === null ? null : masuraObiect(stratActiv, cheieSelectata)
+  const previzualizareSelectata =
+    previzualizare && previzualizare.strat === stratActiv && previzualizare.cheie === cheieSelectata
+      ? previzualizare
+      : null
+  const cutieManere = previzualizareSelectata ?? masuraSelectata
 
   function laPointerDown(eveniment: PointerEvent<SVGSVGElement>) {
     const punctRezervare = laCanvas(eveniment)
@@ -287,9 +431,41 @@ export function EditorZona({
       return
     }
 
+    const punct = laCanvas(eveniment)
+
+    /**
+     * Manerele stau DEASUPRA obiectului si se testeaza primele: altfel un maner
+     * din interiorul conturului ar fi citit ca o apucare de obiect, si tragerea
+     * ar muta masa in loc s-o redimensioneze.
+     */
+    const maner = (eveniment.target as SVGElement).closest('[data-maner]')
+    if (maner && punct && cheieSelectata !== null && masuraSelectata && poateRedimensiona) {
+      refGest.current = {
+        pointerId: eveniment.pointerId,
+        strat: stratActiv,
+        cheie: cheieSelectata,
+        decalajX: 0,
+        decalajY: 0,
+        ancora: maner.getAttribute('data-maner') as Ancora,
+        cutieInitiala: {
+          x: masuraSelectata.x,
+          y: masuraSelectata.y,
+          latime: masuraSelectata.latime,
+          inaltime: masuraSelectata.inaltime,
+        },
+        rotatie: masuraSelectata.rotatie,
+        pornire: { x: eveniment.clientX, y: eveniment.clientY },
+      }
+      try {
+        eveniment.currentTarget.setPointerCapture(eveniment.pointerId)
+      } catch {
+        // ignorat intentionat
+      }
+      return
+    }
+
     const atribut = stratActiv === 'mese' ? 'data-masa-id' : 'data-structura-indice'
     const tinta = (eveniment.target as SVGElement).closest(`[${atribut}]`)
-    const punct = laCanvas(eveniment)
 
     if (!tinta) {
       // Canvas gol: gestul devine tragerea vederii. Deselectarea se muta pe
@@ -326,6 +502,7 @@ export function EditorZona({
       decalajX: 0,
       decalajY: 0,
       blocat: stratActiv === 'mese' && !poateMutaMese,
+      pornire: { x: eveniment.clientX, y: eveniment.clientY },
     }
     const masura = masuraGest(gest)
     if (!masura) return
@@ -370,17 +547,47 @@ export function EditorZona({
     // alta secventa (ex. dupa hot-reload cu butonul apasat) ar confirma mutarea.
     if (!gest || gest.pointerId !== eveniment.pointerId) return
 
-    const punct = laCanvas(eveniment)
-    const masura = masuraGest(gest)
-    if (!punct || !masura) return
+    // Sub prag nu se intampla nimic: ecranul ramane exact cum era, deci un clic
+    // pe un obiect nealiniat nu-l muta „singur" pe grid.
+    if (!gest.miscat) {
+      const distanta = Math.hypot(
+        eveniment.clientX - gest.pornire.x,
+        eveniment.clientY - gest.pornire.y,
+      )
+      if (distanta < PRAG_MISCARE) return
+      gest.miscat = true
+    }
 
-    const pozitie = inCanvas(
-      masura.latime,
-      masura.inaltime,
-      punct.x - gest.decalajX,
-      punct.y - gest.decalajY,
-    )
-    setPrevizualizare({ strat: gest.strat, cheie: gest.cheie, x: pozitie.x, y: pozitie.y })
+    const punct = laCanvas(eveniment)
+    if (!punct) return
+
+    if (gest.ancora && gest.cutieInitiala) {
+      const cutie = redimensioneaza(gest.cutieInitiala, gest.ancora, punct, {
+        canvas,
+        grid: pasulDeAliniere(eveniment),
+        minim: LATURA_MINIMA,
+        rotatie: gest.rotatie ?? 0,
+        pastreazaRaport: eveniment.shiftKey,
+      })
+      gest.ultima = cutie
+      setPrevizualizare({ strat: gest.strat, cheie: gest.cheie, ...cutie })
+      return
+    }
+
+    const masura = masuraGest(gest)
+    if (!masura) return
+
+    // Previzualizarea arata pozitia FINALA, aliniata inclusiv: ce vezi in
+    // timpul tragerii e exact ce se salveaza la ridicare.
+    const dimensiuni = { latime: masura.latime, inaltime: masura.inaltime }
+    const bruta = { x: punct.x - gest.decalajX, y: punct.y - gest.decalajY }
+    const pas = pasulDeAliniere(eveniment)
+    const pozitie = pas
+      ? pozitieFinala(dimensiuni, canvas, pas, bruta)
+      : limiteazaInCanvas(dimensiuni, canvas, bruta)
+
+    gest.ultima = { ...dimensiuni, ...pozitie }
+    setPrevizualizare({ strat: gest.strat, cheie: gest.cheie, ...dimensiuni, ...pozitie })
   }
 
   function laPointerUp(eveniment: PointerEvent<SVGSVGElement>) {
@@ -454,28 +661,66 @@ export function EditorZona({
       // deja eliberata — nu schimba nimic pentru noi
     }
 
-    const masura = masuraGest(gest)
-    const punct = laCanvas(eveniment)
-    if (!masura || !punct) return
-
-    // Cu snapping-ul oprit ramane doar limitarea in canvas: pozitia libera e
-    // tot ce a cerut degetul, dar in afara salii tot nu are voie sa iasa.
-    const bruta = { x: punct.x - gest.decalajX, y: punct.y - gest.decalajY }
-    const dimensiuni = { latime: masura.latime, inaltime: masura.inaltime }
-    const final = snapLaGrid
-      ? pozitieFinala(dimensiuni, canvas, zona.grid_marime, bruta)
-      : limiteazaInCanvas(dimensiuni, canvas, bruta)
-
-    // Un clic simplu (fara deplasare) nu trebuie sa produca o scriere inutila.
-    // In panoul restaurantului insa, el are alt inteles: deschide rezervarea de
-    // pe masa, sau walk-in-ul daca e libera.
-    if (final.x === masura.x && final.y === masura.y) {
+    /**
+     * Degetul nu s-a miscat: e un CLIC, si un clic nu scrie nimic in baza. In
+     * panoul restaurantului are insa alt inteles — deschide rezervarea de pe
+     * masa, sau walk-in-ul daca e libera.
+     */
+    if (!gest.miscat || !gest.ultima) {
       if (gest.strat === 'mese') onDeschideMasa?.(gest.cheie as string)
       return
     }
 
-    if (gest.strat === 'mese') onMutaMasa(gest.cheie as string, final.x, final.y)
-    else onMutaStructura(gest.cheie as number, final.x, final.y)
+    // Se comite EXACT ce s-a vazut ultima data sub deget. O recalculare din
+    // coordonatele lui pointerup ar fi o a doua socoteala, care poate da alt
+    // rezultat decat previzualizarea.
+    const cutie: Cutie = {
+      x: laPreciziaBazei(gest.ultima.x),
+      y: laPreciziaBazei(gest.ultima.y),
+      latime: laPreciziaBazei(gest.ultima.latime),
+      inaltime: laPreciziaBazei(gest.ultima.inaltime),
+    }
+
+    // ── Redimensionare ──
+    if (gest.ancora && gest.cutieInitiala) {
+      const start = gest.cutieInitiala
+      const neschimbata =
+        cutie.x === start.x &&
+        cutie.y === start.y &&
+        cutie.latime === start.latime &&
+        cutie.inaltime === start.inaltime
+      if (neschimbata) return
+
+      if (gest.strat === 'mese') onRedimensioneazaMasa?.(gest.cheie as string, cutie)
+      else onRedimensioneazaStructura?.(gest.cheie as number, cutie)
+      return
+    }
+
+    const masura = masuraGest(gest)
+    if (!masura) return
+    if (cutie.x === masura.x && cutie.y === masura.y) return
+
+    if (gest.strat === 'mese') onMutaMasa(gest.cheie as string, cutie.x, cutie.y)
+    else onMutaStructura(gest.cheie as number, cutie.x, cutie.y)
+  }
+
+  /**
+   * Anularea NU e o ridicare de deget. Pana acum `onPointerCancel` mergea in
+   * acelasi handler, deci o palma pe tableta sau o intrerupere de sistem
+   * salvau pozitia din acel moment. Cu manerele ar fi salvat si o dimensiune
+   * pe care nimeni n-a apucat s-o vada: gestul intrerupt se abandoneaza.
+   */
+  function laPointerCancel(eveniment: PointerEvent<SVGSVGElement>) {
+    refGest.current = null
+    refGestRezervare.current = null
+    refPan.current = null
+    setPrevizualizare(null)
+    setTragereRezervare(null)
+    try {
+      eveniment.currentTarget.releasePointerCapture(eveniment.pointerId)
+    } catch {
+      // browserul a eliberat-o deja la anulare
+    }
   }
 
   /** Mutare de la tastatura: sageti = un pas de grid, cu Shift = un pixel. */
@@ -506,37 +751,18 @@ export function EditorZona({
   }
 
   /**
-   * Auto-centrarea se calculeaza AICI, nu in pagina: componenta e singura care
-   * stie si continutul, si viewBox-ul in care trebuie sa incapa.
+   * Centrarea inseamna „canvasul intreg, la scara lui": viewBox-ul E canvasul,
+   * deci scara 1 fara translatie il aseaza exact in ecran, cu raportul pastrat.
+   * Aceeasi incadrare o vad si Adminul, si widgetul public — de-asta butonul se
+   * poate folosi ca previzualizare a publicarii.
    */
-  const incadreazaContinut = useCallback(() => {
-    const dreptunghiuri = [
-      ...structura.map((element) => ({
-        x: element.x,
-        y: element.y,
-        latime: element.latime,
-        inaltime: element.inaltime,
-      })),
-      ...mese.map((masa) => ({
-        x: masa.pozitie_x,
-        y: masa.pozitie_y,
-        latime: masa.latime,
-        inaltime: masa.inaltime,
-      })),
-    ]
-    incadreaza(
-      incadrareContinut(dreptunghiuri, {
-        latime: zona.canvas_latime,
-        inaltime: zona.canvas_inaltime,
-      }),
-    )
-  }, [structura, mese, zona.canvas_latime, zona.canvas_inaltime, incadreaza])
+  const centreazaCanvas = reseteaza
 
   // Raportarea trece prin efect, nu prin randare: apelantul o pastreaza intr-un
   // ref, deci ciclul se opreste aici (vezi comentariul din EditorPlanPage).
   useEffect(() => {
-    onVedere?.({ scara: vedere.scara, laScara, incadreazaContinut })
-  }, [onVedere, vedere.scara, laScara, incadreazaContinut])
+    onVedere?.({ scara: vedere.scara, laScara, centreazaCanvas })
+  }, [onVedere, vedere.scara, laScara, centreazaCanvas])
 
   /**
    * Drop-ul din paleta. Coordonatele vin din acelasi `laCanvas` ca gesturile de
@@ -562,6 +788,61 @@ export function EditorZona({
 
   const editezStructura = stratActiv === 'structura'
 
+  /**
+   * Manerele se deseneaza in AFARA transformarii de zoom, proiectand punctele
+   * cu mana: `ecran = pozitie * scara + vedere`. Doua motive, ambele practice.
+   *
+   * Intai, marimea: un maner asezat sub `scale()` ar creste odata cu planul si
+   * la 400% ar acoperi masa. Impartirea la scara ar merge, dar face manerele sa
+   * tremure la fiecare pas de zoom.
+   *
+   * Apoi, evenimentele: grupul stratului inactiv primeste `pointer-events-none`,
+   * iar manerele trebuie sa raspunda indiferent de asta.
+   *
+   * Colturile se rotesc INAINTE de proiectie, deci pe o masa intoarsa manerele
+   * stau chiar pe colturile ei, nu pe cutia nerotita din baza.
+   */
+  // Peretele in linie franta se deseneaza din `puncte` absolute, fara sa asculte
+  // de x/y/latime/inaltime: manerele lui ar arata langa el si n-ar face nimic.
+  const elementSelectat =
+    stratActiv === 'structura' && typeof cheieSelectata === 'number'
+      ? (structura[cheieSelectata] ?? null)
+      : null
+  const manere =
+    poateRedimensiona && cutieManere && !elementSelectat?.puncte?.length
+      ? (() => {
+          const rotatie = masuraSelectata?.rotatie ?? 0
+          const radiani = (rotatie * Math.PI) / 180
+          const cos = Math.cos(radiani)
+          const sin = Math.sin(radiani)
+          const centru = {
+            x: cutieManere.x + cutieManere.latime / 2,
+            y: cutieManere.y + cutieManere.inaltime / 2,
+          }
+          const proiecteaza = (punct: { x: number; y: number }) => {
+            const dx = punct.x - centru.x
+            const dy = punct.y - centru.y
+            const rotit = {
+              x: centru.x + dx * cos - dy * sin,
+              y: centru.y + dx * sin + dy * cos,
+            }
+            return {
+              x: rotit.x * vedere.scara + vedere.x,
+              y: rotit.y * vedere.scara + vedere.y,
+            }
+          }
+          return {
+            colturi: (['nv', 'ne', 'se', 'sv'] as const).map((ancora) =>
+              proiecteaza(punctManer(cutieManere, ancora)),
+            ),
+            puncte: ANCORE.map((ancora) => ({
+              ancora,
+              ...proiecteaza(punctManer(cutieManere, ancora)),
+            })),
+          }
+        })()
+      : null
+
   return (
     /**
      * Aceeasi tema inchisa ca in HartaZona, si aici din acelasi motiv practic:
@@ -578,6 +859,17 @@ export function EditorZona({
         tragereDeasupra && 'ring-2 ring-canvas-selectie',
         className,
       )}
+      /**
+       * Raportul containerului E raportul canvasului, deci planul umple tot
+       * spatiul disponibil fara benzi goale pe margini. Stilul in linie, nu o
+       * clasa Tailwind: `aspect-[${w}/${h}]` nu se genereaza la executie, iar
+       * dimensiunile canvasului vin din baza.
+       */
+      style={
+        umpleContainerul
+          ? undefined
+          : { aspectRatio: `${zona.canvas_latime} / ${zona.canvas_inaltime}` }
+      }
       onDragOver={(eveniment) => {
         if (!onDropObiect) return
         // Fara preventDefault, browserul refuza drop-ul: implicit, o zona HTML
@@ -601,13 +893,15 @@ export function EditorZona({
         role="application"
         aria-label={`Editor pentru zona ${zona.nume}, stratul ${editezStructura ? 'structură' : 'mese'}`}
         className={cn(
-          'h-full w-full touch-none bg-canvas-fundal select-none',
+          // Fundalul svg-ului e EXTERIORUL canvasului: nu se transforma la pan,
+          // deci ramane mereu in spate, iar sala are o margine vizibila.
+          'h-full w-full touch-none bg-canvas-exterior select-none',
           tragereDeasupra ? 'cursor-copy' : 'cursor-default',
         )}
         onPointerDown={laPointerDown}
         onPointerMove={laPointerMove}
         onPointerUp={laPointerUp}
-        onPointerCancel={laPointerUp}
+        onPointerCancel={laPointerCancel}
       >
         <defs>
           <pattern
@@ -620,6 +914,9 @@ export function EditorZona({
               d={`M ${zona.grid_marime} 0 L 0 0 0 ${zona.grid_marime}`}
               className="fill-none stroke-canvas-grid"
               strokeWidth={1}
+              // Fara asta, la 400% liniile gridului se ingroasa de patru ori si
+              // ajung sa concureze cu peretii.
+              vectorEffect="non-scaling-stroke"
             />
           </pattern>
         </defs>
@@ -628,6 +925,14 @@ export function EditorZona({
             dimensiunile canvasului explicit — "100%" ar insemna viewport-ul,
             nu canvasul, si la pan ar ramane lipit de ecran. */}
         <g transform={`translate(${vedere.x} ${vedere.y}) scale(${vedere.scara})`}>
+        {/* Suprafata canvasului: dincolo de ea nimic nu se publica. Are culoare
+            proprie, deci marginea salii se vede si cand planul e gol. */}
+        <rect
+          width={zona.canvas_latime}
+          height={zona.canvas_inaltime}
+          className="fill-canvas-fundal"
+        />
+
         {/* §42.5 — schita originala, sub tot: urmareste zoom-ul si pan-ul. */}
         {fundal && fundal.opacitate > 0 && (
           <image
@@ -641,11 +946,16 @@ export function EditorZona({
             className="pointer-events-none"
           />
         )}
-        <rect
-          width={zona.canvas_latime}
-          height={zona.canvas_inaltime}
-          fill={`url(#${idGrid})`}
-        />
+        {/* Gridul acopera EXACT canvasul, nu tot spatiul de lucru: unde nu mai
+            sunt patratele, nu mai e nici sala. La zoom mic liniile ar cadea sub
+            un pixel si ar face moar — atunci gridul se stinge singur. */}
+        {vedere.scara * zona.grid_marime >= 4 && (
+          <rect
+            width={zona.canvas_latime}
+            height={zona.canvas_inaltime}
+            fill={`url(#${idGrid})`}
+          />
+        )}
 
         {/* ── Layer 1 ── */}
         <g className={editezStructura ? undefined : 'pointer-events-none'}>
@@ -654,7 +964,15 @@ export function EditorZona({
               previzualizare?.strat === 'structura' && previzualizare.cheie === indice
                 ? previzualizare
                 : null
-            const afisat = mutat ? { ...element, x: mutat.x, y: mutat.y } : element
+            const afisat = mutat
+              ? {
+                  ...element,
+                  x: mutat.x,
+                  y: mutat.y,
+                  latime: mutat.latime,
+                  inaltime: mutat.inaltime,
+                }
+              : element
             const selectat = structuraSelectata === indice
 
             if (!editezStructura) {
@@ -701,7 +1019,15 @@ export function EditorZona({
               previzualizare?.strat === 'mese' && previzualizare.cheie === masa.id
                 ? previzualizare
                 : null
-            const afisata = mutata ? { ...masa, pozitie_x: mutata.x, pozitie_y: mutata.y } : masa
+            const afisata = mutata
+              ? {
+                  ...masa,
+                  pozitie_x: mutata.x,
+                  pozitie_y: mutata.y,
+                  latime: mutata.latime,
+                  inaltime: mutata.inaltime,
+                }
+              : masa
 
             if (editezStructura) {
               return (
@@ -721,7 +1047,11 @@ export function EditorZona({
                 role="button"
                 aria-label={`Masa ${masa.numar_masa}. Trage cu mouse-ul sau mută cu săgețile.`}
                 aria-pressed={masaSelectata === masa.id}
+                // Sagetile mutau masa si pentru cine nu are voie s-o mute:
+                // scrierea pleca, RLS o refuza, iar ospatarul primea o eroare
+                // pentru o actiune care nici n-ar fi trebuit sa existe.
                 onKeyDown={(eveniment) =>
+                  poateMutaMese &&
                   laTasta(
                     eveniment,
                     {
@@ -833,7 +1163,54 @@ export function EditorZona({
             </text>
           </g>
         )}
+
+        {/* Chenarul canvasului, desenat ULTIMUL ca sa ramana vizibil si peste
+            un perete lipit de margine. Nu prinde niciun clic: e un reper, nu un
+            obiect. Ce iese din el nu ajunge la Admin si nici in widget. */}
+        <rect
+          width={zona.canvas_latime}
+          height={zona.canvas_inaltime}
+          className="pointer-events-none fill-none stroke-canvas-margine"
+          strokeWidth={2}
+          vectorEffect="non-scaling-stroke"
+        />
         </g>
+
+        {/* ── Manerele de redimensionare ──
+            In afara transformarii: punctele sunt deja proiectate in coordonate
+            de viewBox, deci raman de aceeasi marime la orice zoom. */}
+        {manere && (
+          <g>
+            <polygon
+              points={manere.colturi.map((punct) => `${punct.x},${punct.y}`).join(' ')}
+              className="pointer-events-none fill-none stroke-canvas-selectie"
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
+            />
+            {manere.puncte.map((maner) => (
+              <g key={maner.ancora} data-maner={maner.ancora} className={CURSOR_MANER[maner.ancora]}>
+                {/* Tinta de atingere, invizibila si mult mai mare decat patratul:
+                    pe tableta un maner de 9px nu se prinde cu degetul. */}
+                <rect
+                  x={maner.x - MARIME_MANER * 1.6}
+                  y={maner.y - MARIME_MANER * 1.6}
+                  width={MARIME_MANER * 3.2}
+                  height={MARIME_MANER * 3.2}
+                  className="fill-transparent"
+                />
+                <rect
+                  x={maner.x - MARIME_MANER / 2}
+                  y={maner.y - MARIME_MANER / 2}
+                  width={MARIME_MANER}
+                  height={MARIME_MANER}
+                  rx={2}
+                  className="pointer-events-none fill-canvas-selectie stroke-background"
+                  strokeWidth={1.5}
+                />
+              </g>
+            ))}
+          </g>
+        )}
       </svg>
 
       {/* Comenzile de zoom apar doar in Canvas Builder-ul echipei: pentru

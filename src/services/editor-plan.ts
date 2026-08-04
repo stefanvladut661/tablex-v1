@@ -108,6 +108,11 @@ export type MasaNoua = {
   forma?: Enums<'masa_forma'>
   latime?: number
   inaltime?: number
+  /**
+   * Duce si rotatia la duplicare (Ctrl+V): o masa intoarsa la 45° copiata fara
+   * unghi ar aterizat dreapta langa original, si ar parea ca s-a copiat altceva.
+   */
+  rotatie?: number
 }
 
 /**
@@ -153,6 +158,7 @@ export async function creeazaMasa(masa: MasaNoua): Promise<Masa> {
         ...(masa.forma ? { forma: masa.forma } : {}),
         ...(masa.latime === undefined ? {} : { latime: masa.latime }),
         ...(masa.inaltime === undefined ? {} : { inaltime: masa.inaltime }),
+        ...(masa.rotatie === undefined ? {} : { rotatie: masa.rotatie }),
       })
       .select('*')
       .single()

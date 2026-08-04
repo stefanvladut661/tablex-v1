@@ -75,6 +75,15 @@ Toate deliberate — daca schimbi una, schimba si randul ei de aici:
   (Inter peste tot, rounded-md, umbre subtile). Alegeri de directie vizuala
   facute la constructia landing-ului, comentate in `src/index.css`; schimba
   tokenii de acolo daca vrei alinierea la litera spec-ului.
+- **Incadrarea publicata e CANVASUL zonei, nu o scara salvata.** §9.2.2 lasa
+  echipa sa fixeze incadrarea, si asa a si fost: `zones.zoom_implicit`, aplicata
+  peste un viewBox strans automat pe continut. Doua mecanisme suprapuse care nu
+  se stiau unul pe altul — cu putine mese intr-un colt, „auto-centrarea" cerea o
+  scara de sapte ori, iar la publicare planul aparea impins in coltul
+  stanga-sus. Acum viewBox-ul E canvasul, containerul primeste raportul lui, iar
+  un `clipPath` taie ce a ramas afara: se publica exact ce incape in chenar.
+  `zoom_implicit` ramane coloana in baza (o vedere recreata cu DROP + CREATE
+  si-ar pierde grant-urile catre `anon` — regula 7), dar n-o mai citeste nimeni.
 - **Harta salii e mereu pe tema inchisa**, indiferent de tema aleasa in rest.
   Clasa `dark` sta pe containerul din `HartaZona` si `EditorZona`, deci rescrie
   tokenii doar inauntru. Planul se citeste de la distanta, in sala: pe fundal

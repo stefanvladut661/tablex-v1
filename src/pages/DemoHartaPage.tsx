@@ -86,7 +86,10 @@ export function DemoHartaPage() {
             statusuri={statusuri}
             masaSelectata={masaSelectata}
             onSelecteazaMasa={setMasaSelectata}
-            className="aspect-[3/2] w-full"
+            className="w-full"
+            // Demo-ul e singurul loc public unde zoom-ul are rost: vizitatorul
+            // se joaca, nu conduce o sala. Textul de sub harta il si promitea.
+            permiteZoom
           />
 
           <p className="text-xs text-muted-foreground">

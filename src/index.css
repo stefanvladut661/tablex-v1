@@ -79,6 +79,11 @@
 
   /* ── Canvas Floor Plan — Layer 1 (structura) ─────────────────────── */
   --canvas-fundal: #ffffff;
+  /* Ce se vede DINCOLO de marginea canvasului, in builder. Planul are o
+     suprafata finita, configurabila pe zona; tot ce iese din ea nu se publica,
+     deci exteriorul trebuie sa arate vizibil altfel decat sala. */
+  --canvas-exterior: #e2e8f0;
+  --canvas-margine: #94a3b8;
   --canvas-grid: #e2e8f0;
   --canvas-perete: #1e293b;
   --canvas-usa: #94a3b8;
@@ -156,6 +161,10 @@
   --status-inactiv-soft: #1e293b;
 
   --canvas-fundal: #0f172a;
+  /* Mai inchis decat sala, ca marginea canvasului sa se citeasca dintr-o
+     privire: harta e mereu pe tema inchisa, deci astea sunt valorile reale. */
+  --canvas-exterior: #05080f;
+  --canvas-margine: #475569;
   --canvas-grid: #1e293b;
   --canvas-perete: #cbd5e1;
   --canvas-usa: #64748b;
@@ -235,6 +244,8 @@
   --color-status-inactiv-soft: var(--status-inactiv-soft);
 
   --color-canvas-fundal: var(--canvas-fundal);
+  --color-canvas-exterior: var(--canvas-exterior);
+  --color-canvas-margine: var(--canvas-margine);
   --color-canvas-grid: var(--canvas-grid);
   --color-canvas-perete: var(--canvas-perete);
   --color-canvas-usa: var(--canvas-usa);

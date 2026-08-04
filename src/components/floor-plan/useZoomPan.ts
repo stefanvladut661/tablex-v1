@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PointerEvent as EvenimentPointer } from 'react'
 
-import { vedereIncadrata, type Dreptunghi, type Vedere } from '@/lib/geometrie-plan'
+import type { Vedere } from '@/lib/geometrie-plan'
 
 export const SCARA_MIN = 0.4
 export const SCARA_MAX = 4
@@ -39,10 +39,9 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
     y: 0,
   })
 
-  // Cand echipa schimba incadrarea salvata, harta o preia fara remontare.
-  useEffect(() => {
-    setVedere({ scara: limiteaza(scaraInitiala), x: 0, y: 0 })
-  }, [scaraInitiala])
+  // Nu mai exista o incadrare salvata pe zona care sa fie preluata din mers:
+  // canvasul E incadrarea, si el nu se schimba sub ochii utilizatorului. Efectul
+  // care resincroniza scara a fost scos odata cu `zones.zoom_implicit`.
 
   /** Ultimul punct atins in timpul unei trageri; null cand nu se trage. */
   const ultimulPunct = useRef<Punct | null>(null)
@@ -125,7 +124,10 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
 
       eveniment.currentTarget.setPointerCapture(eveniment.pointerId)
     },
-    [punctUser],
+    // `interactiv` lipsea din lista: handler-ul se oprea pe steagul de la prima
+    // randare, deci o harta care devine interactiva mai tarziu ar fi ramas
+    // inerta la pan pana la remontare.
+    [punctUser, interactiv],
   )
 
   // Pan incremental (delta fata de ultima poziție), ca sa nu fie nevoie de
@@ -216,18 +218,11 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
     [interactiv, masuraViewBox],
   )
 
-  /** Auto-centrare: aduce dreptunghiul dat exact in mijloc, cat de mare incape. */
-  const incadreaza = useCallback(
-    (dreptunghi: Dreptunghi) => {
-      if (!interactiv) return
-      const masura = masuraViewBox()
-      if (!masura) return
-      setVedere(vedereIncadrata(dreptunghi, masura, { min: SCARA_MIN, max: SCARA_MAX }))
-    },
-    [interactiv, masuraViewBox],
-  )
-
-  /** Revine la incadrarea SALVATA, nu la 1: aia e „normalul" planului. */
+  /**
+   * Revine la incadrarea de pornire — adica la CANVASUL intreg, fiindca
+   * viewBox-ul e chiar canvasul zonei: scara 1, fara translatie. E si ce vede
+   * restaurantul dupa publicare, deci butonul are un inteles verificabil.
+   */
   const reseteaza = useCallback(
     () => setVedere({ scara: limiteaza(scaraInitiala), x: 0, y: 0 }),
     [scaraInitiala],
@@ -248,7 +243,6 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
     mareste,
     micsoreaza,
     laScara,
-    incadreaza,
     reseteaza,
     deplaseaza,
     handlers: {

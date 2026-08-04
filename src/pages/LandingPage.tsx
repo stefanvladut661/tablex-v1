@@ -522,7 +522,7 @@ export function LandingPage() {
             arataGrid={false}
             masaSelectata={masaAleasa}
             onSelecteazaMasa={(id) => setMasaAleasa((curent) => (curent === id ? null : id))}
-            className="mt-3 aspect-[3/2] w-full"
+            className="mt-3 w-full"
           />
 
           {/* Tooltip-ul cerut de §51.1: apare la clic si spune exact ce vede
