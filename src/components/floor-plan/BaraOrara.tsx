@@ -82,13 +82,31 @@ export function BaraOrara({
     if (!bara || !ales) return
     const cadru = bara.getBoundingClientRect()
     const slot = ales.getBoundingClientRect()
+    const ideal = bara.scrollLeft + (slot.left - cadru.left) - cadru.width / 2 + slot.width / 2
+
+    /**
+     * Pozitia se ROTUNJESTE la inceputul celui mai apropiat slot, ca marginea
+     * din stanga sa nu taie niciodata o ora in doua („15:00" injumatatit se
+     * citeste „5:00"). `scroll-snap` singur nu ajunge: pe o derulare pornita
+     * din cod, Chrome nu o aplica de fiecare data — verificat, cateva ore
+     * ramaneau taiate. Snap-ul ramane pentru derularea cu degetul.
+     */
+    let tinta = ideal
+    let ceaMaiMica = Infinity
+    for (const copil of bara.children) {
+      const pozitie = bara.scrollLeft + (copil.getBoundingClientRect().left - cadru.left)
+      const distanta = Math.abs(pozitie - ideal)
+      if (distanta < ceaMaiMica) {
+        ceaMaiMica = distanta
+        tinta = pozitie
+      }
+    }
+
     // Instantaneu, nu `smooth`: derularea lina s-a dovedit inerta la testare
     // (cererea pleaca, pozitia nu se schimba), iar pe o bara de sloturi n-ar
     // adauga nimic — ora aleasa trebuie sa fie acolo cand te uiti, nu peste
     // trei sute de milisecunde.
-    bara.scrollTo({
-      left: bara.scrollLeft + (slot.left - cadru.left) - cadru.width / 2 + slot.width / 2,
-    })
+    bara.scrollTo({ left: tinta })
   }, [oraAfisata, urmarestePrezentul])
 
   return (
@@ -109,9 +127,15 @@ export function BaraOrara({
      * in doua si arunca lumina in ochi exact acolo unde se uita ospatarul cel
      * mai des. Clasa `dark` rescrie tokenii doar inauntru, deci nicio culoare
      * nu se scrie de mana (regula 2).
+     *
+     * `text-foreground` de aici NU e decorativ, e obligatoriu. `dark` schimba
+     * doar VARIABILELE; o proprietate mostenita a fost deja rezolvata mai sus,
+     * pe `body`, cu valorile temei deschise, si coboara ca atare in subarbore.
+     * Butonul „Revino la ora curentă" nu-si pune singur o culoare de text, deci
+     * mostenea #0f172a — exact fundalul barei. Buton invizibil, gasit in browser.
      */
     <div
-      className={`dark grid items-center gap-2 rounded-lg border border-border bg-card p-1.5 shadow-sm ${
+      className={`dark grid items-center gap-2 rounded-lg border border-border bg-card p-1.5 text-foreground shadow-sm ${
         urmarestePrezentul ? '' : 'grid-cols-[minmax(0,1fr)_auto]'
       }`}
     >
@@ -119,7 +143,29 @@ export function BaraOrara({
         ref={refBara}
         role="group"
         aria-label="Ora afișată pe hartă"
-        className="flex min-w-0 gap-1 overflow-x-auto"
+        /**
+         * Se deruleaza, dar FARA bara de derulare vizibila. Bara aia taia o
+         * dunga gri peste sloturi si arata a defect intr-un rand de butoane
+         * care oricum se aduce singur la ora aleasa: nimeni nu trebuie s-o
+         * apuce ca sa ajunga undeva. Derularea cu rotita si cu degetul ramane.
+         */
+        className="flex min-w-0 snap-x snap-mandatory gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        /**
+         * Doua masuri impotriva aceleiasi urate: ora taiata in doua la marginea
+         * ferestrei. „15:00" injumatatit se citea „5:00", adica fix ca o eroare
+         * de randare.
+         *
+         * Alinierea (`snap-x snap-mandatory` + `snap-start` pe sloturi) face ca
+         * bara sa se opreasca mereu cu un slot INTREG lipit de marginea din
+         * stanga. Estomparea de la capete acopera restul si spune „mai e ceva
+         * acolo" — ce faceau inainte capetele barei de derulare.
+         */
+        style={{
+          maskImage:
+            'linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%)',
+          WebkitMaskImage:
+            'linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%)',
+        }}
       >
         {sloturi.map((slot) => {
           const ales = Math.abs(slot - oraAfisata) < PAS_ORE / 2
@@ -135,11 +181,13 @@ export function BaraOrara({
               aria-pressed={ales}
               aria-label={`Arată sala la ora ${formateazaOra(slot)}${acum ? ' (ora curentă)' : ''}`}
               onClick={() => onSchimba(slot)}
-              className={`shrink-0 rounded-md px-2.5 py-1.5 text-[13px] tabular-nums transition-colors ${
+              className={`shrink-0 snap-start rounded-md px-3 py-1.5 text-sm font-medium tabular-nums transition-colors ${
                 ales
                   ? 'bg-primary font-semibold text-primary-foreground'
                   : trecut
-                    ? 'text-muted-foreground hover:bg-muted'
+                    ? // Orele trecute raman mai stinse decat restul, dar nu
+                      // sterse: si ele se pot alege, ca sa vezi cum a fost sala.
+                      'text-foreground/60 hover:bg-muted hover:text-foreground'
                     : // Orele care urmeaza se scriu cu culoarea textului, nu cu
                       // cea „stinsa": pe fundalul inchis, restul zilei trebuie
                       // sa se citeasca de la distanta, nu doar sa se ghiceasca.
@@ -149,7 +197,7 @@ export function BaraOrara({
                 // inel, nu o umplere: umplerea e rezervata slotului ALES, iar
                 // doua sloturi umplute diferit s-ar citi ca doua selectii.
                 acum && !ales ? 'ring-1 ring-primary ring-inset' : ''
-              } ${intreaga ? '' : 'text-muted-foreground'}`}
+              } ${intreaga ? '' : 'px-1 text-muted-foreground'}`}
             >
               {intreaga ? formateazaOra(slot) : '·'}
             </button>

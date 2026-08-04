@@ -1,10 +1,7 @@
-import { useId } from 'react'
-import { MaximizeIcon, MinusIcon, PlusIcon } from 'lucide-react'
+import { useId, useRef } from 'react'
 
 import { ElementStructura } from '@/components/floor-plan/ElementStructura'
 import { Masa } from '@/components/floor-plan/Masa'
-import { useZoomPan } from '@/components/floor-plan/useZoomPan'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type {
   ElementStructura as Element,
@@ -24,18 +21,23 @@ type Props = {
   masaSelectata?: string | null
   onSelecteazaMasa?: (id: string) => void
   arataGrid?: boolean
-  /**
-   * Zoom-ul interactiv (rotita, pinch, butoane) e OPRIT implicit.
-   *
-   * Incadrarea nu se mai negociaza nicaieri: planul se vede exact cat e
-   * canvasul zonei, fixat de echipa TableX in Canvas Builder. Doi ospatari care
-   * se uita la aceeasi sala vad acelasi lucru, iar ce a desenat echipa in
-   * chenar e ce ajunge in sala si in widget.
-   */
-  permiteZoom?: boolean
   className?: string
 }
 
+/**
+ * Viewer-ul NU are zoom si NU are pan. Deloc, nicaieri.
+ *
+ * Planul publicat arata exact canvasul zonei, incadrat de echipa TableX in
+ * Canvas Builder — doi ospatari care se uita la aceeasi sala vad acelasi lucru,
+ * iar ce a desenat echipa in chenar e ce ajunge in sala, pe landing si in
+ * widget. Zoom-ul a existat aici o vreme si a fost scos dupa ce s-a vazut in
+ * uz: harta e o vitrina si un tablou de bord, nu o unealta de desen. Cine o
+ * apuca din greseala o trage din cadru si ramane cu sala pe jumatate iesita din
+ * ecran, fara sa stie ca exista un buton de revenire — pentru ca nu exista.
+ *
+ * Gesturile raman doar cele care inseamna ceva: clic pe o masa, Tab si Enter.
+ * Editorul echipei (`EditorZona`) e singurul loc cu zoom si pan.
+ */
 export function HartaZona({
   zona,
   structura = [],
@@ -44,17 +46,9 @@ export function HartaZona({
   masaSelectata = null,
   onSelecteazaMasa,
   arataGrid = true,
-  permiteZoom = false,
   className,
 }: Props) {
-  // Ultimul argument: rotita apropie doar cu Ctrl. Viewer-ul asta sta mereu
-  // intr-o pagina care se deruleaza (landing, demo, widget, dialog), unde o
-  // rotire peste harta trebuie sa coboare pagina, nu sa apropie planul.
-  const { refSvg, vedere, mareste, micsoreaza, reseteaza, handlers } = useZoomPan(
-    1,
-    permiteZoom,
-    true,
-  )
+  const refSvg = useRef<SVGSVGElement | null>(null)
   const idGrid = useId()
   /**
    * Decuparea la marginea canvasului. Id-ul vine din useId fiindca aceeasi
@@ -103,8 +97,7 @@ export function HartaZona({
         preserveAspectRatio="xMidYMid meet"
         role="group"
         aria-label={`Harta zonei ${zona.nume}`}
-        className="h-full w-full touch-none bg-canvas-exterior select-none"
-        {...handlers}
+        className="h-full w-full bg-canvas-exterior select-none"
       >
         <defs>
           <pattern
@@ -125,11 +118,10 @@ export function HartaZona({
           </clipPath>
         </defs>
 
-        <g transform={`translate(${vedere.x} ${vedere.y}) scale(${vedere.scara})`}>
-          {/* Decupajul sta INAUNTRUL transformarii, ca dreptunghiul lui sa fie
-              in coordonate de canvas. Ce a ramas in afara chenarului la
-              desenare nu se vede aici — asta e regula publicarii. */}
-          <g clipPath={`url(#${idDecupaj})`}>
+        {/* Fara transformare de vedere: viewBox-ul e chiar canvasul, deci
+            continutul se deseneaza in coordonatele lui. Decupajul taie ce a
+            ramas in afara chenarului la desenare — asta e regula publicarii. */}
+        <g clipPath={`url(#${idDecupaj})`}>
             <rect
               width={zona.canvas_latime}
               height={zona.canvas_inaltime}
@@ -159,25 +151,8 @@ export function HartaZona({
                   onSelecteaza={onSelecteazaMasa}
                 />
               ))}
-          </g>
         </g>
       </svg>
-
-      {/* Comenzile de zoom apar doar unde zoom-ul e permis — altfel ar fi
-          butoane care nu fac nimic, mai rele decat cele care lipsesc. */}
-      {permiteZoom && (
-        <div className="absolute right-2 bottom-2 flex flex-col gap-1 rounded-lg border border-border bg-card/90 p-1 backdrop-blur">
-          <Button variant="ghost" size="icon-sm" onClick={mareste} aria-label="Mărește">
-            <PlusIcon />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={micsoreaza} aria-label="Micșorează">
-            <MinusIcon />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={reseteaza} aria-label="Încadrează harta">
-            <MaximizeIcon />
-          </Button>
-        </div>
-      )}
     </div>
   )
 }

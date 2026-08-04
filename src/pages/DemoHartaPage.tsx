@@ -104,14 +104,12 @@ export function DemoHartaPage() {
             masaSelectata={masaSelectata}
             onSelecteazaMasa={setMasaSelectata}
             className="w-full"
-            // Demo-ul e singurul loc public unde zoom-ul are rost: vizitatorul
-            // se joaca, nu conduce o sala. Textul de sub harta il si promitea.
-            permiteZoom
           />
 
           <p className="text-xs text-muted-foreground">
-            Trage de hartă ca s-o muți, Ctrl + scroll ca să apropii, click pe o masă pentru
-            detalii. Tab și Enter funcționează la fel, pentru navigarea de la tastatură.
+            Click pe o masă pentru detalii. Tab și Enter funcționează la fel, pentru navigarea de
+            la tastatură. Planul se vede întreg, exact cum îl vede și restaurantul — nu se mută și
+            nu se apropie.
           </p>
         </div>
 
