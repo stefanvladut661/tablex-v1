@@ -150,7 +150,9 @@ export function Hero() {
         )}
 
         {/* Straturile 4 si 6 — continutul, in flux, responsive */}
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pt-16 pb-24 md:pt-24 lg:min-h-[min(92svh,860px)] lg:grid-cols-[52%_48%] lg:gap-0 lg:py-0">
+        {/* Inaltimea e sub un ecran plin (92svh → 76svh) ca banda de recenzii
+            sa se vada de sub telefon inainte de orice derulare. */}
+        <div className="wrap-landing relative grid items-center gap-8 pt-14 pb-10 md:pt-20 lg:min-h-[min(76svh,700px)] lg:grid-cols-[52%_48%] lg:gap-0 lg:py-0">
           <ParallaxLayer {...S.text} className="relative">
             <HeroCopy />
           </ParallaxLayer>

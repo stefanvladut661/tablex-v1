@@ -18,11 +18,21 @@ import { cn } from '@/lib/utils'
  *
  * Toate respecta acelasi ritm vizual: eticheta mica in culoarea de accent,
  * titlu scurt in doua tonuri, text, apoi actiuni. Butoanele de pe landing sunt
- * pastile (rounded-full) — singura abatere de la regula rounded-md din §50.2,
- * si e deliberata: e suprafata de marketing, nu unealta de lucru.
+ * rounded-lg — abatere de la regula rounded-md din §50.2, deliberata: e
+ * suprafata de marketing, nu unealta de lucru.
  */
 
-export const PILULA = 'rounded-full'
+/**
+ * Raza butoanelor de pe landing. A fost `rounded-full`; nu mai e.
+ * Pastila deplina ramane rezervata etichetelor mici (chips, insigne, buline de
+ * iconita). Cand o poarta si butoanele, si cardurile, si insignele, pagina
+ * capata acel „totul e o pastila" care citeste a sablon. `rounded-lg` e raza
+ * deja documentata a landing-ului in CLAUDE.md.
+ *
+ * Numele a ramas PILULA fiindca e importat din patru locuri; ce descrie el e
+ * „raza butoanelor de prezentare", nu forma.
+ */
+export const PILULA = 'rounded-lg'
 
 /* ─────────────────────────── Eticheta de sectiune ─────────────────────── */
 
@@ -83,7 +93,11 @@ export function SectionHeading({
         animationNum={1}
         timelineRef={ref}
         className={cn(
-          'mt-3 text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl',
+          // Majuscule si corp mare, ca in referinta: titlul e ancora sectiunii,
+          // nu o propozitie de citit. Tracking-ul strans il tine compact.
+          'text-4xl leading-[1.1] font-extrabold tracking-[-0.03em] text-balance uppercase sm:text-5xl',
+          // Fara eticheta deasupra, mt-3 ar fi un spatiu care nu separa nimic.
+          eticheta && 'mt-3',
           peFundalInchis && 'text-sidebar-foreground',
         )}
       >
@@ -131,9 +145,12 @@ export function MediaPlaceholder({
       aria-label={`Substitut de imagine: ${eticheta}`}
       style={{ aspectRatio: raport }}
       className={cn(
-        'grid w-full place-content-center gap-2 justify-items-center rounded-xl border border-dashed p-6 text-center',
+        // Bordura punctata ramane, umbra pleaca: aici conturul POARTA sens
+        // („inca nu e imagine reala"), deci el e cel care se pastreaza cand
+        // trebuie ales intre contur si elevatie.
+        'grid w-full place-content-center gap-2 justify-items-center rounded-2xl border border-dashed p-6 text-center',
         inchis
-          ? 'border-sidebar-border bg-sidebar text-sidebar-foreground/60'
+          ? 'suprafata-spotlight border-sidebar-border bg-sidebar text-sidebar-foreground/75'
           : 'border-border bg-muted text-muted-foreground',
         className,
       )}
@@ -191,7 +208,7 @@ export function ProblemCards({ probleme }: { probleme: Problema[] }) {
     <div ref={ref} className="grid gap-4 md:grid-cols-3">
       {probleme.map(({ titlu, text, icoana: Icoana }, indice) => (
         <TimelineContent key={titlu} animationNum={indice} timelineRef={ref} className="h-full">
-          <div className="h-full rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div className="sticla h-full rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <span className="grid size-11 place-content-center rounded-full bg-destructive">
               <Icoana className="size-5 text-destructive-foreground" />
             </span>
@@ -342,7 +359,7 @@ export function DarkBand({ children, className }: { children: ReactNode; classNa
   return (
     <div
       className={cn(
-        'rounded-xl bg-sidebar px-6 py-14 text-sidebar-foreground sm:px-10',
+        'rounded-2xl bg-sidebar px-6 py-14 text-sidebar-foreground sm:px-10',
         className,
       )}
     >
@@ -366,7 +383,7 @@ export function QuoteCards({ testimoniale }: { testimoniale: Testimonial[] }) {
     <div ref={ref} className="grid gap-4 md:grid-cols-3">
       {testimoniale.map(({ citat, autor, locatie }, indice) => (
         <TimelineContent key={autor} animationNum={indice} timelineRef={ref} className="h-full">
-          <figure className="flex h-full flex-col rounded-xl bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <figure className="sticla flex h-full flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <QuoteIcon className="size-6 shrink-0 text-primary" />
             <blockquote className="mt-4 grow text-sm text-card-foreground text-pretty">
               {citat}

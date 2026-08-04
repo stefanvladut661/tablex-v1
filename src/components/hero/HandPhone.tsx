@@ -34,7 +34,10 @@ export function HandPhone() {
       ref={intrareRef}
       // Cadrul include si mana, nu doar telefonul — latimea e mai mare
       // ca telefonul din compozitie sa ramana la dimensiune de erou.
-      className="relative mx-auto w-[min(84vw,360px)] scale-[0.8] lg:w-[430px] lg:scale-[0.88] xl:scale-100"
+      // Reducerea de dimensiune se face pe LATIME, nu pe scale: scale e
+      // transform, nu schimba cutia de layout, deci ar fi lasat o rama goala
+      // de zeci de px in jurul mainii — chiar spatiul care parea "gol" sub ea.
+      className="relative mx-auto w-[min(74vw,317px)] scale-[0.8] lg:w-[378px] lg:scale-[0.88] xl:scale-100"
       initial={redus ? false : intrareInitial}
       animate={intrareFinal}
       transition={{ duration: mobil ? 1 : 1.4, delay: TIMELINE.mana.delay, ease: EASE.expo }}
@@ -60,6 +63,11 @@ export function HandPhone() {
       >
         {/* width/height intrinseci: browserul rezerva cutia inainte de
             incarcare — zero layout shift (CLS-ul interzis de spec). */}
+        {/* Masca de jos stinge taietura incheieturii in fundal. Sta pe IMAGINE,
+            nu pe sectiunea urmatoare: asa urca odata cu stratul de parallax si
+            marginea ramane ascunsa la orice pozitie de scroll. Ecranul DOM se
+            termina la 76.6% (ECRAN_RECT), deci stingerea de la 82% nu-l atinge.
+            #000 e canal alfa aici, nu culoare — acelasi idiom ca .hero-grid. */}
         <img
           src={ASSETS.mana}
           alt=""
@@ -67,7 +75,7 @@ export function HandPhone() {
           height={MANA_PX.inaltime}
           fetchPriority="high"
           decoding="async"
-          className="h-auto w-full"
+          className="h-auto w-full [mask-image:linear-gradient(to_bottom,#000_82%,transparent_99%)]"
         />
 
         {/* Ecranul DOM, asezat exact peste ecranul alb din fotografie.
