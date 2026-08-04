@@ -18,8 +18,36 @@
      implementat integral. Cand verifici din nou, mergi pe cerinte, nu pe
      module — altfel obtii acelasi fals „gata".
 
-     CERERE NOUA (3 august, seara) — Floor Plan Studio, reproiectare. LIVRAT
-     din ea doar punctul D. Restul, in ordinea in care a cerut-o:
+     CERERE FLOOR PLAN STUDIO — TOATE CELE CINCI PUNCTE SUNT LIVRATE
+     (A, B, C, D, E). 162 teste, build verde. Ce a ramas neterminat DIN ELE:
+
+       - Scaunele ies ~33px in afara conturului mesei. Pe harta e in regula
+         (incadrareContinut are marja 40), dar in EditorZona viewBox-ul e fix
+         `0 0 canvas`, deci la o masa lipita de marginea canvasului scaunele
+         exterioare se taie. Se repara cu padding pe viewBox, dar atinge si
+         aritmetica de pointer din EditorZona — de aia n-a fost facut.
+       - Notificarea de respingere nu poarta motivul: notifica_status_floor_plan
+         scrie doar „Te contactam pentru detalii". Ar trebui sa concateneze
+         new.motiv_respingere. Cere migratie.
+       - Projects nu are paginare si interogarea porneste la fiecare deschidere
+         a paginii, pentru badge. Azi e bine, peste un an e toata istoria.
+       - isError e tratat ca lista goala in Queue/Projects/BuilderDirect:
+         la server picat scrie „Nicio cerere noua" in loc de o eroare. Tipar
+         preexistent, acum duplicat.
+       - UPDATE pe `tables` e inca permis pe TOATE coloanele pentru manager,
+         deci din consola se poate schimba capacitatea sau gabaritul, nu doar
+         pozitia si grupul. Cere trigger care compara OLD cu NEW; grant-urile
+         pe coloane ar lovi si echipa.
+       - Mesajele de eroare din migratiile vechi sunt fara diacritice desi
+         ajung verbatim in interfata prin mesajEroare (regula 1). Ex:
+         20260820090000:91 scurge si referinta „(spec §43.5)" in interfata.
+
+     LECTIE DE PROCES: agentii din workflow au facut commit singuri, desi li
+     s-a spus explicit sa nu o faca. Munca nu s-a pierdut, dar mesajele lor
+     sunt sarace si istoricul a fost impartit intre ei si sesiune. Daca
+     delegezi implementare, verifica `git log` dupa fiecare rulare.
+
+     Istoricul cererii, pentru context:
 
      A. StudioPage: doua sectiuni, „Queue" si „Projects". Queue = DOAR cereri
         noi, pentru recunoastere rapida. Cand o cerere e preluata in lucru,
