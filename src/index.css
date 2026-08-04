@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/albert-sans";
 @import "@fontsource/ibm-plex-mono/500.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -98,6 +99,12 @@
   /* Norii decorativi; pe tema inchisa devin un slate vizibil pe fundal. */
   --cloud: #ffffff;
 
+  /* Suprafata de vitrina a landing-ului: banda Solutiei si substitutele de
+     imagine. Navy inchis, mai adanc decat --sidebar (#1e293b), ca banda sa se
+     citeasca drept alt plan, nu drept aceeasi suprafata. Text deschis: 14.2:1. */
+  --spotlight: #0f172a;
+  --spotlight-foreground: #e2e8f0;
+
   /* ── Grafice ─────────────────────────────────────────────────────── */
   --chart-1: #1d4ed8;
   --chart-2: #1e293b;
@@ -171,6 +178,11 @@
 
   --signal: #ff7a47;
   --cloud: #2b3a52;
+
+  /* Aceeasi pe ambele teme — e o suprafata de accent, inchisa in sine,
+     care nu trebuie sa urmeze fundalul paginii. */
+  --spotlight: #0f172a;
+  --spotlight-foreground: #e2e8f0;
 
   --chart-1: #60a5fa;
   --chart-2: #cbd5e1;
@@ -252,6 +264,8 @@
   --color-chart-5: var(--chart-5);
   --color-signal: var(--signal);
   --color-cloud: var(--cloud);
+  --color-spotlight: var(--spotlight);
+  --color-spotlight-foreground: var(--spotlight-foreground);
   /* Titlurile intregii aplicatii vorbesc limba hero-ului: Plus Jakarta. */
   --font-heading: var(--font-display);
   --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", var(--font-sans);
@@ -336,6 +350,97 @@
 }
 
 @layer components {
+  /* Albert Sans, doar pe pagina de prezentare. Rescrie cei doi tokeni de font
+     pe subarbore, in loc sa-i schimbe global: aplicatia si Super Adminul
+     raman pe Inter + Plus Jakarta.
+
+     `font-family` de pe clasa NU e redundant. Variabilele nu schimba retroactiv
+     o valoare deja mostenita: <html> a calculat deja Inter din var(--font-sans),
+     iar redefinirea variabilei mai jos n-ar reface acel calcul. Regula de aici
+     re-rezolva var-ul in noul scope, si de-abia asa se schimba textul.
+     Titlurile merg singure — regula h1-h4 citeste var(--font-display) la
+     nivelul lor, deci vede valoarea rescrisa aici.
+
+     Mono ramane IBM Plex: etichetele de sectiune (Eyebrow) sunt un accent
+     deliberat, nu text care ar trebui sa semene cu restul. */
+  .tema-landing {
+    --font-sans: "Albert Sans Variable", "Albert Sans", ui-sans-serif, system-ui,
+      -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-display: "Albert Sans Variable", "Albert Sans", var(--font-sans);
+    font-family: var(--font-sans);
+  }
+
+  /* Suprafata portocalie: banda Solutiei si substitutele de imagine.
+     Nu pune doar un fundal — REBRANSEAZA tokenii sidebar pe subarbore. Asa,
+     tot ce e deja scris cu `peFundalInchis` (titlul, eticheta, pastilele de
+     incredere) ramane corect fara sa-i atinga nimeni codul; altfel ar fi
+     trebuit un al doilea set de clase prin trei componente.
+     Merge fiindca @theme e `inline`: `bg-sidebar` compileaza in
+     var(--sidebar), deci rescrierea variabilei aici schimba utilitarul.
+     Toate perechile de mai jos sunt verificate pe #0f172a. */
+  .suprafata-spotlight {
+    --sidebar: var(--spotlight);
+    --sidebar-foreground: var(--spotlight-foreground);
+    /* Eticheta de sectiune: albastrul deschis al temei inchise, 7.1:1. */
+    --sidebar-primary: #60a5fa;
+    /* Pastilele de incredere: sticla peste navy, nu suprafata plina —
+       textul ramane --sidebar-foreground, deci contrastul tine de fundalul
+       de dedesubt, care e tot navy. */
+    --sidebar-accent: color-mix(in oklab, #ffffff 10%, transparent);
+    --sidebar-border: color-mix(in oklab, #ffffff 14%, transparent);
+  }
+
+  /* Glassmorphism usor: suprafata semi-transparenta, blur pe ce trece pe
+     dedesubt si o muchie de lumina sus, care e chiar lucrul ce citeste drept
+     „sticla" — fara ea ramane doar un card palid.
+
+     „Usor" e literal, 78% opacitate. Sticla adevarata (40-50%) ar lasa textul
+     sa concureze cu ce trece prin spate, iar cardurile astea poarta text mic.
+     Pe fundal plat efectul e aproape invizibil, si asa si trebuie: se vede
+     acolo unde chiar trece ceva pe sub el — grid-ul hero-ului, banda de
+     recenzii in derulare, marginea benzii intunecate.
+
+     Cine o foloseste TREBUIE sa scoata `bg-card` si `border-border`: in
+     Tailwind v4 utilitarele bat @layer components, deci ar rescrie fundalul
+     si muchia de aici, iar sticla ar disparea fara nicio eroare. */
+  .sticla {
+    background-color: color-mix(in oklab, var(--card) 55%, transparent);
+    /* 18px, nu mai mult: peste 20px blur-ul de fundal devine obositor la
+       citit (Axess Lab), iar cardurile astea poarta text mic. */
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    /* FARA bordura perimetrala, deliberat: contur subtire PLUS umbra lata pe
+       acelasi element e tiparul care face cardurile sa arate a sablon — un
+       design asumat alege una dintre ele. Ramane doar muchia de lumina de
+       sus, care nu e contur de definire, ci reflexia ce face materialul. */
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, #ffffff 55%, transparent),
+      0 14px 38px -22px color-mix(in oklab, var(--foreground) 45%, transparent);
+  }
+
+  /* Coloana paginii de prezentare. Exista ca sa fie UN SINGUR loc care decide
+     latimea: scrisa in fiecare sectiune, s-ar desincroniza la prima adaugare,
+     iar marginile n-ar mai cadea pe aceeasi verticala — exact ce se vede.
+
+     Sub 1024px ramane latime plina cu padding: la 1024px 60vw inseamna 614px,
+     prea ingust pentru grilele de trei carduri, iar pe telefon ar fi de
+     nefolosit. Podeaua de 48rem tine acelasi lucru intre 1024 si 1280px.
+
+     Banda de recenzii si subsolul NU o folosesc — merg cap la cap, deliberat. */
+  .wrap-landing {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 72rem;
+    padding-inline: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .wrap-landing {
+      max-width: max(48rem, 60vw);
+      padding-inline: 0;
+    }
+  }
+
   /* Fundalul hero-ului: wash liniar discret, NU gradient mesh (spec §1). */
   .hero-wash {
     background-image: linear-gradient(160deg, var(--card), var(--muted));

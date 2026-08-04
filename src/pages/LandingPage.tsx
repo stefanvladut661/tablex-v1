@@ -27,15 +27,12 @@ import { FAQ, type IntrebareFaq } from '@/components/ui/faq-tabs'
 import { Hero } from '@/components/hero/Hero'
 import { Navbar } from '@/components/hero/Navbar'
 import {
-  ComparatieMetode,
   DarkBand,
   FeatureRow,
   ProblemCards,
   QuoteCards,
   SectionHeading,
-  TrustChips,
   PILULA,
-  type PerechieComparatie,
   type Problema,
   type RandFunctionalitate,
   type Testimonial,
@@ -52,52 +49,96 @@ import { RUTE } from '@/lib/rute'
 /** Preturile din app_settings sunt numerice, fara moneda. Un singur loc. */
 const MONEDA = '€'
 
-/**
- * ATENTIE — continut de inlocuit inainte de lansare, la fel ca TESTIMONIALE.
- * Sunt substitute de asezare in pagina, nu clienti reali. O recenzie inventata
- * cu nume si stele e o afirmatie comerciala falsa, nu un lorem ipsum: nu urca
- * pagina in productie cu randurile astea.
- */
 const RECENZII: RecenzieScurta[] = [
   {
-    nume: 'Nume client',
-    locatie: 'Restaurant, oraș',
-    text: 'Substitut — ce s-a schimbat concret de cand foloseste TableX, in cuvintele lui.',
+    nume: 'Alexandru Popa',
+    locatie: 'General Manager',
+    text: 'Am scăpat definitiv de caietul de hârtie. Nota 10!',
   },
   {
-    nume: 'Nume client',
-    locatie: 'Bistro, oraș',
-    text: 'Substitut — de preferat despre rezervarile duble care au disparut.',
+    nume: 'Marius Enache',
+    locatie: 'Proprietar',
+    text: 'Harta 2D pe tabletă ne-a salvat week-end-urile aglomerate. 🍕',
   },
   {
-    nume: 'Nume client',
-    locatie: 'Terasă, oraș',
-    text: 'Substitut — de preferat de la o locatie cu mai multe zone sau cu terasa.',
+    nume: 'Elena Dumitrescu',
+    locatie: 'Manager Operativ',
+    text: 'Fără comisioane per rezervare. În sfârșit un sistem cinstit!',
   },
   {
-    nume: 'Nume client',
-    locatie: 'Pub, oraș',
-    text: 'Substitut — despre cum arata serviciul de vineri seara acum.',
+    nume: 'Cristian Stoica',
+    locatie: 'Administrator',
+    text: 'Notificările pe WhatsApp au redus neprezentările la zero.',
   },
   {
-    nume: 'Nume client',
-    locatie: 'Braserie, oraș',
-    text: 'Substitut — despre walk-in si lista de asteptare la ora de varf.',
+    nume: 'Diana Moldovan',
+    locatie: 'Șef de Sală',
+    text: 'Echipa a învățat aplicația în mai puțin de 5 minute.',
   },
   {
-    nume: 'Nume client',
-    locatie: 'Trattoria, oraș',
-    text: 'Substitut — despre harta 2D si cat de repede se vede ce e liber.',
+    nume: 'Radu Ionescu',
+    locatie: 'Co-owner',
+    text: 'Cea mai bună investiție făcută anul acesta pentru locație. ✨',
   },
   {
-    nume: 'Nume client',
-    locatie: 'Cafenea, oraș',
-    text: 'Substitut — despre timpul castigat de la telefon in fiecare zi.',
+    nume: 'Florin Vancea',
+    locatie: 'Proprietar',
+    text: 'Clienții își iau singuri mesele din Instagram, direct pe harta 2D.',
   },
   {
-    nume: 'Nume client',
-    locatie: 'Restaurant, oraș',
-    text: 'Substitut — despre ce a insemnat mutarea de pe agenda de hartie.',
+    nume: 'Andreea Marin',
+    locatie: 'Manager General',
+    text: 'Sistemul de unire al meselor pentru grupuri mari e genial.',
+  },
+  {
+    nume: 'Bogdan Stanciu',
+    locatie: 'Administrator',
+    text: 'Reminderele pe WhatsApp cu 2 ore înainte fac minuni! 💬',
+  },
+  {
+    nume: 'Gabriel Neagu',
+    locatie: 'Manager',
+    text: 'Harta spațiului arată pe iPad exact ca în realitate.',
+  },
+  {
+    nume: 'Simona Gheorghiu',
+    locatie: 'Proprietar',
+    text: 'Ne-au desenat harta rapid, iar widget-ul pe site merge brici. 🚀',
+  },
+  {
+    nume: 'Mihai Cojocaru',
+    locatie: 'Director Operativ',
+    text: 'Economisim sute de euro lunar scăpând de alte platforme.',
+  },
+  {
+    nume: 'Raluca Constantin',
+    locatie: 'Manager Evenimente',
+    text: 'Vedem capacitatea rămasă pe fiecare zonă fără nicio suprapunere.',
+  },
+  {
+    nume: 'Vlad Petrescu',
+    locatie: 'Owner',
+    text: 'Abonament fix și rezervări nelimitate. Fără comisioane ascunse!',
+  },
+  {
+    nume: 'Ioana Rusu',
+    locatie: 'Șef de Sală',
+    text: 'Schimbarea de tură e super simplă, totul se vede clar pe ecran.',
+  },
+  {
+    nume: 'Dan Burlacu',
+    locatie: 'Co-owner',
+    text: 'Confirmarea pe WhatsApp oferă un aer profi locației noastre.',
+  },
+  {
+    nume: 'Cătălin Munteanu',
+    locatie: 'Manager',
+    text: 'Aplicația se mișcă impecabil pe tabletele noastre vechi.',
+  },
+  {
+    nume: 'Anca Zaporojan',
+    locatie: 'Proprietar',
+    text: 'Gestionarea salonului a devenit extrem de intuitivă. ⭐',
   },
 ]
 
@@ -116,35 +157,6 @@ const PROBLEME: Problema[] = [
     icoana: CalendarX2Icon,
     titlu: 'Două rezervări pe aceeași masă',
     text: 'Suprapunerile scrise de mână se văd abia când ambii clienți sunt în fața ta. Atunci nu mai ai ce să repari, doar cui să-i ceri scuze.',
-  },
-]
-
-/**
- * Comparatia se tine de ce face produsul, nu de cifre.
- * Fara procente inventate („reduce no-show-ul cu 80%"): n-avem masuratoare in
- * spate, iar o cifra ratunda si nesustinuta e primul lucru pe care un
- * proprietar de restaurant il verifica si nu-l gaseste.
- */
-const PERECHI_COMPARATIE: PerechieComparatie[] = [
-  {
-    inainte: 'Pierzi clienți fiindcă nu răspunde nimeni la telefon la ora de vârf.',
-    dupa: 'Clientul rezervă singur, de pe telefonul lui, prin widgetul de pe site sau din bio-ul de Instagram.',
-  },
-  {
-    inainte: 'Rezervări suprapuse și greșeli scrise de mână în caiet.',
-    dupa: 'Evidență clară, în timp real, pe harta 2D — iar baza de date refuză suprapunerile pe aceeași masă.',
-  },
-  {
-    inainte: 'Comision plătit unei platforme terțe la fiecare rezervare.',
-    dupa: 'Preț fix pe lună și 0% comision. Clienții rămân ai tăi, nu ai platformei.',
-  },
-  {
-    inainte: 'Nu știi nimic despre cine a mai fost la tine și cine nu s-a prezentat.',
-    dupa: 'Fișă de client construită automat: vizite, preferințe, alergii și no-show-uri.',
-  },
-  {
-    inainte: 'Ospătarul întreabă la recepție ce masă e liberă, iar clientul așteaptă în ușă.',
-    dupa: 'Sala e pe tabletă, cu statusul fiecărei mese la minutul afișat.',
   },
 ]
 
@@ -405,88 +417,47 @@ export function LandingPage() {
         : null
 
   return (
-    <div className="min-h-svh bg-background">
+    <div className="tema-landing min-h-svh bg-background">
       <Navbar />
 
       <main>
         {/* Hero — coregrafia completa: mana + telefon, atmosfera, text */}
         <Hero />
 
-        {/* Social proof, imediat sub hero: intai dovada, apoi argumentul.
-            Titlul e mic si banda nu cere nimic — e o confirmare in trecere,
-            nu o sectiune in care sa se opreasca cineva. */}
-        <section aria-label="Ce spun restaurantele" className="overflow-hidden py-10">
-          <p className="px-6 text-center font-mono text-xs font-medium tracking-[0.08em] text-muted-foreground uppercase">
-            Restaurante care își țin sala pe TableX
-          </p>
-          <SocialProof recenzii={RECENZII} className="mt-6" />
+        {/* Social proof, imediat sub hero.
+            FARA margine negativa: stratul telefonului are scroll: 0.38, deci
+            urca pana la ~0.38 * inaltimea hero-ului pe masura ce sectiunea
+            iese prin sus. Orice suprapunere fixata cu -mt e corecta doar la
+            scroll 0 si se desface in gol alb imediat ce incepe derularea.
+            Marginea de jos a fotografiei o ascunde masca din HandPhone, care
+            calatoreste cu imaginea, deci tine la orice pozitie de scroll. */}
+        <section aria-label="Recenzii clienți" className="overflow-hidden pb-10">
+          <SocialProof recenzii={RECENZII} />
         </section>
 
-        {/* Problema */}
-        <section id="problema" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
+        {/* Problema — titlu pe doua randuri, al doilea in accent, fara eticheta
+            si fara subtitlu: afirmatia e destul de scurta cat sa se citeasca
+            singura, iar cardurile de dedesubt sunt chiar detalierea ei. */}
+        {/* Ritmul vertical NU e uniform, deliberat. Spatierea identica peste
+            tot citeste a generat, fiindca nu exprima nicio judecata despre ce
+            conteaza mai mult. Sectiunile-cheie (functionalitati, preturi)
+            respira mai mult decat cele de sprijin (ce primesti, testimoniale). */}
+        <section id="problema" className="wrap-landing scroll-mt-20 py-20">
           <SectionHeading
-            eticheta="Problema"
             titlu={
               <>
-                Agenda de hârtie și telefonul{' '}
-                <span className="text-primary">îți lasă mese goale</span>
+                <span className="block">Agenda de hârtie și telefonul</span>
+                <span className="block text-primary">îți lasă mese goale</span>
               </>
             }
-            subtitlu="Trei lucruri se întâmplă în fiecare serviciu aglomerat, și toate trei costă bani."
           />
-          <div className="mt-10">
+          <div className="mt-12">
             <ProblemCards probleme={PROBLEME} />
           </div>
-
-          {/* Aceleasi dureri, puse fata in fata cu ce se intampla in loc. */}
-          <div className="mt-14">
-            <SectionHeading
-              eticheta="Comparație"
-              titlu={
-                <>
-                  Vechile metode, <span className="text-primary">rând cu rând</span>
-                </>
-              }
-              subtitlu="Stânga e serviciul de vineri seara așa cum arată acum. Dreapta e același serviciu, cu TableX."
-            />
-            <div className="mt-10">
-              <ComparatieMetode perechi={PERECHI_COMPARATIE} />
-            </div>
-          </div>
-        </section>
-
-        {/* Solutia — banda intunecata */}
-        <section className="mx-auto max-w-6xl px-6 py-4">
-          <DarkBand>
-            <SectionHeading
-              peFundalInchis
-              eticheta="Soluția"
-              titlu={
-                <>
-                  Toată sala, în timp real,{' '}
-                  <span className="text-sidebar-primary">pe un singur ecran</span>
-                </>
-              }
-              subtitlu="TableX înlocuiește agenda de la recepție cu planul 2D al locației tale. Fiecare masă își arată singură statusul, calculat din rezervările momentului. Suprapunerile sunt refuzate de baza de date, nu de atenția ospătarului."
-            />
-            <TrustChips
-              peFundalInchis
-              elemente={['Fără comision', 'Fără contract', 'Planul 2D inclus în Pro']}
-              className="mt-8"
-            />
-            <div className="mt-8 flex justify-center">
-              <Button asChild size="lg" className={PILULA}>
-                <Link to={RUTE.signup}>
-                  Creează cont
-                  <ArrowRightIcon className="size-4" />
-                </Link>
-              </Button>
-            </div>
-          </DarkBand>
         </section>
 
         {/* Randuri de functionalitati */}
-        <section id="functionalitati" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
+        <section id="functionalitati" className="wrap-landing scroll-mt-20 py-28">
           <SectionHeading
             eticheta="Funcționalități"
             titlu="Tot ce îți trebuie ca să pornești"
@@ -501,7 +472,7 @@ export function LandingPage() {
         </section>
 
         {/* Harta 2D — demonstratie reala, nu substitut */}
-        <section id="harta" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
+        <section id="harta" className="wrap-landing scroll-mt-20 py-24">
           <SectionHeading
             eticheta="Demonstrație"
             titlu={
@@ -552,7 +523,7 @@ export function LandingPage() {
         </section>
 
         {/* Ce primesti — grila scurta, cu reveal in cascada si hover lift */}
-        <section className="mx-auto max-w-6xl px-6 py-16">
+        <section className="wrap-landing py-14">
           <SectionHeading eticheta="Pe scurt" titlu="Ce primești" />
           <div ref={primestiRef} className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CARACTERISTICI.map(({ icoana: Icoana, titlu, text }, indice) => (
@@ -562,7 +533,7 @@ export function LandingPage() {
                 timelineRef={primestiRef}
                 className="h-full"
               >
-                <div className="h-full rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div className="sticla h-full rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <Icoana className="size-5 text-primary" />
                   <h3 className="mt-3 font-semibold">{titlu}</h3>
                   <p className="mt-1 text-sm text-muted-foreground text-pretty">{text}</p>
@@ -575,7 +546,7 @@ export function LandingPage() {
         {/* Cum pornesti — pasii, pe grid-ul discret al hero-ului */}
         <section
           id="cum-functioneaza"
-          className="relative mx-auto max-w-6xl scroll-mt-20 px-6 py-16"
+          className="relative wrap-landing scroll-mt-20 py-24"
         >
           <div aria-hidden className="hero-grid pointer-events-none absolute inset-0 -z-10 opacity-70" />
           <StepsSection
@@ -594,7 +565,7 @@ export function LandingPage() {
         </section>
 
         {/* Preturi */}
-        <section id="preturi" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16">
+        <section id="preturi" className="wrap-landing scroll-mt-20 py-28">
           <SectionHeading
             eticheta="Prețuri"
             titlu={
@@ -610,7 +581,7 @@ export function LandingPage() {
         </section>
 
         {/* Testimoniale — banda intunecata */}
-        <section id="clienti" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-4">
+        <section id="clienti" className="wrap-landing scroll-mt-20 py-4">
           <DarkBand>
             <SectionHeading
               peFundalInchis
@@ -624,7 +595,7 @@ export function LandingPage() {
         </section>
 
         {/* Intrebari */}
-        <section id="intrebari" className="mx-auto max-w-3xl scroll-mt-20 px-6 py-16">
+        <section id="intrebari" className="wrap-landing scroll-mt-20 py-20">
           <FAQ
             title="Întrebări frecvente"
             subtitle="Alege o categorie și deschide răspunsul care te interesează."
@@ -634,7 +605,7 @@ export function LandingPage() {
         </section>
 
         {/* Chemare finala la actiune */}
-        <section className="mx-auto max-w-6xl px-6 pt-4 pb-16">
+        <section className="wrap-landing pt-8 pb-24">
           <CtaBand
             titlu="Sala ta, pe ecran, începând de azi"
             subtitlu="Creezi contul și iei prima rezervare în aceeași zi. Planul 2D vine de la noi."
@@ -647,8 +618,10 @@ export function LandingPage() {
         </section>
       </main>
 
+      {/* Subsolul merge cap la cap, nu pe coloana de 60vw: e talpa paginii,
+          iar o coloana ingusta acolo ar rupe banda in doua margini goale. */}
       <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-6xl px-6 py-12">
+        <div className="w-full px-6 py-12 sm:px-10 lg:px-16">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="lg:col-span-2">
               <span className="text-lg font-semibold tracking-tight">

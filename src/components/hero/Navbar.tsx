@@ -70,7 +70,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-[80] border-b border-border bg-background/85 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+      <div className="wrap-landing flex items-center justify-between py-3">
         <motion.span
           className="text-lg font-semibold tracking-tight"
           {...aparitie(TIMELINE.nav.logo, 10)}

@@ -45,7 +45,7 @@ export function HeroCopy() {
 
   return (
     <div className="relative">
-      <h1 className="font-display text-[clamp(2.2rem,9vw,2.9rem)] leading-[1.04] font-extrabold tracking-[-0.035em] text-balance text-foreground md:text-[clamp(2.9rem,5.6vw,4.75rem)]">
+      <h1 className="font-display text-[clamp(1.95rem,9vw,2.55rem)] leading-[1.04] font-extrabold tracking-[-0.035em] text-balance text-foreground md:text-[clamp(2.55rem,5.6vw,4.15rem)]">
         {LINII.map((linie, i) => (
           <LinieH1
             key={linie}
@@ -103,7 +103,7 @@ export function HeroCopy() {
       </h1>
 
       <motion.p
-        className="mt-6 max-w-md text-lg leading-[1.65] text-muted-foreground"
+        className="mt-6 max-w-md text-base leading-[1.65] text-muted-foreground"
         initial={redus ? false : { opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: t(TIMELINE.subtitlu), ease: 'easeOut' }}
@@ -130,7 +130,7 @@ export function HeroCopy() {
         >
           <Link
             to={RUTE.demoHarta}
-            className="relative inline-flex h-12 items-center overflow-hidden rounded-full bg-primary px-7 text-[15px] font-medium tracking-[-0.01em] text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
+            className="relative inline-flex h-12 items-center overflow-hidden rounded-full bg-primary px-7 text-[13px] font-medium tracking-[-0.01em] text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
           >
             Cere un demo
             {!redus && (
@@ -164,7 +164,7 @@ export function HeroCopy() {
         >
           <a
             href="#cum-functioneaza"
-            className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[-0.01em] text-foreground focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
+            className="group inline-flex items-center gap-2 text-[13px] font-medium tracking-[-0.01em] text-foreground focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
           >
             Vezi cum funcționează
             <ArrowRightIcon

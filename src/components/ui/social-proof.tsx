@@ -35,7 +35,7 @@ function initiale(nume: string) {
 
 function CardRecenzie({ nume, locatie, text, stele = 5 }: RecenzieScurta) {
   return (
-    <figure className="w-72 shrink-0 rounded-xl border border-border bg-card p-5 transition-colors duration-300 hover:border-primary/40 sm:w-80">
+    <figure className="sticla w-72 shrink-0 rounded-2xl p-5 sm:w-80">
       <div className="flex items-center gap-3">
         <span
           aria-hidden
@@ -83,16 +83,21 @@ export function SocialProof({
   const randJos = recenzii.slice(mijloc)
 
   return (
-    <div className={cn('relative flex w-full flex-col items-center gap-2', className)}>
-      {/* Cheia e indicele: recenziile pot avea acelasi nume (si chiar au, cat
-          timp sunt substitute), iar lista nu se reordoneaza niciodata. */}
-      <Marquee pauseOnHover className="w-full [--duration:44s]">
+    <div className={cn('relative flex w-full flex-col items-center', className)}>
+      {/* py-6 nu e decor: Marquee taie cu overflow-hidden (obligatoriu pe
+          orizontala, altfel se vede banda iesind), iar umbra cardurilor de
+          sticla coboara ~22px sub ele. Cu p-2 implicit se reteza drept.
+          overflow-y: visible nu e o iesire — CSS il promoveaza la auto cand
+          overflow-x e hidden, deci ar aparea o bara de derulare. */}
+      {/* Cheia e indicele: recenziile pot avea acelasi nume, iar lista nu se
+          reordoneaza niciodata. */}
+      <Marquee pauseOnHover className="w-full py-6 [--duration:44s]">
         {randSus.map((recenzie, indice) => (
           <CardRecenzie key={indice} {...recenzie} />
         ))}
       </Marquee>
 
-      <Marquee reverse pauseOnHover className="w-full [--duration:52s]">
+      <Marquee reverse pauseOnHover className="w-full py-6 [--duration:52s]">
         {randJos.map((recenzie, indice) => (
           <CardRecenzie key={indice} {...recenzie} />
         ))}
