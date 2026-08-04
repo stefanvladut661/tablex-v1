@@ -102,8 +102,16 @@ export function BaraOrara({
      * ca prima coloana are voie sa coboare la zero; bara isi deruleaza sloturile
      * pe orizontala, cum a facut mereu.
      */
+    /**
+     * Aceeasi tema inchisa ca harta de sub ea, si din acelasi motiv (vezi
+     * HartaZona): bara si planul se citesc impreuna, dintr-o privire, de la
+     * distanta, in sala. O bara alba lipita de un plan de noapte taia ecranul
+     * in doua si arunca lumina in ochi exact acolo unde se uita ospatarul cel
+     * mai des. Clasa `dark` rescrie tokenii doar inauntru, deci nicio culoare
+     * nu se scrie de mana (regula 2).
+     */
     <div
-      className={`grid items-center gap-2 ${
+      className={`dark grid items-center gap-2 rounded-lg border border-border bg-card p-1.5 shadow-sm ${
         urmarestePrezentul ? '' : 'grid-cols-[minmax(0,1fr)_auto]'
       }`}
     >
@@ -111,7 +119,7 @@ export function BaraOrara({
         ref={refBara}
         role="group"
         aria-label="Ora afișată pe hartă"
-        className="flex min-w-0 gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1.5"
+        className="flex min-w-0 gap-1 overflow-x-auto"
       >
         {sloturi.map((slot) => {
           const ales = Math.abs(slot - oraAfisata) < PAS_ORE / 2
@@ -127,18 +135,21 @@ export function BaraOrara({
               aria-pressed={ales}
               aria-label={`Arată sala la ora ${formateazaOra(slot)}${acum ? ' (ora curentă)' : ''}`}
               onClick={() => onSchimba(slot)}
-              className={`shrink-0 rounded-md px-2 py-1 text-xs tabular-nums transition-colors ${
+              className={`shrink-0 rounded-md px-2.5 py-1.5 text-[13px] tabular-nums transition-colors ${
                 ales
                   ? 'bg-primary font-semibold text-primary-foreground'
                   : trecut
                     ? 'text-muted-foreground hover:bg-muted'
-                    : 'hover:bg-muted'
+                    : // Orele care urmeaza se scriu cu culoarea textului, nu cu
+                      // cea „stinsa": pe fundalul inchis, restul zilei trebuie
+                      // sa se citeasca de la distanta, nu doar sa se ghiceasca.
+                      'text-foreground hover:bg-muted'
               } ${
                 // Reperul „acum", cat timp privirea e in alta parte a zilei. E un
                 // inel, nu o umplere: umplerea e rezervata slotului ALES, iar
                 // doua sloturi umplute diferit s-ar citi ca doua selectii.
-                acum && !ales ? 'ring-1 ring-primary/60 ring-inset' : ''
-              } ${intreaga ? '' : 'opacity-70'}`}
+                acum && !ales ? 'ring-1 ring-primary ring-inset' : ''
+              } ${intreaga ? '' : 'text-muted-foreground'}`}
             >
               {intreaga ? formateazaOra(slot) : '·'}
             </button>

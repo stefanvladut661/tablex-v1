@@ -90,7 +90,9 @@ Toate deliberate — daca schimbi una, schimba si randul ei de aici:
   inchis mesele colorate ies in fata, iar tableta nu arunca lumina alba in ochii
   clientilor. Bulinele din `LegendaStatus` intra si ele in `dark`, altfel
   „inactiv" — singurul status care difera intre teme — ar arata alta culoare in
-  legenda decat pe harta.
+  legenda decat pe harta. La fel si `BaraOrara`: sta lipita deasupra planului si
+  se citeste impreuna cu el, iar o bara alba peste un plan de noapte taia
+  ecranul in doua exact acolo unde se uita ospatarul cel mai des.
 - **Starea de citit a notificarilor sta intr-un tabel de legatura**
   (`notificari_citite`), nu ca `user_id` pe randul notificarii, cum arata
   definitia din §33. Forma din spec implica fan-out la generare: cele sapte

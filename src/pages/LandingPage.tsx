@@ -530,7 +530,7 @@ export function LandingPage() {
                 <span className="text-primary">la ora {formateazaOra(oraAfisata)}</span>
               </>
             }
-            subtitlu="Nu e o captură de ecran. E harta reală, cu aceeași bară orară pe care o are panoul: alege o oră și vezi cum se schimbă sala. Trage de hartă ca s-o muți, Ctrl + scroll ca să apropii."
+            subtitlu="Nu e o captură de ecran. E harta reală, cu aceeași bară orară pe care o are panoul: alege o oră și vezi cum se schimbă sala. Dă click pe o masă ca să vezi ce arată personalului."
           />
 
           <LegendaStatus className="mt-8" />
@@ -555,9 +555,14 @@ export function LandingPage() {
             arataGrid={false}
             masaSelectata={masaAleasa}
             onSelecteazaMasa={(id) => setMasaAleasa((curent) => (curent === id ? null : id))}
-            // Harta se poate apropia si plimba, ca in panou: pe o sala de 20 de
-            // mese, ce se vede de departe e o pata verde-rosie, nu un plan.
-            permiteZoom
+            /**
+             * FARA zoom si fara pan, deliberat. Aici planul e o vitrina, nu o
+             * unealta: un vizitator care apuca harta o trage din cadru din
+             * greseala, si ramane cu o sala pe jumatate iesita din ecran, fara
+             * sa stie ca exista un buton de revenire — pentru ca nu exista.
+             * Cine vrea sa se joace are „Deschide demonstrația completă", chiar
+             * sub harta. Singurul gest de aici e clicul pe o masa (§51.1).
+             */
             className="mt-3 w-full"
           />
 
