@@ -237,7 +237,7 @@ export function WidgetRezervarePage() {
                   mese={meseZona}
                   structura={sala.data.structura[zonaCurenta.id]}
                   arataGrid={false}
-                  className="aspect-[3/2] w-full"
+                  className="w-full"
                 />
                 <p className="text-xs text-muted-foreground">
                   Masa se alocă de personal, în funcție de numărul de persoane și de ora aleasă.

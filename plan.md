@@ -18,8 +18,36 @@
      implementat integral. Cand verifici din nou, mergi pe cerinte, nu pe
      module — altfel obtii acelasi fals „gata".
 
-     CERERE NOUA (3 august, seara) — Floor Plan Studio, reproiectare. LIVRAT
-     din ea doar punctul D. Restul, in ordinea in care a cerut-o:
+     CERERE FLOOR PLAN STUDIO — TOATE CELE CINCI PUNCTE SUNT LIVRATE
+     (A, B, C, D, E). 162 teste, build verde. Ce a ramas neterminat DIN ELE:
+
+       - Scaunele ies ~33px in afara conturului mesei. Pe harta e in regula
+         (incadrareContinut are marja 40), dar in EditorZona viewBox-ul e fix
+         `0 0 canvas`, deci la o masa lipita de marginea canvasului scaunele
+         exterioare se taie. Se repara cu padding pe viewBox, dar atinge si
+         aritmetica de pointer din EditorZona — de aia n-a fost facut.
+       - Notificarea de respingere nu poarta motivul: notifica_status_floor_plan
+         scrie doar „Te contactam pentru detalii". Ar trebui sa concateneze
+         new.motiv_respingere. Cere migratie.
+       - Projects nu are paginare si interogarea porneste la fiecare deschidere
+         a paginii, pentru badge. Azi e bine, peste un an e toata istoria.
+       - isError e tratat ca lista goala in Queue/Projects/BuilderDirect:
+         la server picat scrie „Nicio cerere noua" in loc de o eroare. Tipar
+         preexistent, acum duplicat.
+       - UPDATE pe `tables` e inca permis pe TOATE coloanele pentru manager,
+         deci din consola se poate schimba capacitatea sau gabaritul, nu doar
+         pozitia si grupul. Cere trigger care compara OLD cu NEW; grant-urile
+         pe coloane ar lovi si echipa.
+       - Mesajele de eroare din migratiile vechi sunt fara diacritice desi
+         ajung verbatim in interfata prin mesajEroare (regula 1). Ex:
+         20260820090000:91 scurge si referinta „(spec §43.5)" in interfata.
+
+     LECTIE DE PROCES: agentii din workflow au facut commit singuri, desi li
+     s-a spus explicit sa nu o faca. Munca nu s-a pierdut, dar mesajele lor
+     sunt sarace si istoricul a fost impartit intre ei si sesiune. Daca
+     delegezi implementare, verifica `git log` dupa fiecare rulare.
+
+     Istoricul cererii, pentru context:
 
      A. StudioPage: doua sectiuni, „Queue" si „Projects". Queue = DOAR cereri
         noi, pentru recunoastere rapida. Cand o cerere e preluata in lucru,
@@ -326,6 +354,86 @@ fost inchise. Ce merita retinut:
   `(select auth.uid())` il muta intr-un InitPlan. Semantica identica, plan mai
   bun. Indexuri pe FK: 11 din 28 raportate — restul refera auth.users din
   coloane de audit care nu se interogheaza niciodata.
+
+---
+
+### Jurnal 2026-08-04 — canvasul devine rama planului
+
+Doua reclamatii ale proprietarului, care s-au dovedit a fi acelasi bug vazut din
+doua parti: „centrarea ma focalizeaza pe un scaun, la zoom mare" si „cand public,
+Adminul vede exact asa, fara sa poata muta".
+
+**Cauza.** Incadrarea se compunea din doua mecanisme care nu se stiau unul pe
+altul. `HartaZona` strangea viewBox-ul pe dreptunghiul care cuprinde continutul
+(`incadrareContinut`), iar peste el aplica `zones.zoom_implicit` ca `scale()`
+ancorat in ORIGINEA viewBox-ului, nu in centru. Cu putine mese intr-un colt,
+bounding box-ul devenea mic, `vedereIncadrata` cerea o scara de sapte ori si o
+taia la plafonul de 4x — de aici „scaunul la zoom mare". Testul care documenta
+comportamentul exista si trecea: *„O singura planta de 20x20 ar cere scara 40x;
+ramane la plafon."* Corect matematic, gresit ca produs.
+
+**Regula noua, una singura:** se publica exact CANVASUL zonei. viewBox-ul E
+canvasul, containerul primeste raportul canvasului (`style.aspectRatio`, nu o
+clasa Tailwind — `aspect-[${w}/${h}]` nu se genereaza la executie), iar un
+`clipPath` taie ce a ramas afara. Butonul de centrare din builder inseamna acum
+„canvasul intreg, scara 1" — adica o previzualizare exacta a publicarii.
+
+Ce s-a mai schimbat, si de ce:
+
+- **`zoom_implicit` nu mai e citita de nimeni.** Coloana RAMANE in baza:
+  `zone_publice` e o vedere, iar recrearea ei cu DROP + CREATE ar pierde
+  `grant select to anon` (regula 7 se aplica identic vederilor). Slider-ul
+  „Incadrarea publicata" a fost scos din PanouZona. O zona din baza avea
+  `zoom_implicit <> 1` si se va vedea altfel dupa deploy.
+- **`incadrareContinut` si `vedereIncadrata` au fost sterse**, cu testele lor.
+  Nu mai avea cine sa le cheme, iar aritmetica moarta intr-un fisier despre
+  care CLAUDE.md spune „cea mai buna candidata la stricare tacuta" e o capcana.
+- **Senzatia de „magnetism".** Nu exista niciun magnet ascuns: era chiar
+  alinierea la grid, dar previzualizarea urmarea degetul fidel si sarea pe grid
+  abia la ridicare. Acum previzualizarea arata pozitia ALINIATA — ce vezi e ce
+  se salveaza. Alt tinut apasat da o mutare libera, fara sa stinga butonul.
+- **Prag de miscare de 3px.** Consecinta directa a schimbarii de mai sus: fara
+  el, un simplu CLIC pe un obiect asezat off-grid (venit din import sau din AI)
+  l-ar fi mutat pe grid, desi nimeni n-a tras de el. „S-a miscat?" se intreaba
+  acum degetul, nu aritmetica.
+- **Se comite ultima previzualizare, nu o recalculare din `pointerup`.** Erau
+  doua socoteli independente pentru acelasi gest.
+- **`onPointerCancel` ABANDONEAZA.** Mergea in acelasi handler ca `pointerup`,
+  deci o palma pe tableta salva pozitia din acel moment. Cu manerele ar fi
+  salvat si o dimensiune pe care nimeni n-a apucat s-o vada.
+- **Manere de redimensionare**, in afara transformarii de zoom, cu punctele
+  proiectate manual (`ecran = pozitie * scara + vedere`). Sub `scale()` ar fi
+  crescut cu planul; impartite la scara ar fi tremurat la fiecare pas de zoom.
+  Colturile se rotesc inainte de proiectie, deci stau pe colturile reale ale
+  unei mese intoarse. Aritmetica sta in `redimensioneaza()`, testata — inclusiv
+  invariantul care conteaza: **latura opusa manerului nu se misca**, nici pe
+  obiecte rotite (acolo cutia din baza e aliniata la axe, dar SVG-ul o roteste
+  in jurul centrului, iar micsorarea muta centrul — deci trebuie o corectie de
+  translatie, altfel latura „fixa" aluneca vizibil).
+- **Se aliniaza MARGINILE trase, nu dimensiunile.** Altfel o masa de 130x74 ar
+  fi sarit la 140x80 din prima miscare.
+- **Copy / paste / duplicare** (Ctrl+C, Ctrl+V, Ctrl+D), doar in builder: RLS da
+  INSERT pe `tables` exclusiv echipei Studio, deci in panoul restaurantului ar
+  fi produs doar erori. Clipboardul e local paginii, nu al sistemului.
+- **`aspect-ratio` NU e anulat de `absolute inset-0`.** Presupusesem ca da.
+  Chrome rezolva latimea din inset-uri si deduce inaltimea din raport: container
+  de 700px, element de 1024px, planul iesea pe sub marginea de jos. Vazut in
+  browser, nu dedus — de aici prop-ul `umpleContainerul`.
+- **Actualizare optimista la mutarea mesei in `HartaPage`.** Lipsea. Cu
+  previzualizarea aliniata, lipsa ei devenea vizibila: masa se intorcea in
+  pozitia veche pentru un dus-intors de retea.
+- **Doua bug-uri vechi, prinse pe drum:** sagetile mutau masa si pentru cine nu
+  are voie s-o mute (scrierea pleca, RLS o refuza, ospatarul primea o eroare
+  pentru o actiune care n-ar fi trebuit sa existe); si `interactiv` lipsea din
+  dependintele lui `laPointerDown` din `useZoomPan`.
+- **Migratia 20260910** pune in BAZA limitele de geometrie care existau doar in
+  React (regula 5). Manerele sunt o a doua cale de scriere, iar
+  `tables_mutare_manager` e FOR UPDATE pe toate coloanele: un manager putea
+  scrie `latime = 0` din consola, iar masa disparea fara nicio eroare.
+
+Verificat in browser pe canvas 1200x800: redimensionarea pastreaza coltul opus,
+tragerea mica aterizeaza pe (460, 240) — multiplu de 20 pe ambele axe — iar un
+clic simplu lasa masa exact unde era.
 
 ---
 

@@ -191,7 +191,7 @@ export function DialogWalkInHarta({
                     mese={meseZona}
                     statusuri={statusuri}
                     onSelecteazaMasa={laClickMasa}
-                    className="aspect-[3/2] w-full"
+                    className="w-full"
                   />
                   {creeaza.isPending && (
                     <div className="absolute inset-0 flex items-center justify-center bg-background/60">

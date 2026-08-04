@@ -10,6 +10,17 @@
 export type Dimensiuni = { latime: number; inaltime: number }
 export type Punct = { x: number; y: number }
 
+/**
+ * Precizia bazei: `pozitie_x`, `latime` etc. sunt numeric(10,2). O tragere
+ * libera produce 137.42134..., Postgres scrie 137.42, iar randul reimprospatat
+ * nu mai e cel din cache — masa tresare cu o zecime de pixel dupa fiecare
+ * mutare. Rotunjim la scriere, sa fie aceeasi valoare in ambele parti.
+ */
+export function laPreciziaBazei(valoare: number): number {
+  if (!Number.isFinite(valoare)) return 0
+  return Math.round(valoare * 100) / 100
+}
+
 /** Cel mai apropiat multiplu al pasului de grid. */
 export function aliniazaLaGrid(valoare: number, grid: number): number {
   if (!Number.isFinite(valoare)) return 0
@@ -57,107 +68,158 @@ export function pozitieFinala(
   })
 }
 
-// ── Incadrarea automata a hartii pe continut ─────────────────────────────
+// ── Redimensionarea prin manere ──────────────────────────────────────────
 
-export type Dreptunghi = { x: number; y: number; latime: number; inaltime: number }
+export type Cutie = Punct & Dimensiuni
 
 /**
- * Canvasul unei zone e 1200x800 implicit, dar o sala cu 6 mese le poate avea
- * pe toate intr-un colt. Randarea era corecta matematic, doar ca jumatate din
- * ecran ramanea gol (§6quater.5).
- *
- * Calculam dreptunghiul care cuprinde continutul si il folosim ca viewBox,
- * cu o marja in jur. Cateva reguli care nu sunt evidente:
- *  - fara continut => tot canvasul, altfel am imparti la zero
- *  - incadrarea nu iese NICIODATA din canvas: altfel s-ar vedea "in afara
- *    salii", iar grid-ul s-ar termina in gol
- *  - pastram raportul canvasului. Fara asta, o sala lunga si ingusta ar fi
- *    intinsa pe verticala de preserveAspectRatio si mesele rotunde ar parea
- *    ovale la prima privire.
+ * Manerul de care se trage, in roza vanturilor: N = nord (sus), S = sud (jos),
+ * E = est (dreapta), V = vest (stanga). Colturile se scriu vertical-orizontal,
+ * ca `ancora.includes('n')` sa raspunda si pentru „nord-vest".
  */
-export function incadrareContinut(
-  continut: Dreptunghi[],
-  canvas: { latime: number; inaltime: number },
-  marja = 40,
-): Dreptunghi {
-  const tot: Dreptunghi = { x: 0, y: 0, latime: canvas.latime, inaltime: canvas.inaltime }
+export type Ancora = 'nv' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sv' | 'v'
 
-  const valide = continut.filter(
-    (d) =>
-      Number.isFinite(d.x) && Number.isFinite(d.y) &&
-      Number.isFinite(d.latime) && Number.isFinite(d.inaltime),
-  )
-  if (!valide.length) return tot
+export const ANCORE: Ancora[] = ['nv', 'n', 'ne', 'e', 'se', 's', 'sv', 'v']
 
-  const stanga = Math.min(...valide.map((d) => d.x))
-  const sus = Math.min(...valide.map((d) => d.y))
-  const dreapta = Math.max(...valide.map((d) => d.x + d.latime))
-  const jos = Math.max(...valide.map((d) => d.y + d.inaltime))
+/** Latura minima a unui obiect redimensionat, in unitati de canvas. */
+export const LATURA_MINIMA = 20
 
-  let x = stanga - marja
-  let y = sus - marja
-  let latime = dreapta - stanga + marja * 2
-  let inaltime = jos - sus + marja * 2
+/** Roteste un punct in jurul unui centru, in grade, conventia SVG (y creste in jos). */
+function roteste(punct: Punct, centru: Punct, grade: number): Punct {
+  if (!grade) return punct
+  const radiani = (grade * Math.PI) / 180
+  const cos = Math.cos(radiani)
+  const sin = Math.sin(radiani)
+  const dx = punct.x - centru.x
+  const dy = punct.y - centru.y
+  return {
+    x: centru.x + dx * cos - dy * sin,
+    y: centru.y + dx * sin + dy * cos,
+  }
+}
 
-  // Raportul canvasului, ca formele sa nu se deformeze.
-  const raport = canvas.latime / canvas.inaltime
-  if (latime / inaltime < raport) {
-    const necesara = inaltime * raport
-    x -= (necesara - latime) / 2
-    latime = necesara
-  } else {
-    const necesara = latime / raport
-    y -= (necesara - inaltime) / 2
-    inaltime = necesara
+export type OptiuniRedimensionare = {
+  canvas: { latime: number; inaltime: number }
+  /** Pasul de aliniere; 0 sau negativ inseamna redimensionare libera. */
+  grid?: number
+  minim?: number
+  /** Rotatia obiectului, in grade. SVG-ul o aplica in jurul CENTRULUI. */
+  rotatie?: number
+  /** Shift tinut apasat: colturile pastreaza raportul laturilor. */
+  pastreazaRaport?: boolean
+}
+
+/**
+ * Cutia noua dupa ce s-a tras de un maner pana in `punct`.
+ *
+ * Doua lucruri nu sunt evidente si de aceea calculul sta aici, testabil:
+ *
+ * 1. **Rotatia.** In baza pastram o cutie ALINIATA la axe, iar SVG-ul o roteste
+ *    in jurul centrului ei. Deci pointerul se aduce intai in sistemul nerotit al
+ *    obiectului (`roteste` cu -rotatie): acolo „trag de marginea de sus"
+ *    inseamna chiar y. Dar micsorarea muta centrul, iar rotatia se face in jurul
+ *    lui — asa ca latura care trebuia sa stea pe loc ar aluneca vizibil. De aceea
+ *    la final cutia se translateaza inapoi cu exact cat s-a deplasat, in ecran,
+ *    coltul care trebuia sa ramana fix.
+ *
+ * 2. **Marginile se aliniaza, nu dimensiunile.** Se aliniaza doar laturile TRASE;
+ *    cea opusa ramane neatinsa. Altfel un obiect cu latimea 74 ar sari la 80 din
+ *    prima miscare, desi nimeni nu i-a cerut asta.
+ */
+export function redimensioneaza(
+  cutie: Cutie,
+  ancora: Ancora,
+  punct: Punct,
+  optiuni: OptiuniRedimensionare,
+): Cutie {
+  const {
+    canvas,
+    grid = 0,
+    minim = LATURA_MINIMA,
+    rotatie = 0,
+    pastreazaRaport = false,
+  } = optiuni
+
+  const masuri = [cutie.x, cutie.y, cutie.latime, cutie.inaltime, punct.x, punct.y]
+  // O masura corupta ar scrie NaN in baza; mai bine cutia neschimbata.
+  if (!masuri.every((masura) => Number.isFinite(masura))) return cutie
+
+  const centru = { x: cutie.x + cutie.latime / 2, y: cutie.y + cutie.inaltime / 2 }
+  const local = roteste(punct, centru, -rotatie)
+
+  const mutaV = ancora.includes('v')
+  const mutaE = ancora.includes('e')
+  const mutaN = ancora.includes('n')
+  const mutaS = ancora.includes('s')
+
+  const aliniaza = (valoare: number) => (grid > 0 ? aliniazaLaGrid(valoare, grid) : valoare)
+
+  let stanga = mutaV ? aliniaza(local.x) : cutie.x
+  let dreapta = mutaE ? aliniaza(local.x) : cutie.x + cutie.latime
+  let sus = mutaN ? aliniaza(local.y) : cutie.y
+  let jos = mutaS ? aliniaza(local.y) : cutie.y + cutie.inaltime
+
+  // Marginea trasa ramane in canvas si nu trece dincolo de cea opusa: fara
+  // asta, o tragere peste obiect ar da latimi negative.
+  if (mutaV) stanga = Math.min(Math.max(0, stanga), dreapta - minim)
+  if (mutaE) dreapta = Math.max(Math.min(canvas.latime, dreapta), stanga + minim)
+  if (mutaN) sus = Math.min(Math.max(0, sus), jos - minim)
+  if (mutaS) jos = Math.max(Math.min(canvas.inaltime, jos), sus + minim)
+
+  if (
+    pastreazaRaport &&
+    (mutaV || mutaE) &&
+    (mutaN || mutaS) &&
+    cutie.latime > 0 &&
+    cutie.inaltime > 0
+  ) {
+    const raport = cutie.latime / cutie.inaltime
+    let latime = dreapta - stanga
+    let inaltime = jos - sus
+    // Dimensiunea care a crescut mai mult o comanda pe cealalta: asa coltul
+    // urmareste degetul, in loc sa fuga inaintea lui.
+    if (latime / inaltime > raport) inaltime = latime / raport
+    else latime = inaltime * raport
+    if (mutaV) stanga = dreapta - latime
+    else dreapta = stanga + latime
+    if (mutaN) sus = jos - inaltime
+    else jos = sus + inaltime
   }
 
-  // Daca extinderea a depasit canvasul, nu are rost sa incadram: aratam tot.
-  if (latime >= canvas.latime || inaltime >= canvas.inaltime) return tot
+  let noua: Cutie = { x: stanga, y: sus, latime: dreapta - stanga, inaltime: jos - sus }
 
-  // Impingem inapoi inauntru, pastrand dimensiunea.
-  x = Math.min(Math.max(0, x), canvas.latime - latime)
-  y = Math.min(Math.max(0, y), canvas.inaltime - inaltime)
+  if (rotatie) {
+    // Coltul care TREBUIE sa stea pe loc: cel opus manerului. Pe manerele de
+    // latura, axa neatinsa nu-si schimba centrul, deci contributia ei e zero.
+    const fix = {
+      x: mutaV ? cutie.x + cutie.latime : mutaE ? cutie.x : centru.x,
+      y: mutaN ? cutie.y + cutie.inaltime : mutaS ? cutie.y : centru.y,
+    }
+    const centruNou = { x: noua.x + noua.latime / 2, y: noua.y + noua.inaltime / 2 }
+    const inainte = roteste(fix, centru, rotatie)
+    const dupa = roteste(fix, centruNou, rotatie)
+    noua = { ...noua, x: noua.x + inainte.x - dupa.x, y: noua.y + inainte.y - dupa.y }
+  }
 
-  return { x, y, latime, inaltime }
+  const dimensiuni = {
+    latime: Math.min(noua.latime, canvas.latime),
+    inaltime: Math.min(noua.inaltime, canvas.inaltime),
+  }
+  return { ...dimensiuni, ...inCanvas(dimensiuni, canvas, noua) }
+}
+
+/** Obiectul incape INTREG in canvas? Ce nu incape nu se vede la publicare. */
+export function esteInCanvas(
+  cutie: Cutie,
+  canvas: { latime: number; inaltime: number },
+): boolean {
+  return (
+    cutie.x >= 0 &&
+    cutie.y >= 0 &&
+    cutie.x + cutie.latime <= canvas.latime &&
+    cutie.y + cutie.inaltime <= canvas.inaltime
+  )
 }
 
 /** Transformarea aplicata continutului canvasului: `translate(x y) scale(s)`. */
 export type Vedere = { scara: number; x: number; y: number }
-
-/**
- * Vederea care aduce `dreptunghi` in mijlocul viewBox-ului, la cea mai mare
- * scara la care incape intreg — adica butonul de auto-centrare.
- *
- * Sta aici, si nu in hook, fiindca e exact genul de aritmetica ce se strica
- * TACUT: o inmultire uitata nu arunca nimic, doar aseaza planul cu jumatate de
- * ecran alaturi, iar cine se uita crede ca a pierdut mesele.
- *
- * Deducerea translatiei: un punct `p` al continutului ajunge la `x + p*scara`.
- * Vrem ca marginea stanga a dreptunghiului sa cada la jumatatea spatiului
- * ramas, deci `x + dreptunghi.x*scara = (viewBox.latime - dreptunghi.latime*scara) / 2`.
- */
-export function vedereIncadrata(
-  dreptunghi: Dreptunghi,
-  viewBox: { latime: number; inaltime: number },
-  limite: { min: number; max: number } = { min: 0.4, max: 4 },
-): Vedere {
-  const masuri = [dreptunghi.x, dreptunghi.y, dreptunghi.latime, dreptunghi.inaltime, viewBox.latime, viewBox.inaltime]
-  const utilizabil =
-    masuri.every((masura) => Number.isFinite(masura)) &&
-    dreptunghi.latime > 0 &&
-    dreptunghi.inaltime > 0 &&
-    viewBox.latime > 0 &&
-    viewBox.inaltime > 0
-  // Fara masuri valide nu inventam o incadrare: lasam vederea neutra, adica
-  // exact canvasul asa cum a fost desenat.
-  if (!utilizabil) return { scara: 1, x: 0, y: 0 }
-
-  const potrivita = Math.min(viewBox.latime / dreptunghi.latime, viewBox.inaltime / dreptunghi.inaltime)
-  const scara = Math.min(limite.max, Math.max(limite.min, potrivita))
-
-  return {
-    scara,
-    x: (viewBox.latime - dreptunghi.latime * scara) / 2 - dreptunghi.x * scara,
-    y: (viewBox.inaltime - dreptunghi.inaltime * scara) / 2 - dreptunghi.y * scara,
-  }
-}

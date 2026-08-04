@@ -108,20 +108,42 @@ export function HartaPage() {
   const [masaDeEditat, setMasaDeEditat] = useState<string | null>(null)
   const [walkInDeschis, setWalkInDeschis] = useState(false)
 
+  const cheieMese = CHEI_MESE.mese(profil?.tip === 'admin' ? profil.restaurant.id : '')
+
   /**
    * Mutarea unei mese e o scriere ca oricare alta: verificam numarul de randuri
    * (un UPDATE respins de RLS raspunde 200 cu zero randuri) si reincarcam, ca
    * doua tablete din sala sa nu ajunga sa arate planuri diferite.
+   *
+   * Cu ACTUALIZARE OPTIMISTA, ca in builder. De cand previzualizarea gestului
+   * arata exact pozitia finala, lipsa ei se vedea: previzualizarea dispare la
+   * ridicarea degetului, cache-ul are inca pozitia veche, deci masa se intorcea
+   * pentru un dus-intors de retea. Pe o tableta din sala, aia e o saritura
+   * vizibila, nu un detaliu.
    */
   const mutaMasa = useMutation({
     mutationFn: ({ id, x, y }: { id: string; x: number; y: number }) =>
       actualizeazaMasa(id, { pozitie_x: x, pozitie_y: y }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: CHEI_MESE.mese(profil?.tip === 'admin' ? profil.restaurant.id : ''),
-      })
+    // Sincron, deci fara `async`: patch-ul intra in acelasi lot de randare cu
+    // golirea previzualizarii din canvas.
+    onMutate: ({ id, x, y }) => {
+      const anterioare = queryClient.getQueryData<MasaHarta[]>(cheieMese)
+      queryClient.setQueryData<MasaHarta[]>(cheieMese, (lista) =>
+        (lista ?? []).map((rand) =>
+          rand.id === id ? { ...rand, pozitie_x: x, pozitie_y: y } : rand,
+        ),
+      )
+      void queryClient.cancelQueries({ queryKey: cheieMese })
+      return { anterioare }
     },
-    onError: (eroare) => notificari.eroare(eroare),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: cheieMese })
+    },
+    onError: (eroare, _variabile, context) => {
+      // Refuzul chiar TREBUIE sa dea masa inapoi: acolo nu s-a salvat nimic.
+      if (context?.anterioare) queryClient.setQueryData(cheieMese, context.anterioare)
+      notificari.eroare(eroare)
+    },
   })
   const restaurant = profil?.tip === 'admin' ? profil.restaurant : null
   const fus = restaurant?.fus_orar ?? 'Europe/Bucharest'
@@ -253,7 +275,7 @@ export function HartaPage() {
             structura={STRUCTURA_DEMO[ZONE_DEMO[0].id]}
             mese={MESE_DEMO[ZONE_DEMO[0].id]}
             statusuri={statusuriLaOra(20, ZONE_DEMO[0].id)}
-            className="aspect-[3/2] w-full"
+            className="w-full"
           />
         </BlocajPlan>
       </div>
@@ -341,7 +363,7 @@ export function HartaPage() {
                   structuraSelectata={null}
                   onSelecteazaStructura={() => {}}
                   onMutaStructura={() => {}}
-                  className="aspect-[3/2] w-full"
+                  className="w-full"
                 />
               )
             )}

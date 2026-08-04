@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { aliniazaLaGrid, inCanvas, incadrareContinut, pozitieFinala } from '@/lib/geometrie-plan'
+import {
+  ANCORE,
+  aliniazaLaGrid,
+  esteInCanvas,
+  inCanvas,
+  pozitieFinala,
+  redimensioneaza,
+  type Cutie,
+} from '@/lib/geometrie-plan'
 
 const CANVAS = { latime: 1200, inaltime: 800 }
 const MASA = { latime: 80, inaltime: 80 }
@@ -97,98 +105,112 @@ describe('pozitieFinala', () => {
   })
 })
 
-describe('incadrareContinut', () => {
-  const CANVAS_MARE = { latime: 1200, inaltime: 800 }
+describe('redimensioneaza', () => {
+  const CUTIE: Cutie = { x: 200, y: 100, latime: 130, inaltime: 74 }
+  const LIBER = { canvas: CANVAS, grid: 0, minim: 20 }
 
-  it('fara continut arata tot canvasul', () => {
-    expect(incadrareContinut([], CANVAS_MARE)).toEqual({
-      x: 0, y: 0, latime: 1200, inaltime: 800,
-    })
-  })
-
-  it('strange incadrarea pe cateva mese dintr-un colt', () => {
-    const mese = [
-      { x: 100, y: 100, latime: 80, inaltime: 80 },
-      { x: 220, y: 100, latime: 80, inaltime: 80 },
-      { x: 100, y: 220, latime: 80, inaltime: 80 },
-    ]
-    const incadrare = incadrareContinut(mese, CANVAS_MARE)
-
-    // Mai stransa decat tot canvasul — asta e tot rostul.
-    expect(incadrare.latime).toBeLessThan(CANVAS_MARE.latime)
-    // Tot continutul trebuie sa incapa inauntru.
-    for (const masa of mese) {
-      expect(masa.x).toBeGreaterThanOrEqual(incadrare.x)
-      expect(masa.y).toBeGreaterThanOrEqual(incadrare.y)
-      expect(masa.x + masa.latime).toBeLessThanOrEqual(incadrare.x + incadrare.latime)
-      expect(masa.y + masa.inaltime).toBeLessThanOrEqual(incadrare.y + incadrare.inaltime)
+  /** Unde ajunge pe ECRAN un punct al cutiei, dupa rotatia din jurul centrului. */
+  function peEcran(punct: { x: number; y: number }, cutie: Cutie, grade: number) {
+    const centru = { x: cutie.x + cutie.latime / 2, y: cutie.y + cutie.inaltime / 2 }
+    const radiani = (grade * Math.PI) / 180
+    const dx = punct.x - centru.x
+    const dy = punct.y - centru.y
+    return {
+      x: centru.x + dx * Math.cos(radiani) - dy * Math.sin(radiani),
+      y: centru.y + dx * Math.sin(radiani) + dy * Math.cos(radiani),
     }
+  }
+
+  it('trage coltul SE si lasa coltul NV pe loc', () => {
+    const noua = redimensioneaza(CUTIE, 'se', { x: 400, y: 300 }, LIBER)
+    expect(noua).toEqual({ x: 200, y: 100, latime: 200, inaltime: 200 })
   })
 
-  it('pastreaza raportul canvasului, ca mesele rotunde sa nu para ovale', () => {
-    // Continut lung si ingust: fara corectie, raportul ar fi complet diferit.
-    const incadrare = incadrareContinut(
-      [{ x: 100, y: 380, latime: 900, inaltime: 40 }],
-      CANVAS_MARE,
-    )
-    const raportCanvas = CANVAS_MARE.latime / CANVAS_MARE.inaltime
-    expect(incadrare.latime / incadrare.inaltime).toBeCloseTo(raportCanvas, 5)
+  it('trage coltul NV si lasa coltul SE pe loc', () => {
+    const noua = redimensioneaza(CUTIE, 'nv', { x: 250, y: 130 }, LIBER)
+    expect(noua.x + noua.latime).toBe(CUTIE.x + CUTIE.latime)
+    expect(noua.y + noua.inaltime).toBe(CUTIE.y + CUTIE.inaltime)
+    expect(noua).toEqual({ x: 250, y: 130, latime: 80, inaltime: 44 })
   })
 
-  it('nu iese niciodata din canvas, nici pentru continut lipit de margine', () => {
-    const incadrare = incadrareContinut(
-      [{ x: 0, y: 0, latime: 80, inaltime: 80 }],
-      CANVAS_MARE,
-    )
-    expect(incadrare.x).toBeGreaterThanOrEqual(0)
-    expect(incadrare.y).toBeGreaterThanOrEqual(0)
-    expect(incadrare.x + incadrare.latime).toBeLessThanOrEqual(CANVAS_MARE.latime + 0.001)
-    expect(incadrare.y + incadrare.inaltime).toBeLessThanOrEqual(CANVAS_MARE.inaltime + 0.001)
+  it('manerul de latura schimba o singura dimensiune', () => {
+    const est = redimensioneaza(CUTIE, 'e', { x: 500, y: 999 }, LIBER)
+    expect(est.inaltime).toBe(CUTIE.inaltime)
+    expect(est.y).toBe(CUTIE.y)
+    expect(est.latime).toBe(300)
+
+    const nord = redimensioneaza(CUTIE, 'n', { x: -999, y: 140 }, LIBER)
+    expect(nord.latime).toBe(CUTIE.latime)
+    expect(nord.x).toBe(CUTIE.x)
+    expect(nord).toMatchObject({ y: 140, inaltime: 34 })
   })
 
-  it('cade inapoi pe tot canvasul cand continutul il umple oricum', () => {
-    const incadrare = incadrareContinut(
-      [{ x: 10, y: 10, latime: 1180, inaltime: 780 }],
-      CANVAS_MARE,
-    )
-    expect(incadrare).toEqual({ x: 0, y: 0, latime: 1200, inaltime: 800 })
+  it('aliniaza DOAR marginea trasa, nu si pe cea opusa', () => {
+    // Cutia porneste la x=205 (nealiniat). Tragand de est cu grid 20, marginea
+    // din dreapta ajunge pe grid, dar stanga trebuie sa ramana exact 205 —
+    // altfel obiectul ar sari desi nimeni nu l-a apucat de acolo.
+    const nealiniata: Cutie = { x: 205, y: 100, latime: 130, inaltime: 74 }
+    const noua = redimensioneaza(nealiniata, 'e', { x: 471, y: 100 }, { canvas: CANVAS, grid: 20 })
+    expect(noua.x).toBe(205)
+    expect(noua.x + noua.latime).toBe(480)
   })
 
-  it('ignora valorile corupte in loc sa produca NaN', () => {
-    const incadrare = incadrareContinut(
-      [
-        { x: 100, y: 100, latime: 80, inaltime: 80 },
-        { x: Number.NaN, y: 0, latime: 80, inaltime: 80 },
-      ],
-      CANVAS_MARE,
-    )
-    expect(Number.isFinite(incadrare.x)).toBe(true)
-    expect(Number.isFinite(incadrare.latime)).toBe(true)
+  it('nu coboara sub latura minima, oricat de departe s-ar trage', () => {
+    const stransa = redimensioneaza(CUTIE, 'se', { x: -5000, y: -5000 }, LIBER)
+    expect(stransa.latime).toBe(20)
+    expect(stransa.inaltime).toBe(20)
+    // Coltul fix ramane tot NV.
+    expect(stransa.x).toBe(CUTIE.x)
+    expect(stransa.y).toBe(CUTIE.y)
   })
 
-  it('INVARIANT: incadrarea contine tot continutul si sta in canvas', () => {
-    const cazuri = [
-      [{ x: 0, y: 0, latime: 40, inaltime: 40 }],
-      [{ x: 1100, y: 700, latime: 80, inaltime: 80 }],
-      [
-        { x: 60, y: 60, latime: 80, inaltime: 80 },
-        { x: 1000, y: 640, latime: 80, inaltime: 80 },
-      ],
-      [{ x: 500, y: 400, latime: 10, inaltime: 10 }],
+  it('INVARIANT: rezultatul sta in canvas si are laturi pozitive', () => {
+    const puncte = [
+      { x: -900, y: -900 },
+      { x: 0, y: 0 },
+      { x: 260, y: 130 },
+      { x: 9000, y: 9000 },
+      { x: 1199, y: 799 },
     ]
-
-    for (const continut of cazuri) {
-      const i = incadrareContinut(continut, CANVAS_MARE)
-      expect(i.x).toBeGreaterThanOrEqual(-0.001)
-      expect(i.y).toBeGreaterThanOrEqual(-0.001)
-      expect(i.x + i.latime).toBeLessThanOrEqual(CANVAS_MARE.latime + 0.001)
-      expect(i.y + i.inaltime).toBeLessThanOrEqual(CANVAS_MARE.inaltime + 0.001)
-      for (const d of continut) {
-        expect(d.x).toBeGreaterThanOrEqual(i.x - 0.001)
-        expect(d.x + d.latime).toBeLessThanOrEqual(i.x + i.latime + 0.001)
-        expect(d.y).toBeGreaterThanOrEqual(i.y - 0.001)
-        expect(d.y + d.inaltime).toBeLessThanOrEqual(i.y + i.inaltime + 0.001)
+    for (const ancora of ANCORE) {
+      for (const grid of [0, 20]) {
+        for (const punct of puncte) {
+          const noua = redimensioneaza(CUTIE, ancora, punct, { canvas: CANVAS, grid })
+          const unde = `${ancora}, grid ${grid}, punct ${punct.x}/${punct.y}`
+          expect(noua.latime, unde).toBeGreaterThanOrEqual(20)
+          expect(noua.inaltime, unde).toBeGreaterThanOrEqual(20)
+          expect(esteInCanvas(noua, CANVAS), unde).toBe(true)
+        }
       }
     }
+  })
+
+  it('pe un obiect rotit, coltul opus ramane fix PE ECRAN', () => {
+    // Fara corectia de translatie, micsorarea muta centrul, iar rotatia din
+    // jurul lui ar plimba vizibil latura care trebuia sa stea pe loc.
+    for (const rotatie of [30, 90, 200]) {
+      const noua = redimensioneaza(CUTIE, 'se', { x: 260, y: 140 }, { ...LIBER, rotatie })
+      const inainte = peEcran({ x: CUTIE.x, y: CUTIE.y }, CUTIE, rotatie)
+      const dupa = peEcran({ x: noua.x, y: noua.y }, noua, rotatie)
+      expect(dupa.x, `rotatie ${rotatie}`).toBeCloseTo(inainte.x, 6)
+      expect(dupa.y, `rotatie ${rotatie}`).toBeCloseTo(inainte.y, 6)
+    }
+  })
+
+  it('cu Shift pastreaza raportul laturilor', () => {
+    const noua = redimensioneaza(CUTIE, 'se', { x: 600, y: 200 }, { ...LIBER, pastreazaRaport: true })
+    expect(noua.latime / noua.inaltime).toBeCloseTo(CUTIE.latime / CUTIE.inaltime, 6)
+  })
+
+  it('nu strica nimic pe masuri corupte', () => {
+    expect(redimensioneaza(CUTIE, 'se', { x: Number.NaN, y: 100 }, LIBER)).toEqual(CUTIE)
+  })
+})
+
+describe('esteInCanvas', () => {
+  it('recunoaste obiectul care iese, chiar si cu un pixel', () => {
+    expect(esteInCanvas({ x: 0, y: 0, latime: 1200, inaltime: 800 }, CANVAS)).toBe(true)
+    expect(esteInCanvas({ x: 1121, y: 0, latime: 80, inaltime: 80 }, CANVAS)).toBe(false)
+    expect(esteInCanvas({ x: -1, y: 0, latime: 80, inaltime: 80 }, CANVAS)).toBe(false)
   })
 })
