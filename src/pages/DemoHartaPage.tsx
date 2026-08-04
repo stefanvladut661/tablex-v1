@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { ArrowLeftIcon, ClockIcon } from 'lucide-react'
 
+import { BaraOrara } from '@/components/floor-plan/BaraOrara'
 import { HartaZona } from '@/components/floor-plan/HartaZona'
 import { LegendaStatus } from '@/components/floor-plan/LegendaStatus'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   MESE_DEMO,
+  ORA_VARF_DEMO,
+  PROGRAM_DEMO,
   STRUCTURA_DEMO,
   ZONE_DEMO,
   formateazaOra,
@@ -18,12 +21,16 @@ import {
 import { ETICHETE_STATUS } from '@/types/floor-plan'
 import { RUTE } from '@/lib/rute'
 
-const ORA_MIN = 10
-const ORA_MAX = 23.5
-
 export function DemoHartaPage() {
   const [zonaId, setZonaId] = useState(ZONE_DEMO[0].id)
-  const [ora, setOra] = useState(19.5)
+  /**
+   * `null` inseamna „ora de referinta a demonstratiei", exact conventia din
+   * panou, unde null inseamna „urmareste prezentul". Asa bara orara e chiar
+   * componenta livrata, nu una refacuta pentru vitrina — inclusiv butonul de
+   * intoarcere, care apare doar dupa ce ai plecat de la ora de pornire.
+   */
+  const [oraAleasa, setOraAleasa] = useState<number | null>(null)
+  const ora = oraAleasa ?? ORA_VARF_DEMO
   const [masaSelectata, setMasaSelectata] = useState<string | null>(null)
 
   const zona = ZONE_DEMO.find((z) => z.id === zonaId) ?? ZONE_DEMO[0]
@@ -79,6 +86,16 @@ export function DemoHartaPage() {
             <LegendaStatus />
           </div>
 
+          {/* §28.12 — aceeasi bara ca in panoul restaurantului, pe toata latimea,
+              deasupra canvasului. Exact asezarea din HartaPage. */}
+          <BaraOrara
+            program={PROGRAM_DEMO}
+            oraAfisata={ora}
+            oraLive={ORA_VARF_DEMO}
+            urmarestePrezentul={oraAleasa === null}
+            onSchimba={setOraAleasa}
+          />
+
           <HartaZona
             zona={zona}
             structura={STRUCTURA_DEMO[zonaId]}
@@ -93,38 +110,28 @@ export function DemoHartaPage() {
           />
 
           <p className="text-xs text-muted-foreground">
-            Scroll pentru zoom, trage pentru deplasare, click pe o masă pentru detalii. Tab și
-            Enter funcționează la fel, pentru navigarea de la tastatură.
+            Trage de hartă ca s-o muți, Ctrl + scroll ca să apropii, click pe o masă pentru
+            detalii. Tab și Enter funcționează la fel, pentru navigarea de la tastatură.
           </p>
         </div>
 
         <aside className="flex flex-col gap-4">
-          {/* Bara orara (§28.12): dovada practica a deciziei din schema —
-              statusul mesei se recalculeaza, nu se citeste dintr-o coloana. */}
+          {/* Dovada practica a deciziei din schema: statusul mesei se
+              recalculeaza, nu se citeste dintr-o coloana. Ora se ALEGE din bara
+              de deasupra hartii, ca in panou; aici ramane doar valoarea, mare,
+              pentru cine se uita de la distanta — tot ca in panou. */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <ClockIcon className="size-4 text-primary" />
                 Ora afișată
               </CardTitle>
-              <CardDescription>Derulează ziua și vezi cum se schimbă harta.</CardDescription>
+              <CardDescription>
+                Alege o oră din bara de deasupra hărții și vezi cum se schimbă sala.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-3">
+            <CardContent>
               <div className="text-2xl font-semibold tabular-nums">{formateazaOra(ora)}</div>
-              <input
-                type="range"
-                min={ORA_MIN}
-                max={ORA_MAX}
-                step={0.25}
-                value={ora}
-                onChange={(e) => setOra(Number(e.target.value))}
-                aria-label="Ora afișată pe hartă"
-                className="w-full accent-primary"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
-                <span>{formateazaOra(ORA_MIN)}</span>
-                <span>{formateazaOra(ORA_MAX)}</span>
-              </div>
             </CardContent>
           </Card>
 

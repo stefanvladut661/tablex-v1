@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { RotateCcwIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,13 @@ function formateazaOra(oraZecim: number): string {
  * nu se mai misca sub tine — altfel previzualizarea ar sari inapoi in mijlocul
  * unei decizii.
  *
+ * Iesirea din prezent NU mai e o alarma. Avea o banda portocalie cu text, adica
+ * exact culoarea pe care Traffic Light-ul (§3, §7.4) o rezerva meselor care se
+ * elibereaza — pe un ecran unde tocmai culoarea e informatia, o banda portocalie
+ * care nu spune nimic despre mese e zgomot. Si nu era nici o greseala: alegerea
+ * altei ore e chiar ce cere bara sa faci. A ramas doar butonul de intoarcere, iar
+ * ora aleasa se vede oricum aprinsa in bara.
+ *
  * Bara NU-si mai tine propriul ceas. „Acum" vine de sus, din acelasi hook din
  * care il ia si harta: cand fiecare si-l calcula singur, cele doua divergeau
  * dupa un minut si bara declara „previzualizare" o harta pe care n-o atinsese
@@ -51,15 +59,63 @@ export function BaraOrara({
   const sloturi: number[] = []
   for (let o = Math.floor(program.deLa); o <= program.panaLa; o += PAS_ORE) sloturi.push(o)
 
+  /**
+   * Ora aleasa se aduce singura in mijlocul barei.
+   *
+   * Bara tine o zi intreaga si se deruleaza pe orizontala, deci slotul aprins
+   * poate cadea in afara ferestrei — la deschidere, cand „acum" e seara, sau
+   * dupa ce butonul de intoarcere apare si ingusteaza bara. O ora aleasa pe
+   * care n-o vezi arata ca si cum nu s-ar fi intamplat nimic.
+   *
+   * `scrollTo` pe container, nu `scrollIntoView` pe buton: al doilea ar putea
+   * misca si pagina de sub el.
+   *
+   * Distanta se ia din dreptunghiuri, nu din `offsetLeft`: acela se masoara
+   * fata de `offsetParent`, adica primul stramos POZITIONAT — bara nu e unul,
+   * deci valoarea venea din alt sistem de referinta si derularea ateriza mereu
+   * la zero. (Prima incercare a facut exact asta.)
+   */
+  const refBara = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const bara = refBara.current
+    const ales = bara?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (!bara || !ales) return
+    const cadru = bara.getBoundingClientRect()
+    const slot = ales.getBoundingClientRect()
+    // Instantaneu, nu `smooth`: derularea lina s-a dovedit inerta la testare
+    // (cererea pleaca, pozitia nu se schimba), iar pe o bara de sloturi n-ar
+    // adauga nimic — ora aleasa trebuie sa fie acolo cand te uiti, nu peste
+    // trei sute de milisecunde.
+    bara.scrollTo({
+      left: bara.scrollLeft + (slot.left - cadru.left) - cadru.width / 2 + slot.width / 2,
+    })
+  }, [oraAfisata, urmarestePrezentul])
+
   return (
-    <div className="grid gap-2">
+    /**
+     * Grid cu `minmax(0, 1fr)`, nu un rand flex.
+     *
+     * Intr-un rand flex, latimea min-content a randului ramane suma sloturilor
+     * (~1100px) chiar si cu `min-w-0` pe bara — iar cand bara sta intr-o coloana
+     * de grid `1fr`, minimul automat al coloanei devine tocmai acela si intreaga
+     * pagina capata bara de derulare orizontala. `minmax(0, 1fr)` spune explicit
+     * ca prima coloana are voie sa coboare la zero; bara isi deruleaza sloturile
+     * pe orizontala, cum a facut mereu.
+     */
+    <div
+      className={`grid items-center gap-2 ${
+        urmarestePrezentul ? '' : 'grid-cols-[minmax(0,1fr)_auto]'
+      }`}
+    >
       <div
+        ref={refBara}
         role="group"
         aria-label="Ora afișată pe hartă"
-        className="flex gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1.5"
+        className="flex min-w-0 gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1.5"
       >
         {sloturi.map((slot) => {
           const ales = Math.abs(slot - oraAfisata) < PAS_ORE / 2
+          const acum = Math.abs(slot - oraLive) < PAS_ORE / 2
           const trecut = slot < oraLive
           // Orele intregi poarta eticheta; jumatatile raman liniute, ca bara sa
           // fie citibila dintr-o privire pe o tableta tinuta in mana.
@@ -69,7 +125,7 @@ export function BaraOrara({
               key={slot}
               type="button"
               aria-pressed={ales}
-              aria-label={`Arată sala la ora ${formateazaOra(slot)}`}
+              aria-label={`Arată sala la ora ${formateazaOra(slot)}${acum ? ' (ora curentă)' : ''}`}
               onClick={() => onSchimba(slot)}
               className={`shrink-0 rounded-md px-2 py-1 text-xs tabular-nums transition-colors ${
                 ales
@@ -77,6 +133,11 @@ export function BaraOrara({
                   : trecut
                     ? 'text-muted-foreground hover:bg-muted'
                     : 'hover:bg-muted'
+              } ${
+                // Reperul „acum", cat timp privirea e in alta parte a zilei. E un
+                // inel, nu o umplere: umplerea e rezervata slotului ALES, iar
+                // doua sloturi umplute diferit s-ar citi ca doua selectii.
+                acum && !ales ? 'ring-1 ring-primary/60 ring-inset' : ''
               } ${intreaga ? '' : 'opacity-70'}`}
             >
               {intreaga ? formateazaOra(slot) : '·'}
@@ -86,19 +147,16 @@ export function BaraOrara({
       </div>
 
       {!urmarestePrezentul && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-status-expirare bg-status-expirare-soft px-3 py-2">
-          <p className="text-sm">
-            <span className="font-medium">Previzualizare pentru ora {formateazaOra(oraAfisata)}</span>
-            <span className="text-muted-foreground">
-              {' '}
-              — mesele arată cum vor fi atunci, nu cum sunt acum.
-            </span>
-          </p>
-          <Button size="xs" variant="outline" onClick={() => onSchimba(null)}>
-            <RotateCcwIcon className="size-3.5" />
-            Revino la acum
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="shrink-0"
+          onClick={() => onSchimba(null)}
+          title={`Harta arată ora ${formateazaOra(oraAfisata)}. Revino la ${formateazaOra(oraLive)}.`}
+        >
+          <RotateCcwIcon className="size-3.5" />
+          Revino la ora curentă
+        </Button>
       )}
     </div>
   )

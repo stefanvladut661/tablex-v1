@@ -42,10 +42,19 @@ import {
 } from '@/components/ui/landing-blocks'
 import { SocialProof, type RecenzieScurta } from '@/components/ui/social-proof'
 import { PricingSection, type PlanPreturi } from '@/components/ui/pricing-section'
+import { BaraOrara } from '@/components/floor-plan/BaraOrara'
 import { StepsSection, type PasFlux } from '@/components/ui/steps-section'
 import { TimelineContent } from '@/components/ui/timeline-animation'
 import { useSetariApp } from '@/hooks/useSetariApp'
-import { MESE_DEMO, STRUCTURA_DEMO, ZONE_DEMO, statusuriLaOra } from '@/lib/harta-demo'
+import {
+  MESE_DEMO,
+  ORA_VARF_DEMO,
+  PROGRAM_DEMO,
+  STRUCTURA_DEMO,
+  ZONE_DEMO,
+  formateazaOra,
+  statusuriLaOra,
+} from '@/lib/harta-demo'
 import { ETICHETE_STATUS } from '@/types/floor-plan'
 import { RUTE } from '@/lib/rute'
 
@@ -379,8 +388,19 @@ export function LandingPage() {
 
   const zona = ZONE_DEMO[0]
   const mese = MESE_DEMO[zona.id]
-  // Ora de varf: harta arata interesant, cu toate cele cinci statusuri.
-  const statusuri = useMemo(() => statusuriLaOra(19.5, zona.id), [zona.id])
+
+  /**
+   * Ora demonstratiei se alege din ACEEASI bara ca in panoul restaurantului
+   * (§28.12), nu dintr-un slider inventat pentru landing. Sectiunea promite „e
+   * harta reala, nu o captura" — daca selectorul de ora ar fi altul decat cel
+   * livrat, promisiunea ar fi falsa chiar in locul unde se face.
+   *
+   * 19:30 tine locul lui „acum": e ora de varf, singura la care se vad toate
+   * cele cinci statusuri deodata.
+   */
+  const [oraDemo, setOraDemo] = useState<number | null>(null)
+  const oraAfisata = oraDemo ?? ORA_VARF_DEMO
+  const statusuri = useMemo(() => statusuriLaOra(oraAfisata, zona.id), [oraAfisata, zona.id])
 
   /**
    * §51.1 — demonstratia de pe landing e INTERACTIVA: clicul pe o masa arata
@@ -506,13 +526,26 @@ export function LandingPage() {
             eticheta="Demonstrație"
             titlu={
               <>
-                Harta 2D, <span className="text-primary">la ora 19:30</span>
+                Harta 2D,{' '}
+                <span className="text-primary">la ora {formateazaOra(oraAfisata)}</span>
               </>
             }
-            subtitlu="Nu e o captură de ecran. E harta reală, cu date fictive: derulează ziua și vezi cum se schimbă sala."
+            subtitlu="Nu e o captură de ecran. E harta reală, cu aceeași bară orară pe care o are panoul: alege o oră și vezi cum se schimbă sala. Trage de hartă ca s-o muți, Ctrl + scroll ca să apropii."
           />
 
           <LegendaStatus className="mt-8" />
+
+          {/* §28.12 — chiar bara din panou, nu o copie: ora aleasa se aprinde,
+              iar butonul de intoarcere apare doar cand ai plecat de la ea. */}
+          <div className="mt-4">
+            <BaraOrara
+              program={PROGRAM_DEMO}
+              oraAfisata={oraAfisata}
+              oraLive={ORA_VARF_DEMO}
+              urmarestePrezentul={oraDemo === null}
+              onSchimba={setOraDemo}
+            />
+          </div>
 
           <HartaZona
             zona={zona}
@@ -522,6 +555,9 @@ export function LandingPage() {
             arataGrid={false}
             masaSelectata={masaAleasa}
             onSelecteazaMasa={(id) => setMasaAleasa((curent) => (curent === id ? null : id))}
+            // Harta se poate apropia si plimba, ca in panou: pe o sala de 20 de
+            // mese, ce se vede de departe e o pata verde-rosie, nu un plan.
+            permiteZoom
             className="mt-3 w-full"
           />
 
@@ -537,7 +573,8 @@ export function LandingPage() {
                   Masa {detaliiMasa.numar_masa}
                 </span>{' '}
                 · {detaliiMasa.capacitate} locuri ·{' '}
-                {ETICHETE_STATUS[statusuri[detaliiMasa.id] ?? 'liber']} la 19:30
+                {ETICHETE_STATUS[statusuri[detaliiMasa.id] ?? 'liber']} la{' '}
+                {formateazaOra(oraAfisata)}
               </>
             ) : (
               'Dă click pe o masă ca să vezi ce arată personalului.'

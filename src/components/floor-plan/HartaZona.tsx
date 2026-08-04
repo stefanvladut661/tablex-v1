@@ -47,7 +47,14 @@ export function HartaZona({
   permiteZoom = false,
   className,
 }: Props) {
-  const { refSvg, vedere, mareste, micsoreaza, reseteaza, handlers } = useZoomPan(1, permiteZoom)
+  // Ultimul argument: rotita apropie doar cu Ctrl. Viewer-ul asta sta mereu
+  // intr-o pagina care se deruleaza (landing, demo, widget, dialog), unde o
+  // rotire peste harta trebuie sa coboare pagina, nu sa apropie planul.
+  const { refSvg, vedere, mareste, micsoreaza, reseteaza, handlers } = useZoomPan(
+    1,
+    permiteZoom,
+    true,
+  )
   const idGrid = useId()
   /**
    * Decuparea la marginea canvasului. Id-ul vine din useId fiindca aceeasi

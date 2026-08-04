@@ -30,8 +30,16 @@ function limiteaza(scara: number) {
  *   afiseaza, nu o schimba.
  * @param interactiv Cand e fals, gesturile de zoom/pan sunt inerte: harta
  *   ramane exact la incadrarea primita. Doar editorul echipei o porneste.
+ * @param rotitaCereCtrl Rotita apropie doar cu Ctrl (sau Cmd) apasat.
+ *   Obligatoriu pentru hartile asezate INTR-O PAGINA care se deruleaza: acolo
+ *   listener-ul de wheel cheama preventDefault, deci fara conditia asta o
+ *   derulare cu cursorul peste hartă ar apropia planul in loc sa coboare pagina,
+ *   iar vizitatorul ar ramane blocat in mijlocul landing-ului. In builder, unde
+ *   canvasul e tot ecranul si pagina nu se deruleaza, rotita simpla e gestul
+ *   asteptat. Pinch-ul pe trackpad ajunge tot aici, cu ctrlKey pus de browser,
+ *   deci continua sa functioneze in ambele cazuri.
  */
-export function useZoomPan(scaraInitiala = 1, interactiv = true) {
+export function useZoomPan(scaraInitiala = 1, interactiv = true, rotitaCereCtrl = false) {
   const refSvg = useRef<SVGSVGElement | null>(null)
   const [vedere, setVedere] = useState<Vedere>({
     scara: limiteaza(scaraInitiala),
@@ -92,6 +100,8 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
     if (!svg || !interactiv) return
 
     function laWheel(eveniment: WheelEvent) {
+      // Fara preventDefault, deci pagina se deruleaza normal peste harta.
+      if (rotitaCereCtrl && !eveniment.ctrlKey && !eveniment.metaKey) return
       eveniment.preventDefault()
       scaleaza(
         eveniment.deltaY < 0 ? PAS : 1 / PAS,
@@ -101,7 +111,7 @@ export function useZoomPan(scaraInitiala = 1, interactiv = true) {
 
     svg.addEventListener('wheel', laWheel, { passive: false })
     return () => svg.removeEventListener('wheel', laWheel)
-  }, [punctUser, scaleaza, interactiv])
+  }, [punctUser, scaleaza, interactiv, rotitaCereCtrl])
 
   const laPointerDown = useCallback(
     (eveniment: EvenimentPointer<SVGSVGElement>) => {

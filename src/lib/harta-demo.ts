@@ -1,3 +1,4 @@
+import type { IntervalProgram } from '@/lib/program'
 import type {
   ElementStructura,
   MasaHarta,
@@ -141,6 +142,21 @@ const REZERVARI_DEMO: RezervareDemo[] = [
 
 /** Pragul "se elibereaza in curand" din §7.4: 20 de minute. */
 const PRAG_EXPIRARE_ORE = 20 / 60
+
+/**
+ * Programul zilei demonstrative, in forma pe care o cere `BaraOrara` — aceeasi
+ * bara orara ca in panoul restaurantului. Landing-ul si pagina de demo o
+ * folosesc pe ea, nu un slider propriu: sectiunea promite „e harta reala, nu o
+ * captura", iar un selector de ora inventat doar pentru vitrina ar face
+ * promisiunea falsa chiar in locul unde se face.
+ */
+export const PROGRAM_DEMO: IntervalProgram = { deschis: true, deLa: 10, panaLa: 23.5 }
+
+/**
+ * Ora la care se deschid demonstratiile — tine locul lui „acum". E ora de varf:
+ * singurul moment din zi in care se vad toate cele cinci statusuri deodata.
+ */
+export const ORA_VARF_DEMO = 19.5
 
 /**
  * Reconstruieste statusurile pentru un moment dat — exact modelul din
