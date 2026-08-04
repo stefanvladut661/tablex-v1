@@ -84,8 +84,13 @@ export function Masa({ masa, status, selectata = false, interactiva = false, onS
       ].join(' ')}
     >
       {/* Scaunele (§8.4, §9.2.2, §28.5, §42.7), desenate INAINTEA mesei ca
-          blatul sa ramana deasupra, si niciodata cu pointer-events: un deget
-          care nimereste un scaun trebuie sa selecteze tot masa. */}
+          blatul sa ramana deasupra.
+
+          `pointer-events-none`: scaunele ies pana la ~33px in afara blatului si
+          se suprapun peste vecini, iar mesele se deseneaza una peste alta in
+          ordinea din lista. Daca ar prinde clicul, scaunul mesei desenate ultima
+          ar fura selectia mesei de sub el — deci zona lor e transparenta la
+          atingere, iar masa se ia doar de pe blat. */}
       <g className="pointer-events-none" aria-hidden="true">
         {scaune.map((scaun, indice) => (
           <g key={indice} transform={`translate(${scaun.x} ${scaun.y}) rotate(${scaun.unghi})`}>

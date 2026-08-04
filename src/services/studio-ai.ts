@@ -40,9 +40,15 @@ export const CHEI_STUDIO_AI = {
 }
 
 /**
- * Cea mai recenta cerere ACTIVA (cu schita) a restaurantului — pe ea se
- * ancoreaza fundalul-schita si Best Guess-ul din editor (§42.5). Aici e
- * SINGURUL loc din client care citeste ai_rezultat.
+ * Cea mai recenta cerere ACTIVA a restaurantului. Pe ea se ancoreaza tot
+ * builderul: ZONA la care se lucreaza (`zone_nume`), fundalul-schita si Best
+ * Guess-ul (§42.5). Aici e SINGURUL loc din client care citeste ai_rezultat.
+ *
+ * Filtrul „numai cu schita" a fost SCOS deliberat: din el se alegea zona, iar o
+ * cerere fara schita (schita e optionala la trimitere) ar fi trimis builderul sa
+ * deseneze alta sala decat cea ceruta ultima data. Mai bine o cerere fara schita
+ * de calc — atunci nu se afiseaza fundalul si nici generarea AI, ceea ce e
+ * corect: nu exista ce genera.
  */
 export async function getCerereStudio(restaurantId: string): Promise<CerereStudio | null> {
   const { data, error } = await supabase
@@ -50,7 +56,6 @@ export async function getCerereStudio(restaurantId: string): Promise<CerereStudi
     .select('id, zone_nume, schita_image_url, ai_rezultat, ai_generat_la')
     .eq('restaurant_id', restaurantId)
     .in('status', ['pending', 'in_progress'])
-    .not('schita_image_url', 'is', null)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -68,7 +73,7 @@ export async function genereazaPlanAI(cerereId: string): Promise<RezultatGenerar
   const { data, error } = await supabase.functions.invoke('genereaza-plan-ai', {
     body: { cerere_id: cerereId },
   })
-  if (error) throw new Error('Generarea AI a esuat. Incearca din nou.')
+  if (error) throw new Error('Generarea AI a eșuat. Încearcă din nou.')
   if (data?.eroare) throw new Error(data.eroare)
   if (data?.ok) return { ok: true, elemente: data.elemente ?? 0, mese: data.mese ?? 0 }
   return { ok: false, simulat: data?.simulat, motiv: data?.motiv ?? 'Generarea nu a rulat.' }

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Tables, TablesUpdate } from '@/types/database'
+import type { Enums, Tables, TablesUpdate } from '@/types/database'
 import type { ElementStructura } from '@/types/floor-plan'
 
 export type Zona = Tables<'zones'>
@@ -81,10 +81,16 @@ export async function actualizeazaZona(
 /**
  * Migratia 18 refuza stergerea unei zone cu rezervari viitoare (P0002).
  * Nu preintampinam aici: baza e sursa de adevar, iar mesajul ei e deja explicit.
+ *
+ * Un DELETE oprit de RLS nu e insa o eroare, ci un 200 cu zero randuri — la fel
+ * ca un UPDATE. Fara `.select('id')` interfata ar fi anuntat „Zona a fost
+ * stearsa" pentru o zona ramasa pe loc, iar operatorul ar fi aflat abia la
+ * urmatoarea reincarcare.
  */
 export async function stergeZona(id: string): Promise<void> {
-  const { error } = await supabase.from('zones').delete().eq('id', id)
+  const { data, error } = await supabase.from('zones').delete().eq('id', id).select('id')
   if (error) throw error
+  verificaAplicat(data, 'Ștergerea zonei')
 }
 
 export type MasaNoua = {
@@ -93,6 +99,15 @@ export type MasaNoua = {
   capacitate: number
   pozitieX: number
   pozitieY: number
+  /**
+   * Forma si gabaritul vin din paleta de obiecte: cine trage o masa
+   * dreptunghiulara o vrea dreptunghiulara din prima, nu rotunda si apoi
+   * corectata din panou. Optionale — lipsa lor lasa valorile implicite ale
+   * bazei (rotunda, 80x80), care sunt sursa de adevar, nu o copie de aici.
+   */
+  forma?: Enums<'masa_forma'>
+  latime?: number
+  inaltime?: number
 }
 
 /**
@@ -135,6 +150,9 @@ export async function creeazaMasa(masa: MasaNoua): Promise<Masa> {
         capacitate: masa.capacitate,
         pozitie_x: masa.pozitieX,
         pozitie_y: masa.pozitieY,
+        ...(masa.forma ? { forma: masa.forma } : {}),
+        ...(masa.latime === undefined ? {} : { latime: masa.latime }),
+        ...(masa.inaltime === undefined ? {} : { inaltime: masa.inaltime }),
       })
       .select('*')
       .single()
@@ -157,9 +175,11 @@ export async function actualizeazaMasa(
   verificaAplicat(data, 'Modificarea mesei')
 }
 
+/** Acelasi motiv ca la stergerea zonei: zero randuri inseamna „nu s-a sters". */
 export async function stergeMasa(id: string): Promise<void> {
-  const { error } = await supabase.from('tables').delete().eq('id', id)
+  const { data, error } = await supabase.from('tables').delete().eq('id', id).select('id')
   if (error) throw error
+  verificaAplicat(data, 'Ștergerea mesei')
 }
 
 // ── Layer 1: structura salii (pereti, bar, intrare...) ───────────────────

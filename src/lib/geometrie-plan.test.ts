@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { aliniazaLaGrid, inCanvas, incadrareContinut, pozitieFinala } from '@/lib/geometrie-plan'
+import {
+  aliniazaLaGrid,
+  inCanvas,
+  incadrareContinut,
+  pozitieFinala,
+  vedereIncadrata,
+} from '@/lib/geometrie-plan'
 
 const CANVAS = { latime: 1200, inaltime: 800 }
 const MASA = { latime: 80, inaltime: 80 }
@@ -189,6 +195,80 @@ describe('incadrareContinut', () => {
         expect(d.y).toBeGreaterThanOrEqual(i.y - 0.001)
         expect(d.y + d.inaltime).toBeLessThanOrEqual(i.y + i.inaltime + 0.001)
       }
+    }
+  })
+})
+
+describe('vedereIncadrata', () => {
+  const VIEWBOX = { latime: 1200, inaltime: 800 }
+
+  it('aduce dreptunghiul exact in mijloc', () => {
+    // Un patrat de 400x400 in coltul stanga-sus: incape de doua ori pe
+    // inaltime, deci scara e 2, iar continutul trebuie sa iasa centrat.
+    const v = vedereIncadrata({ x: 0, y: 0, latime: 400, inaltime: 400 }, VIEWBOX)
+    expect(v.scara).toBe(2)
+    // Marginile stanga/dreapta si sus/jos, dupa transformare, sunt egale.
+    expect(v.x).toBeCloseTo((1200 - 800) / 2, 6)
+    expect(v.y).toBeCloseTo((800 - 800) / 2, 6)
+  })
+
+  it('proiecteaza cele doua colturi la aceeasi distanta de margini', () => {
+    const dreptunghi = { x: 320, y: 180, latime: 500, inaltime: 260 }
+    const v = vedereIncadrata(dreptunghi, VIEWBOX)
+
+    const stanga = v.x + dreptunghi.x * v.scara
+    const dreapta = v.x + (dreptunghi.x + dreptunghi.latime) * v.scara
+    const sus = v.y + dreptunghi.y * v.scara
+    const jos = v.y + (dreptunghi.y + dreptunghi.inaltime) * v.scara
+
+    expect(stanga).toBeCloseTo(VIEWBOX.latime - dreapta, 6)
+    expect(sus).toBeCloseTo(VIEWBOX.inaltime - jos, 6)
+    // Si nimic nu iese din viewBox.
+    expect(stanga).toBeGreaterThanOrEqual(-0.001)
+    expect(jos).toBeLessThanOrEqual(VIEWBOX.inaltime + 0.001)
+  })
+
+  it('nu depaseste limitele de zoom ale canvasului', () => {
+    // O singura planta de 20x20 ar cere scara 40x; ramane la plafon.
+    const mare = vedereIncadrata({ x: 100, y: 100, latime: 20, inaltime: 20 }, VIEWBOX)
+    expect(mare.scara).toBe(4)
+
+    // Un continut de zece ori cat canvasul ar cere 0.1; ramane la podea.
+    const mic = vedereIncadrata({ x: 0, y: 0, latime: 12000, inaltime: 8000 }, VIEWBOX)
+    expect(mic.scara).toBe(0.4)
+  })
+
+  it('lasa vederea neutra cand masurile nu au sens', () => {
+    // Fara continut nu inventam o incadrare: 1:1, fara translatie. Altfel o
+    // impartire la zero ar scrie NaN in transformarea SVG-ului, iar planul ar
+    // disparea complet de pe ecran.
+    for (const gresit of [
+      { x: 0, y: 0, latime: 0, inaltime: 400 },
+      { x: 0, y: 0, latime: 400, inaltime: 0 },
+      { x: Number.NaN, y: 0, latime: 400, inaltime: 400 },
+    ]) {
+      expect(vedereIncadrata(gresit, VIEWBOX)).toEqual({ scara: 1, x: 0, y: 0 })
+    }
+    expect(vedereIncadrata({ x: 0, y: 0, latime: 400, inaltime: 400 }, { latime: 0, inaltime: 0 })).toEqual({
+      scara: 1,
+      x: 0,
+      y: 0,
+    })
+  })
+
+  it('incadreaza rezultatul lui incadrareContinut fara sa taie nimic', () => {
+    // Cazul real al butonului de auto-centrare: doua mese intr-un colt.
+    const continut = [
+      { x: 60, y: 60, latime: 80, inaltime: 80 },
+      { x: 260, y: 180, latime: 130, inaltime: 74 },
+    ]
+    const v = vedereIncadrata(incadrareContinut(continut, VIEWBOX), VIEWBOX)
+
+    for (const d of continut) {
+      expect(v.x + d.x * v.scara).toBeGreaterThanOrEqual(0)
+      expect(v.y + d.y * v.scara).toBeGreaterThanOrEqual(0)
+      expect(v.x + (d.x + d.latime) * v.scara).toBeLessThanOrEqual(VIEWBOX.latime)
+      expect(v.y + (d.y + d.inaltime) * v.scara).toBeLessThanOrEqual(VIEWBOX.inaltime)
     }
   })
 })

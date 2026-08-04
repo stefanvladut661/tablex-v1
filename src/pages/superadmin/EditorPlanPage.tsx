@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeftIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import { ArrowLeftIcon, MagnetIcon, ScanIcon, Trash2Icon } from 'lucide-react'
 
-import { EditorZona, type Strat } from '@/components/floor-plan/EditorZona'
+import {
+  EditorZona,
+  TIP_TRANSFER_OBIECT,
+  type ComenziVedere,
+  type Strat,
+} from '@/components/floor-plan/EditorZona'
+import { SCARA_MAX, SCARA_MIN } from '@/components/floor-plan/useZoomPan'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -28,8 +33,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useNotificari } from '@/hooks/useNotificari'
+import { inCanvas, pozitieFinala } from '@/lib/geometrie-plan'
 import { importaGeometrie, type GeometrieImportata } from '@/lib/import-geometrie'
+import { gasesteZonaDupaNume, normalizeazaNumeZona } from '@/lib/nume-zona'
 import { RUTE } from '@/lib/rute'
+import { cn } from '@/lib/utils'
 import {
   CHEIE_ISTORIC,
   CHEI_EDITOR,
@@ -47,13 +55,10 @@ import {
   stergeZona,
   type Layer1,
   type Masa,
+  type Zona,
 } from '@/services/editor-plan'
 import { CHEI_FP, urlSchita } from '@/services/floor-plan'
-import {
-  CHEI_STUDIO_AI,
-  genereazaPlanAI,
-  getCerereStudio,
-} from '@/services/studio-ai'
+import { CHEI_STUDIO_AI, genereazaPlanAI, getCerereStudio } from '@/services/studio-ai'
 import { CHEI_SA, getRestaurante } from '@/services/super-admin'
 import type { Enums } from '@/types/database'
 import type { ElementStructura, TipStructura } from '@/types/floor-plan'
@@ -62,6 +67,23 @@ const ETICHETE_FORMA: Record<Enums<'masa_forma'>, string> = {
   rotunda: 'Rotundă',
   patrata: 'Pătrată',
   dreptunghiulara: 'Dreptunghiulară',
+}
+
+/**
+ * Sabloanele paletei — cu ce dimensiuni ateriza obiectul tras pe plan.
+ *
+ * Mesele: 80x80 e chiar valoarea implicita a bazei, iar 130x74 e masa lunga
+ * clasica, cea pe care generatorul de scaune o aseaza 2+2 pe laturile lungi si
+ * cate unul la capete. Cine trage o masa dreptunghiulara o vrea dreptunghiulara
+ * din prima, nu rotunda si apoi corectata din panou.
+ */
+const SABLOANE_MASA: Record<
+  Enums<'masa_forma'>,
+  { eticheta: string; latime: number; inaltime: number; capacitate: number }
+> = {
+  rotunda: { eticheta: 'Masă rotundă', latime: 80, inaltime: 80, capacitate: 4 },
+  patrata: { eticheta: 'Masă pătrată', latime: 80, inaltime: 80, capacitate: 4 },
+  dreptunghiulara: { eticheta: 'Masă lungă', latime: 130, inaltime: 74, capacitate: 6 },
 }
 
 /**
@@ -86,56 +108,91 @@ const SABLOANE_STRUCTURA: Record<
 }
 
 const TIPURI_STRUCTURA = Object.keys(SABLOANE_STRUCTURA) as TipStructura[]
+const FORME_MASA = Object.keys(SABLOANE_MASA) as Array<Enums<'masa_forma'>>
 
-function DialogZonaNoua({
-  onInchide,
-  onCreeaza,
-  inLucru,
+/** Pictograma din paleta imprumuta exact culoarea cu care apare pe canvas. */
+const CLASA_PICTOGRAMA: Record<TipStructura, string> = {
+  perete: 'bg-canvas-perete',
+  usa: 'bg-canvas-usa',
+  intrare: 'bg-canvas-usa',
+  bar: 'bg-canvas-bar',
+  dj: 'bg-canvas-zona-speciala',
+  vip: 'bg-canvas-zona-speciala',
+  bucatarie: 'bg-canvas-zona-speciala',
+  planta: 'bg-canvas-planta',
+  piscina: 'bg-canvas-piscina',
+}
+
+/**
+ * Cheile de mutatie sunt module-level: dupa fiecare scriere ne intereseaza daca
+ * a mai ramas vreuna in zbor, iar `isMutating` le cauta dupa cheie.
+ */
+const CHEIE_MUTATIE_MESE = ['editor', 'scrie-masa'] as const
+const CHEIE_MUTATIE_STRAT = ['editor', 'scrie-strat'] as const
+
+/** Latura maxima a pictogramei din paleta, in pixeli de ecran. */
+const PICTOGRAMA_MAXIM = 30
+
+function ObiectPaleta({
+  obiect,
+  eticheta,
+  latime,
+  inaltime,
+  clasa,
+  rotund = false,
+  onAseaza,
 }: {
-  onInchide: () => void
-  onCreeaza: (nume: string) => void
-  inLucru: boolean
+  obiect: string
+  eticheta: string
+  latime: number
+  inaltime: number
+  clasa: string
+  rotund?: boolean
+  onAseaza: () => void
 }) {
-  const [nume, setNume] = useState('')
+  // Pictograma pastreaza proportiile reale ale obiectului: asa se vede din
+  // paleta ca peretele e o dunga si barul un dreptunghi lat, fara nicio eticheta
+  // suplimentara. Minimul de 5px tine dunga vizibila.
+  const scara = PICTOGRAMA_MAXIM / Math.max(latime, inaltime)
 
   return (
-    <Dialog open onOpenChange={(deschis) => !deschis && onInchide()}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Zonă nouă</DialogTitle>
-          <DialogDescription>
-            Numele apare în panoul restaurantului și în widgetul public.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form
-          className="grid gap-1.5"
-          onSubmit={(eveniment) => {
-            eveniment.preventDefault()
-            if (nume.trim().length >= 2) onCreeaza(nume.trim())
+    <button
+      type="button"
+      draggable
+      onDragStart={(eveniment) => {
+        eveniment.dataTransfer.setData(TIP_TRANSFER_OBIECT, obiect)
+        eveniment.dataTransfer.effectAllowed = 'copy'
+      }}
+      // Clicul e drumul de rezerva, pentru tastatura si pentru ecranele unde
+      // tragerea nu merge: aseaza obiectul in mijlocul planului, de unde poate
+      // fi tras mai departe. NU e modul „armezi butonul, apoi dai clic pe plan"
+      // interzis de §42.4 — ramane o singura apasare.
+      onClick={onAseaza}
+      title={`${eticheta} — trage pe plan`}
+      className="flex cursor-grab items-center gap-2 rounded-lg border border-border bg-background/60 px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted active:cursor-grabbing"
+    >
+      <span className="flex w-8 shrink-0 items-center justify-center">
+        <span
+          aria-hidden="true"
+          className={cn('block', clasa, rotund ? 'rounded-full' : 'rounded-xs')}
+          style={{
+            width: Math.max(5, Math.round(latime * scara)),
+            height: Math.max(5, Math.round(inaltime * scara)),
           }}
-        >
-          <Label htmlFor="zona-noua">Nume</Label>
-          <Input
-            id="zona-noua"
-            autoFocus
-            value={nume}
-            onChange={(e) => setNume(e.target.value)}
-            placeholder="Salon interior, Terasă, Etaj 1..."
-            className="h-9"
-          />
-        </form>
+        />
+      </span>
+      <span className="min-w-0 truncate">{eticheta}</span>
+    </button>
+  )
+}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onInchide}>
-            Renunță
-          </Button>
-          <Button disabled={inLucru || nume.trim().length < 2} onClick={() => onCreeaza(nume.trim())}>
-            Creează
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+/** Panourile plutesc peste canvas, deci nu mai sunt carduri: sunt sectiuni. */
+function Sectiune({ titlu, children }: { titlu: string; children: ReactNode }) {
+  return (
+    <section className="grid gap-3 border-b border-border/60 p-3 last:border-b-0">
+      <h2 className="text-sm font-semibold">{titlu}</h2>
+      {children}
+    </section>
   )
 }
 
@@ -183,22 +240,31 @@ function DialogStergere({
  *             floor_plan_layers.continut, cu publicare separata.
  * Se editeaza unul singur odata: mesele se deseneaza PESTE structura, deci un
  * canvas care le asculta pe amandoua ar avea un test de lovire ambiguu.
+ *
+ * ZONA NU SE ALEGE. Fiecare zona e un proiect in sine, iar Adminul spune in
+ * cerere pentru care sala a platit (`floor_plan_requests.zone_nume`). Un
+ * selector ar fi fost, in cel mai bun caz, decorativ, si in cel mai rau o cale
+ * de a desena planul cerut in alta sala. Daca zona din cerere nu exista inca, o
+ * creeaza builderul, o singura data, la deschidere.
+ *
+ * Ecranul e canvas pe tot, cu panourile plutind deasupra lui: planul e obiectul
+ * de lucru, nu un card intr-o pagina. Panourile sunt translucide ca sa se vada
+ * ce e sub ele — o masa asezata sub panoul de proprietati ramane vizibila.
  */
 export function EditorPlanPage() {
   const { restaurantId = '' } = useParams()
   const notificari = useNotificari()
   const queryClient = useQueryClient()
 
-  const [zonaActiva, setZonaActiva] = useState<string | null>(null)
   const [masaSelectata, setMasaSelectata] = useState<string | null>(null)
-  const [modAdaugare, setModAdaugare] = useState(false)
   const [strat, setStrat] = useState<Strat>('mese')
-  const [tipDeAsezat, setTipDeAsezat] = useState<TipStructura>('perete')
   const [structuraSelectata, setStructuraSelectata] = useState<number | null>(null)
-  const [dialogZonaNoua, setDialogZonaNoua] = useState(false)
+  const [snapLaGrid, setSnapLaGrid] = useState(true)
   const [stergere, setStergere] = useState<{ tip: 'zona' | 'masa'; id: string; nume: string } | null>(
     null,
   )
+  /** Zona cererii lipsea si a fost creata acum — se spune, nu se presupune. */
+  const [zonaCreataAcum, setZonaCreataAcum] = useState(false)
 
   const restaurante = useQuery({ queryKey: CHEI_SA.restaurante, queryFn: getRestaurante })
   const zone = useQuery({
@@ -212,28 +278,45 @@ export function EditorPlanPage() {
     enabled: Boolean(restaurantId),
   })
 
+  /**
+   * §42.5 + §9.2.2 pasul 1 — cererea activa da si zona la care se lucreaza, si
+   * schita de calc, si Best Guess-ul. Slider-ul de opacitate si toggle-ul de
+   * ascundere sunt separate: schita se poate stinge complet cu un click, nu
+   * doar reduce.
+   */
+  const cerereStudio = useQuery({
+    queryKey: CHEI_STUDIO_AI.cerere(restaurantId),
+    queryFn: () => getCerereStudio(restaurantId),
+    enabled: Boolean(restaurantId),
+  })
+
   const restaurant = restaurante.data?.find((r) => r.id === restaurantId)
-  const zonaCurenta = zone.data?.find((z) => z.id === (zonaActiva ?? zone.data?.[0]?.id)) ?? null
+  const numeZonaCeruta = cerereStudio.data?.zone_nume.trim() ?? ''
+  const zonaCeruta = numeZonaCeruta ? gasesteZonaDupaNume(zone.data ?? [], numeZonaCeruta) : null
+  /**
+   * Cand exista o cerere, zona ei e SINGURA pe care lucram — inclusiv cat timp
+   * e in curs de creare, cand ramane null. O rezerva pe „prima zona" ar parea
+   * amabila, dar ar lasa mesele in alta sala decat cea platita.
+   */
+  const zonaCurenta = numeZonaCeruta ? zonaCeruta : (zone.data?.[0] ?? null)
+
   const meseZona = useMemo(
     () => (mese.data ?? []).filter((m) => m.zone_id === zonaCurenta?.id),
     [mese.data, zonaCurenta?.id],
   )
   const masa = meseZona.find((m) => m.id === masaSelectata) ?? null
 
+  const cheieMese = CHEI_EDITOR.mese(restaurantId)
+  const cheieLayer1 = CHEI_EDITOR.layer1(zonaCurenta?.id ?? '')
+
   const layer1 = useQuery({
-    queryKey: CHEI_EDITOR.layer1(zonaCurenta?.id ?? ''),
+    queryKey: cheieLayer1,
     queryFn: () => getLayer1(zonaCurenta!.id),
     enabled: Boolean(zonaCurenta?.id),
   })
-  const elemente = layer1.data?.elemente ?? []
+  const elemente = useMemo(() => layer1.data?.elemente ?? [], [layer1.data])
   const element = structuraSelectata === null ? null : (elemente[structuraSelectata] ?? null)
 
-  /**
-   * §42.5 + §9.2.2 pasul 1 — schita si Best Guess-ul vin de pe cea mai
-   * recenta cerere activa a restaurantului. Slider-ul de opacitate si
-   * toggle-ul de ascundere sunt separate: schita se poate stinge complet
-   * cu un click, nu doar reduce.
-   */
   const [opacitateSchita, setOpacitateSchita] = useState(45)
   const [schitaVizibila, setSchitaVizibila] = useState(true)
   const [arataAI, setArataAI] = useState(true)
@@ -254,11 +337,19 @@ export function EditorPlanPage() {
   const [eroriImport, setEroriImport] = useState<string[]>([])
   const [importInLucru, setImportInLucru] = useState(false)
 
-  const cerereStudio = useQuery({
-    queryKey: CHEI_STUDIO_AI.cerere(restaurantId),
-    queryFn: () => getCerereStudio(restaurantId),
-    enabled: Boolean(restaurantId),
-  })
+  /**
+   * Comenzile de vedere ale canvasului ajung intr-un REF, nu in stare: obiectul
+   * e altul la fiecare schimbare de scara, iar tinerea lui in stare ar re-randa
+   * pagina, care ar re-randa canvasul, care ar raporta din nou — bucla. Din el
+   * pastram in stare doar numarul de care are nevoie randarea (procentul de pe
+   * slider), unde React se opreste singur cand valoarea nu s-a schimbat.
+   */
+  const comenziVedere = useRef<ComenziVedere | null>(null)
+  const [scaraVedere, setScaraVedere] = useState(1)
+  const preiaComenzileVederii = useCallback((comenzi: ComenziVedere) => {
+    comenziVedere.current = comenzi
+    setScaraVedere(comenzi.scara)
+  }, [])
 
   const schitaSemnata = useQuery({
     queryKey: CHEI_FP.schita(cerereStudio.data?.schita_image_url ?? ''),
@@ -293,13 +384,32 @@ export function EditorPlanPage() {
   const zonaNoua = useMutation({
     mutationFn: (nume: string) => creeazaZona(restaurantId, nume),
     onSuccess: (zona) => {
-      notificari.succes(`Zona „${zona.nume}" a fost creată.`)
-      setZonaActiva(zona.id)
-      setDialogZonaNoua(false)
+      setZonaCreataAcum(true)
+      notificari.succes(`Zona „${zona.nume}” a fost creată automat, din cererea restaurantului.`)
       reincarcaZone()
     },
     onError: (eroare) => notificari.eroare(eroare),
   })
+
+  /**
+   * Crearea automata a zonei din cerere, EXACT o data.
+   *
+   * Garda e un ref, nu o stare: efectul se re-executa la fiecare randare in care
+   * lista de zone inca nu contine zona ceruta (adica pe tot parcursul cererii de
+   * inserare), iar in React 19 orice efect ruleaza de doua ori in dezvoltare. Un
+   * `zonaNoua.isPending` n-ar fi ajuns — intre `mutate` si prima randare cu
+   * `isPending` incape o a doua executie a efectului, si restaurantul s-ar fi
+   * ales cu doua zone identice si goale.
+   */
+  const zonaIncercata = useRef<string | null>(null)
+  const creeazaZonaCeruta = zonaNoua.mutate
+  useEffect(() => {
+    if (!restaurantId || !numeZonaCeruta || !zone.isSuccess || zonaCeruta) return
+    const cheie = `${restaurantId}|${normalizeazaNumeZona(numeZonaCeruta)}`
+    if (zonaIncercata.current === cheie) return
+    zonaIncercata.current = cheie
+    creeazaZonaCeruta(numeZonaCeruta)
+  }, [restaurantId, numeZonaCeruta, zone.isSuccess, zonaCeruta, creeazaZonaCeruta])
 
   const salveazaZona = useMutation({
     mutationFn: ({ id, modificari }: { id: string; modificari: Parameters<typeof actualizeazaZona>[1] }) =>
@@ -312,12 +422,193 @@ export function EditorPlanPage() {
     mutationFn: stergeZona,
     onSuccess: () => {
       notificari.succes('Zona a fost ștearsă.')
-      setZonaActiva(null)
       setMasaSelectata(null)
+      setStructuraSelectata(null)
       setStergere(null)
       reincarcaZone()
       reincarcaMese()
     },
+    onError: (eroare) => {
+      setStergere(null)
+      notificari.eroare(eroare)
+    },
+  })
+
+  const masaNoua = useMutation({
+    mutationKey: CHEIE_MUTATIE_MESE,
+    // Numerotarea se face in serviciu, din baza: constrangerea de unicitate e
+    // pe restaurant, iar starea de aici poate fi in urma cu o asezare.
+    mutationFn: (masaCeruta: Omit<Parameters<typeof creeazaMasa>[0], 'restaurantId' | 'zoneId'>) =>
+      creeazaMasa({ ...masaCeruta, restaurantId, zoneId: zonaCurenta!.id }),
+    onSuccess: (masaCreata) => {
+      // Randul creat intra direct in cache: daca am astepta reimprospatarea,
+      // masa ar aparea vizibil mai tarziu decat locul in care a fost lasata.
+      queryClient.setQueryData<Masa[]>(cheieMese, (lista) => [...(lista ?? []), masaCreata])
+      setMasaSelectata(masaCreata.id)
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: CHEIE_MUTATIE_MESE }) === 1) reincarcaMese()
+    },
+  })
+
+  /**
+   * Mutarea si editarea unei mese, cu ACTUALIZARE OPTIMISTA.
+   *
+   * Fara ea, la drop se vedea saritura clasica: previzualizarea gestului
+   * dispare, randul din cache e inca cel de pe server, deci masa se intoarce in
+   * pozitia veche si abia reimprospatarea o aduce inapoi. Scriem asadar pozitia
+   * noua in cache inainte sa plece cererea, si o dam inapoi doar daca serverul
+   * refuza — cazul in care masa TREBUIE sa sara inapoi, fiindca acolo chiar nu
+   * s-a salvat nimic.
+   */
+  const salveazaMasa = useMutation({
+    mutationKey: CHEIE_MUTATIE_MESE,
+    mutationFn: ({ id, modificari }: { id: string; modificari: Parameters<typeof actualizeazaMasa>[1] }) =>
+      actualizeazaMasa(id, modificari),
+    onMutate: ({ id, modificari }) => {
+      /**
+       * Patch-ul se scrie SINCRON, si de aceea functia nu e `async`.
+       * `onMutate` e apelat de React Query din chiar apelul `mutate()`, adica
+       * din interiorul evenimentului de pointerup — deci scrierea intra in
+       * acelasi lot de randare cu golirea previzualizarii din canvas, iar masa
+       * nu apuca sa fie desenata nici macar un cadru in pozitia veche. Un
+       * `await` inaintea ei ar fi impins-o dupa prima randare: exact saritura
+       * de reparat, doar mai scurta.
+       */
+      const anterioare = queryClient.getQueryData<Masa[]>(cheieMese)
+      queryClient.setQueryData<Masa[]>(cheieMese, (lista) =>
+        (lista ?? []).map((rand) => (rand.id === id ? ({ ...rand, ...modificari } as Masa) : rand)),
+      )
+      // Anularea vine dupa, dar tot sincron: o reimprospatare pornita inainte de
+      // mutatie ar ateriza dupa ea si ar sterge valoarea optimista.
+      void queryClient.cancelQueries({ queryKey: cheieMese })
+      return { anterioare }
+    },
+    onError: (eroare, _variabile, context) => {
+      if (context?.anterioare) queryClient.setQueryData(cheieMese, context.anterioare)
+      notificari.eroare(eroare)
+    },
+    onSettled: () => {
+      // Doar dupa ULTIMA scriere in zbor: o invalidare la mijloc ar aduce
+      // randurile de dinaintea celorlalte si mesele ar sari inapoi pe rand.
+      if (queryClient.isMutating({ mutationKey: CHEIE_MUTATIE_MESE }) === 1) reincarcaMese()
+    },
+  })
+
+  /**
+   * Starea COMPLETA a stratului de structura. Mutatia nu mai primeste o
+   * schimbare partiala, ci rezultatul: continutul e un array jsonb, deci orice
+   * operatie (adaugare, mutare, redimensionare, stergere, publicare) rescrie
+   * oricum acelasi rand, iar o valoare completa poate fi pusa in cache optimist
+   * fara sa mai fie recompusa la executie.
+   */
+  type StareStrat = { elemente: ElementStructura[]; vizibil: boolean; publicat: boolean }
+
+  function stareStrat(schimbare: Partial<StareStrat>): StareStrat {
+    return {
+      elemente: schimbare.elemente ?? elemente,
+      vizibil: schimbare.vizibil ?? layer1.data?.vizibil ?? true,
+      publicat: schimbare.publicat ?? layer1.data?.publicat ?? false,
+    }
+  }
+
+  const salveazaStructura = useMutation({
+    mutationKey: CHEIE_MUTATIE_STRAT,
+    /**
+     * Scrierile pe acelasi strat se serializeaza: continutul e un singur rand
+     * cu blocaj optimist pe `versiune`, deci doua cereri plecate simultan s-ar
+     * lovi una de alta si a doua ar raporta un conflict inexistent. Cu `scope`,
+     * `onMutate` ruleaza tot imediat (deci interfata nu asteapta), dar cererea
+     * pleaca abia cand cea dinaintea ei s-a asezat.
+     */
+    scope: { id: `layer1-${zonaCurenta?.id ?? 'fara-zona'}` },
+    mutationFn: (stare: StareStrat) => {
+      // Versiunea si id-ul se citesc din cache LA EXECUTIE, nu din randarea in
+      // care s-a apasat: actualizarea optimista de mai jos schimba doar
+      // continutul, deci aici ajunge mereu ultima versiune confirmata de baza.
+      const confirmat = queryClient.getQueryData<Layer1>(cheieLayer1) ?? null
+      return salveazaLayer1({
+        restaurantId,
+        zoneId: zonaCurenta!.id,
+        elemente: stare.elemente,
+        vizibil: stare.vizibil,
+        publicat: stare.publicat,
+        versiuneCitita: confirmat?.versiune ?? null,
+        layerId: confirmat?.id ?? null,
+      })
+    },
+    // Sincron, din acelasi motiv ca la mese: un `await` inaintea scrierii ar
+    // lasa elementul un cadru in pozitia veche.
+    onMutate: (stare) => {
+      const anterior = queryClient.getQueryData<Layer1>(cheieLayer1) ?? null
+      // Cand stratul nu exista inca in baza nu inventam unul in cache: `id`-ul
+      // fals ar fi citit de mutationFn drept „exista deja", si insertul s-ar
+      // transforma intr-un update pe un rand inexistent.
+      if (anterior) queryClient.setQueryData<Layer1>(cheieLayer1, { ...anterior, ...stare })
+      void queryClient.cancelQueries({ queryKey: cheieLayer1 })
+      return { anterior }
+    },
+    /**
+     * Din raspuns luam DOAR ce stie serverul mai bine — `id` si `versiune`.
+     * Continutul ramane cel din cache, fiindca el poate fi deja mai nou: cu
+     * `scope`, o a doua mutare pleaca dupa prima, dar `onMutate`-ul ei a scris
+     * deja pozitia noua. Scrierea intreaga a raspunsului o dadea inapoi pe cea
+     * veche pentru tot dus-intorsul urmator — exact saritura reparata la mese,
+     * ramasa pe stratul de structura.
+     */
+    onSuccess: (stratNou) =>
+      queryClient.setQueryData<Layer1>(cheieLayer1, (curent) =>
+        curent ? { ...curent, id: stratNou.id, versiune: stratNou.versiune } : stratNou,
+      ),
+    onError: (eroare, _stare, context) => {
+      if (context) queryClient.setQueryData<Layer1>(cheieLayer1, context.anterior)
+      notificari.eroare(eroare)
+    },
+    onSettled: () => {
+      // Publicarea lasa un instantaneu, scris de un trigger: lista de versiuni
+      // trebuie recitita, altfel versiunea proaspata apare abia la reincarcare.
+      if (zonaCurenta) {
+        void queryClient.invalidateQueries({ queryKey: CHEIE_ISTORIC(zonaCurenta.id) })
+      }
+    },
+  })
+
+  function schimbaStructura(schimbare: Partial<StareStrat>) {
+    salveazaStructura.mutate(stareStrat(schimbare))
+  }
+
+  /**
+   * Istoricul (§40). Instantaneele le scrie un trigger la fiecare publicare,
+   * deci lista se reimprospateaza dupa orice salvare a structurii publicate.
+   */
+  const istoric = useQuery({
+    queryKey: CHEIE_ISTORIC(zonaCurenta?.id ?? ''),
+    queryFn: () => getIstoricVersiuni(zonaCurenta!.id),
+    enabled: Boolean(zonaCurenta?.id),
+  })
+
+  const revino = useMutation({
+    mutationFn: restaureazaVersiune,
+    onSuccess: (versiuneNoua) => {
+      notificari.succes(`Planul a revenit la versiunea aleasă (acum versiunea ${versiuneNoua}).`)
+      // Continutul stratului s-a schimbat in baza, nu in cache: il recitim.
+      void queryClient.invalidateQueries({ queryKey: cheieLayer1 })
+      void queryClient.invalidateQueries({ queryKey: CHEIE_ISTORIC(zonaCurenta!.id) })
+    },
+    onError: (eroare) => notificari.eroare(eroare),
+  })
+
+  const eliminaMasa = useMutation({
+    mutationFn: stergeMasa,
+    onSuccess: () => {
+      notificari.succes('Masa a fost ștearsă.')
+      setMasaSelectata(null)
+      setStergere(null)
+      reincarcaMese()
+    },
+    // Migratia 18 refuza stergerea unei mese cu rezervari viitoare; mesajul ei
+    // spune deja ce sa faca in loc (dezactivare).
     onError: (eroare) => {
       setStergere(null)
       notificari.eroare(eroare)
@@ -338,15 +629,22 @@ export function EditorPlanPage() {
     let meseIntrate = 0
     try {
       if (date.structura.length) {
-        await salveazaStructura.mutateAsync({ elemente: [...elemente, ...date.structura] })
+        await salveazaStructura.mutateAsync(
+          stareStrat({ elemente: [...elemente, ...date.structura] }),
+        )
       }
-      for (const masa of date.mese) {
+      for (const masaImportata of date.mese) {
         await creeazaMasa({
           restaurantId,
           zoneId: zonaCurenta.id,
-          capacitate: masa.capacitate,
-          pozitieX: masa.x,
-          pozitieY: masa.y,
+          capacitate: masaImportata.capacitate,
+          pozitieX: masaImportata.x,
+          pozitieY: masaImportata.y,
+          // Forma si gabaritul erau pana acum aruncate la import: o sala de mese
+          // lungi ateriza ca un sir de mese rotunde de 80x80.
+          forma: masaImportata.forma,
+          latime: masaImportata.latime,
+          inaltime: masaImportata.inaltime,
         })
         meseIntrate += 1
       }
@@ -370,614 +668,495 @@ export function EditorPlanPage() {
     }
   }
 
-  const masaNoua = useMutation({
-    // Numerotarea se face in serviciu, din baza: constrangerea de unicitate e
-    // pe restaurant, iar starea de aici poate fi in urma cu o asezare.
-    mutationFn: ({ x, y }: { x: number; y: number }) =>
-      creeazaMasa({
-        restaurantId,
-        zoneId: zonaCurenta!.id,
-        capacitate: 4,
-        pozitieX: x,
-        pozitieY: y,
-      }),
-    onSuccess: (masaCreata) => {
-      setMasaSelectata(masaCreata.id)
-      reincarcaMese()
-    },
-    onError: (eroare) => notificari.eroare(eroare),
-  })
-
-  const salveazaMasa = useMutation({
-    mutationFn: ({ id, modificari }: { id: string; modificari: Parameters<typeof actualizeazaMasa>[1] }) =>
-      actualizeazaMasa(id, modificari),
-    onSuccess: reincarcaMese,
-    onError: (eroare) => notificari.eroare(eroare),
-  })
+  /**
+   * Coltul din stanga-sus la care ateriza un obiect lasat cu centrul in `punct`.
+   * Alinierea la grid se aplica AICI, nu in canvas: acolo se stie unde a cazut
+   * degetul, aici se stie cat de mare e obiectul.
+   */
+  function asezare(punct: { x: number; y: number }, latime: number, inaltime: number) {
+    if (!zonaCurenta) return { x: 0, y: 0 }
+    const dimensiuni = { latime, inaltime }
+    const canvas = { latime: zonaCurenta.canvas_latime, inaltime: zonaCurenta.canvas_inaltime }
+    const bruta = { x: punct.x - latime / 2, y: punct.y - inaltime / 2 }
+    return snapLaGrid
+      ? pozitieFinala(dimensiuni, canvas, zonaCurenta.grid_marime, bruta)
+      : inCanvas(dimensiuni, canvas, bruta)
+  }
 
   /**
-   * O singura mutatie pentru tot stratul: continut e un array jsonb, deci orice
-   * schimbare (adaugare, mutare, redimensionare, stergere, publicare) rescrie
-   * acelasi rand. Rezultatul intra direct in cache — vezi comentariul din
-   * salveazaLayer1 pentru de ce nu asteptam o reimprospatare.
+   * Un obiect din paleta a ajuns pe plan. Stratul se comuta singur dupa ce s-a
+   * asezat: altfel o masa lasata cat timp se lucra la structura ar fi aparut
+   * imediat neselectabila, si ar fi parut ca drag-and-drop-ul nu a mers.
    */
-  const salveazaStructura = useMutation({
-    mutationFn: (schimbare: {
-      elemente?: ElementStructura[]
-      vizibil?: boolean
-      publicat?: boolean
-    }) =>
-      salveazaLayer1({
-        restaurantId,
-        zoneId: zonaCurenta!.id,
-        elemente: schimbare.elemente ?? elemente,
-        vizibil: schimbare.vizibil ?? layer1.data?.vizibil ?? true,
-        publicat: schimbare.publicat ?? layer1.data?.publicat ?? false,
-        versiuneCitita: layer1.data?.versiune ?? null,
-        layerId: layer1.data?.id ?? null,
-      }),
-    onSuccess: (stratNou) => {
-      queryClient.setQueryData<Layer1>(CHEI_EDITOR.layer1(zonaCurenta!.id), stratNou)
-    },
-    onError: (eroare) => notificari.eroare(eroare),
-  })
+  function asazaObiect(obiect: string, punct: { x: number; y: number }) {
+    if (!zonaCurenta) return
+    const [familie, tip] = obiect.split(':')
 
-  /**
-   * Istoricul (§40). Instantaneele le scrie un trigger la fiecare publicare,
-   * deci lista se reimprospateaza dupa orice salvare a structurii publicate.
-   */
-  const istoric = useQuery({
-    queryKey: CHEIE_ISTORIC(zonaCurenta?.id ?? ''),
-    queryFn: () => getIstoricVersiuni(zonaCurenta!.id),
-    enabled: Boolean(zonaCurenta?.id),
-  })
+    if (familie === 'masa') {
+      const sablon = SABLOANE_MASA[tip as Enums<'masa_forma'>]
+      if (!sablon) return
+      const pozitie = asezare(punct, sablon.latime, sablon.inaltime)
+      setStrat('mese')
+      setStructuraSelectata(null)
+      masaNoua.mutate({
+        capacitate: sablon.capacitate,
+        pozitieX: pozitie.x,
+        pozitieY: pozitie.y,
+        forma: tip as Enums<'masa_forma'>,
+        latime: sablon.latime,
+        inaltime: sablon.inaltime,
+      })
+      return
+    }
 
-  const revino = useMutation({
-    mutationFn: restaureazaVersiune,
-    onSuccess: (versiuneNoua) => {
-      notificari.succes(`Planul a revenit la versiunea aleasă (acum versiunea ${versiuneNoua}).`)
-      // Continutul stratului s-a schimbat in baza, nu in cache: il recitim.
-      void queryClient.invalidateQueries({ queryKey: CHEI_EDITOR.layer1(zonaCurenta!.id) })
-      void queryClient.invalidateQueries({ queryKey: CHEIE_ISTORIC(zonaCurenta!.id) })
-    },
-    onError: (eroare) => notificari.eroare(eroare),
-  })
+    const sablon = SABLOANE_STRUCTURA[tip as TipStructura]
+    if (!sablon) return
+    const pozitie = asezare(punct, sablon.latime, sablon.inaltime)
+    const nou: ElementStructura = {
+      tip: tip as TipStructura,
+      x: pozitie.x,
+      y: pozitie.y,
+      latime: sablon.latime,
+      inaltime: sablon.inaltime,
+      ...(sablon.text ? { eticheta: sablon.text } : {}),
+    }
+    setStrat('structura')
+    setMasaSelectata(null)
+    setStructuraSelectata(elemente.length)
+    schimbaStructura({ elemente: [...elemente, nou] })
+  }
 
-  const eliminaMasa = useMutation({
-    mutationFn: stergeMasa,
-    onSuccess: () => {
-      notificari.succes('Masa a fost ștearsă.')
-      setMasaSelectata(null)
-      setStergere(null)
-      reincarcaMese()
-    },
-    // Migratia 18 refuza stergerea unei mese cu rezervari viitoare; mesajul ei
-    // spune deja ce sa faca in loc (dezactivare).
-    onError: (eroare) => {
-      setStergere(null)
-      notificari.eroare(eroare)
-    },
-  })
+  /** Mijlocul planului — unde ateriza obiectele asezate cu tastatura. */
+  function centrulPlanului() {
+    return zonaCurenta
+      ? { x: zonaCurenta.canvas_latime / 2, y: zonaCurenta.canvas_inaltime / 2 }
+      : { x: 0, y: 0 }
+  }
 
   if (!restaurantId) return null
 
+  const areSchita = Boolean(cerereStudio.data?.schita_image_url)
+  const seIncarca = zone.isLoading || mese.isLoading || cerereStudio.isLoading
+  const procentZoom = Math.round(scaraVedere * 100)
+
   return (
-    <div className="min-h-svh bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to={RUTE.superadmin}>
-                <ArrowLeftIcon />
-                Înapoi
-              </Link>
-            </Button>
-            <div>
-              <p className="text-sm font-semibold">
-                Editor plan · {restaurant?.nume ?? 'Restaurant'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Modificările se salvează imediat, la fiecare acțiune.
-              </p>
-            </div>
+    <div className="flex h-svh flex-col overflow-hidden bg-background">
+      {/* Bara de sus ramane subtire si neschimbata la rol: iesire, context,
+          promisiunea de salvare. Restul ecranului e planul. */}
+      <header className="shrink-0 border-b border-border bg-card">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={RUTE.superadmin}>
+              <ArrowLeftIcon />
+              Înapoi
+            </Link>
+          </Button>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">
+              Editor plan · {restaurant?.nume ?? 'Restaurant'}
+              {zonaCurenta ? ` · ${zonaCurenta.nume}` : ''}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Modificările se salvează imediat, la fiecare acțiune.
+            </p>
           </div>
+          {zonaCreataAcum && zonaCurenta && (
+            <Badge variant="secondary" title="Zona din cerere nu exista și a fost creată acum.">
+              Zonă creată automat
+            </Badge>
+          )}
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-7xl gap-4 px-6 py-6 lg:grid-cols-[1fr_20rem]">
-        {/* ── Canvas ── */}
-        <div className="grid gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              value={zonaCurenta?.id ?? ''}
-              onValueChange={(id) => {
-                setZonaActiva(id)
-                setMasaSelectata(null)
-              }}
-            >
-              <SelectTrigger className="h-8 w-56">
-                <SelectValue placeholder="Alege zona" />
-              </SelectTrigger>
-              <SelectContent>
-                {(zone.data ?? []).map((z) => (
-                  <SelectItem key={z.id} value={z.id}>
-                    {z.nume}
-                    {z.activa ? '' : ' (dezactivată)'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="relative flex-1 overflow-hidden">
+        {seIncarca ? (
+          <Skeleton className="absolute inset-0 rounded-none" />
+        ) : zonaCurenta ? (
+          <EditorZona
+            zona={zonaCurenta}
+            stratActiv={strat}
+            // Singurul loc din aplicatie unde zoom-ul e interactiv: aici se
+            // stabileste incadrarea pe care o vad apoi toti ceilalti.
+            permiteZoom
+            onVedere={preiaComenzileVederii}
+            snapLaGrid={snapLaGrid}
+            structura={elemente}
+            mese={meseZona}
+            fundal={
+              schitaVizibila && schitaSemnata.data
+                ? { url: schitaSemnata.data, opacitate: opacitateSchita / 100 }
+                : null
+            }
+            overlayAI={arataAI ? (cerereStudio.data?.ai_rezultat ?? null) : null}
+            masaSelectata={masaSelectata}
+            onSelecteazaMasa={setMasaSelectata}
+            onMutaMasa={(id, x, y) =>
+              salveazaMasa.mutate({ id, modificari: { pozitie_x: x, pozitie_y: y } })
+            }
+            structuraSelectata={structuraSelectata}
+            onSelecteazaStructura={setStructuraSelectata}
+            onMutaStructura={(indice, x, y) =>
+              schimbaStructura({
+                elemente: elemente.map((el, i) => (i === indice ? { ...el, x, y } : el)),
+              })
+            }
+            onDropObiect={asazaObiect}
+            className="absolute inset-0 rounded-none border-0"
+          />
+        ) : (
+          <PanouFaraZona
+            numeZonaCeruta={numeZonaCeruta}
+            inLucru={zonaNoua.isPending}
+            aEsuat={zonaNoua.isError}
+            onReincearca={() => {
+              zonaIncercata.current = null
+              zonaNoua.mutate(numeZonaCeruta)
+            }}
+          />
+        )}
 
-            <Button variant="outline" size="sm" onClick={() => setDialogZonaNoua(true)}>
-              <PlusIcon />
-              Zonă nouă
-            </Button>
-
-            {zonaCurenta && (
-              <>
-                <div className="flex overflow-hidden rounded-md border border-border">
-                  {(
-                    [
-                      ['mese', 'Mese'],
-                      ['structura', 'Structură'],
-                    ] as const
-                  ).map(([valoare, eticheta]) => (
-                    <button
-                      key={valoare}
-                      type="button"
-                      aria-pressed={strat === valoare}
-                      onClick={() => {
-                        setStrat(valoare)
-                        setModAdaugare(false)
-                        setMasaSelectata(null)
-                        setStructuraSelectata(null)
-                      }}
-                      className={`px-2.5 py-1 text-xs font-medium ${
-                        strat === valoare
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-transparent text-muted-foreground hover:bg-muted'
-                      }`}
-                    >
-                      {eticheta}
-                    </button>
-                  ))}
-                </div>
-
-                {strat === 'structura' && (
-                  <Select
-                    value={tipDeAsezat}
-                    onValueChange={(tip) => setTipDeAsezat(tip as TipStructura)}
-                  >
-                    <SelectTrigger className="h-8 w-40" aria-label="Tipul elementului de așezat">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPURI_STRUCTURA.map((tip) => (
-                        <SelectItem key={tip} value={tip}>
-                          {SABLOANE_STRUCTURA[tip].eticheta}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                <Button
-                  variant={modAdaugare ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setModAdaugare((activ) => !activ)}
-                  aria-pressed={modAdaugare}
-                >
-                  <PlusIcon />
-                  {modAdaugare
-                    ? 'Click pe plan ca să așezi'
-                    : strat === 'mese'
-                      ? 'Adaugă mese'
-                      : 'Adaugă elemente'}
-                </Button>
-              </>
-            )}
-
-            {/* §42.5 — schita originala: toggle de afisare + opacitate. */}
-            {cerereStudio.data?.schita_image_url && (
-              <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1">
-                <Label htmlFor="schita-vizibila" className="text-xs font-normal">
-                  Schiță
-                </Label>
-                <Switch
-                  id="schita-vizibila"
-                  checked={schitaVizibila}
-                  onCheckedChange={setSchitaVizibila}
-                />
-                <input
-                  type="range"
-                  min={10}
-                  max={90}
-                  value={opacitateSchita}
-                  disabled={!schitaVizibila}
-                  onChange={(e) => setOpacitateSchita(Number(e.target.value))}
-                  className="w-20 accent-primary"
-                  aria-label="Opacitatea schiței"
-                />
-              </div>
-            )}
-
-            {/* §9.2.2 pasul 1 + §41.3 — Best Guess-ul: generare/regenerare,
-                afisare fantomatica si preluarea structurii in stratul real. */}
-            {cerereStudio.data?.schita_image_url && (
+        {/* Un singur strat de overlay peste canvas. `pointer-events-none` pe el
+            si `auto` pe panouri: spatiul dintre ele ramane al planului, deci se
+            poate trage vederea si pe langa panouri. */}
+        {zonaCurenta && (
+          <div className="pointer-events-none absolute inset-0 flex flex-col gap-3 p-3">
+            <div className="pointer-events-auto mx-auto flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1.5 rounded-xl border border-border bg-card/80 px-2.5 py-1.5 shadow-sm backdrop-blur-md">
               <div className="flex items-center gap-1.5">
+                <Label htmlFor="zoom-manual" className="text-xs font-normal">
+                  Zoom
+                </Label>
+                <input
+                  id="zoom-manual"
+                  type="range"
+                  min={Math.round(SCARA_MIN * 100)}
+                  max={Math.round(SCARA_MAX * 100)}
+                  step={5}
+                  value={procentZoom}
+                  onChange={(e) => comenziVedere.current?.laScara(Number(e.target.value) / 100)}
+                  className="w-24 accent-primary"
+                  aria-label="Zoom-ul de lucru"
+                />
+                <span className="w-10 text-xs tabular-nums text-muted-foreground">
+                  {procentZoom}%
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  disabled={genereazaAI.isPending}
-                  onClick={() => genereazaAI.mutate()}
+                  onClick={() => comenziVedere.current?.incadreazaContinut()}
+                  title="Aduce mesele și structura în mijlocul ecranului."
                 >
-                  {genereazaAI.isPending
-                    ? 'Generează...'
-                    : cerereStudio.data.ai_generat_la
-                      ? 'Reîncearcă generarea AI'
-                      : 'Generează AI'}
+                  <ScanIcon />
+                  Auto-centrare
                 </Button>
-                {cerereStudio.data.ai_rezultat && (
-                  <>
-                    <div className="flex items-center gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => comenziVedere.current?.laScara(1)}
+                  title="Revine la scara 1:1, fără să mute privirea."
+                >
+                  100%
+                </Button>
+                <Button
+                  variant={snapLaGrid ? 'secondary' : 'ghost'}
+                  size="sm"
+                  aria-pressed={snapLaGrid}
+                  onClick={() => setSnapLaGrid((activ) => !activ)}
+                  title={
+                    snapLaGrid
+                      ? 'Alinierea la grid e pornită: obiectele se lipesc de linii.'
+                      : 'Aliniere liberă: obiectele rămân exact unde le lași.'
+                  }
+                >
+                  <MagnetIcon />
+                  Grid
+                </Button>
+              </div>
+
+              {/* §42.5 — schita originala: toggle de afisare + opacitate. */}
+              {areSchita && (
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="schita-vizibila" className="text-xs font-normal">
+                    Schiță
+                  </Label>
+                  <Switch
+                    id="schita-vizibila"
+                    checked={schitaVizibila}
+                    onCheckedChange={setSchitaVizibila}
+                  />
+                  <input
+                    type="range"
+                    min={10}
+                    max={90}
+                    value={opacitateSchita}
+                    disabled={!schitaVizibila}
+                    onChange={(e) => setOpacitateSchita(Number(e.target.value))}
+                    className="w-20 accent-primary"
+                    aria-label="Opacitatea schiței"
+                  />
+                </div>
+              )}
+
+              {/* §9.2.2 pasul 1 + §41.3 — Best Guess-ul: generare/regenerare,
+                  afisare fantomatica si preluarea structurii in stratul real. */}
+              {areSchita && (
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={genereazaAI.isPending}
+                    onClick={() => genereazaAI.mutate()}
+                  >
+                    {genereazaAI.isPending
+                      ? 'Generează...'
+                      : cerereStudio.data?.ai_generat_la
+                        ? 'Reîncearcă generarea AI'
+                        : 'Generează AI'}
+                  </Button>
+                  {cerereStudio.data?.ai_rezultat && (
+                    <>
                       <Label htmlFor="arata-ai" className="text-xs font-normal">
                         AI
                       </Label>
                       <Switch id="arata-ai" checked={arataAI} onCheckedChange={setArataAI} />
-                    </div>
-                    {strat === 'structura' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={salveazaStructura.isPending}
-                        onClick={() =>
-                          salveazaStructura.mutate({
-                            elemente: [
-                              ...elemente,
-                              ...(cerereStudio.data!.ai_rezultat!.structura ?? []),
-                            ],
-                          })
-                        }
-                      >
-                        Preia structura AI
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+                      {strat === 'structura' && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={salveazaStructura.isPending}
+                          onClick={() =>
+                            schimbaStructura({
+                              elemente: [
+                                ...elemente,
+                                ...(cerereStudio.data!.ai_rezultat!.structura ?? []),
+                              ],
+                            })
+                          }
+                        >
+                          Preia structura AI
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
 
-            {/* Importul NU e conditionat de existenta schitei: rostul lui e
-                tocmai sa mearga acolo unde generarea AI nu poate (fara cheie de
-                API), iar geometria poate veni si dintr-un plan pe hartie. */}
-            {zonaCurenta && (
+              {/* Importul NU e conditionat de existenta schitei: rostul lui e
+                  tocmai sa mearga acolo unde generarea AI nu poate (fara cheie
+                  de API), iar geometria poate veni si dintr-un plan pe hartie. */}
               <Button variant="outline" size="sm" onClick={() => setImportDeschis(true)}>
                 Importă geometrie
               </Button>
-            )}
+            </div>
 
-            {/* Incadrarea planului: se seteaza AICI si se aplica pentru
-                Admin, ospatar si widgetul public. Zoom-ul din canvas ramane
-                unealta de lucru a echipei; asta e valoarea publicata. */}
-            {zonaCurenta && (
-              <div className="flex items-center gap-2 rounded-lg border border-border px-2 py-1">
-                <Label htmlFor="zoom-implicit" className="text-xs font-normal">
-                  Încadrare
-                </Label>
-                <input
-                  id="zoom-implicit"
-                  type="range"
-                  min={40}
-                  max={400}
-                  step={5}
-                  value={Math.round((zonaCurenta.zoom_implicit ?? 1) * 100)}
-                  onChange={(e) =>
-                    salveazaZona.mutate({
-                      id: zonaCurenta.id,
-                      modificari: { zoom_implicit: Number(e.target.value) / 100 },
-                    })
-                  }
-                  className="w-24 accent-primary"
-                  aria-label="Încadrarea cu care restaurantul vede planul"
-                />
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  {Math.round((zonaCurenta.zoom_implicit ?? 1) * 100)}%
-                </span>
-              </div>
-            )}
-
-            <span className="ml-auto text-xs text-muted-foreground tabular-nums">
-              {strat === 'mese'
-                ? `${meseZona.length} mese în zonă`
-                : `${elemente.length} elemente de structura`}
-            </span>
-          </div>
-
-          {zone.isLoading || mese.isLoading ? (
-            <Skeleton className="aspect-[3/2] w-full" />
-          ) : !zonaCurenta ? (
-            <p className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-              Restaurantul nu are nicio zonă. Creează prima zonă ca să poți așeza mese.
-            </p>
-          ) : (
-            <EditorZona
-              zona={zonaCurenta}
-              stratActiv={strat}
-              // Singurul loc din aplicatie unde zoom-ul e interactiv: aici se
-              // stabileste incadrarea pe care o vad apoi toti ceilalti.
-              permiteZoom
-              structura={elemente}
-              mese={meseZona}
-              fundal={
-                schitaVizibila && schitaSemnata.data
-                  ? { url: schitaSemnata.data, opacitate: opacitateSchita / 100 }
-                  : null
-              }
-              overlayAI={arataAI ? (cerereStudio.data?.ai_rezultat ?? null) : null}
-              masaSelectata={masaSelectata}
-              onSelecteazaMasa={setMasaSelectata}
-              onMutaMasa={(id, x, y) =>
-                salveazaMasa.mutate({ id, modificari: { pozitie_x: x, pozitie_y: y } })
-              }
-              structuraSelectata={structuraSelectata}
-              onSelecteazaStructura={setStructuraSelectata}
-              onMutaStructura={(indice, x, y) =>
-                salveazaStructura.mutate({
-                  elemente: elemente.map((el, i) => (i === indice ? { ...el, x, y } : el)),
-                })
-              }
-              modAdaugare={modAdaugare}
-              onAdauga={(x, y) => {
-                if (strat === 'mese') {
-                  masaNoua.mutate({ x, y })
-                  return
-                }
-                const sablon = SABLOANE_STRUCTURA[tipDeAsezat]
-                const nou: ElementStructura = {
-                  tip: tipDeAsezat,
-                  x,
-                  y,
-                  latime: sablon.latime,
-                  inaltime: sablon.inaltime,
-                  ...(sablon.text ? { eticheta: sablon.text } : {}),
-                }
-                salveazaStructura.mutate({ elemente: [...elemente, nou] })
-                setStructuraSelectata(elemente.length)
-              }}
-              className="aspect-[3/2] w-full"
-            />
-          )}
-
-          <p className="text-xs text-muted-foreground">
-            Trage o masă cu mouse-ul ca să o muți; se aliniază singură la grid. Cu masa
-            selectată, săgețile o mută cu un pas de grid, iar Shift + săgeți cu un pixel.
-          </p>
-        </div>
-
-        {/* ── Panoul de proprietati ── */}
-        <div className="grid content-start gap-4">
-          {zonaCurenta && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Zonă</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="nume-zona">Nume</Label>
-                  <Input
-                    id="nume-zona"
-                    key={`nume-${zonaCurenta.id}`}
-                    defaultValue={zonaCurenta.nume}
-                    className="h-8"
-                    onBlur={(e) => {
-                      const nume = e.target.value.trim()
-                      if (!nume || nume === zonaCurenta.nume) return
-                      salveazaZona.mutate({ id: zonaCurenta.id, modificari: { nume } })
-                    }}
-                  />
+            <div className="flex min-h-0 flex-1 items-stretch gap-3">
+              {/* ── Paleta de obiecte ── */}
+              <aside className="pointer-events-auto flex w-52 flex-col overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm backdrop-blur-md">
+                <div className="border-b border-border/60 p-3">
+                  <h2 className="text-sm font-semibold">Obiecte</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Trage-le pe plan, unde le vrei.
+                  </p>
+                  <div className="mt-2 flex overflow-hidden rounded-md border border-border">
+                    {(
+                      [
+                        ['mese', 'Mese'],
+                        ['structura', 'Structură'],
+                      ] as const
+                    ).map(([valoare, eticheta]) => (
+                      <button
+                        key={valoare}
+                        type="button"
+                        aria-pressed={strat === valoare}
+                        onClick={() => {
+                          setStrat(valoare)
+                          setMasaSelectata(null)
+                          setStructuraSelectata(null)
+                        }}
+                        className={cn(
+                          'flex-1 px-2.5 py-1 text-xs font-medium',
+                          strat === valoare
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-transparent text-muted-foreground hover:bg-muted',
+                        )}
+                      >
+                        {eticheta}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  {(
-                    [
-                      ['canvas_latime', 'Lățime'],
-                      ['canvas_inaltime', 'Înălțime'],
-                    ] as const
-                  ).map(([cheie, eticheta]) => (
-                    <div key={cheie} className="grid gap-1.5">
-                      <Label htmlFor={cheie}>{eticheta}</Label>
-                      <Input
-                        id={cheie}
-                        type="number"
-                        min={200}
-                        max={5000}
-                        step={20}
-                        key={`${cheie}-${zonaCurenta.id}`}
-                        defaultValue={String(zonaCurenta[cheie])}
-                        className="h-8 tabular-nums"
-                        onBlur={(e) => {
-                          const valoare = Number(e.target.value)
-                          if (!Number.isFinite(valoare) || valoare === zonaCurenta[cheie]) return
-                          salveazaZona.mutate({
-                            id: zonaCurenta.id,
-                            modificari: { [cheie]: valoare },
-                          })
-                        }}
-                      />
-                    </div>
+                <div className="grid min-h-0 flex-1 content-start gap-1.5 overflow-y-auto p-3">
+                  <p className="text-xs font-medium text-muted-foreground">Mese</p>
+                  {FORME_MASA.map((forma) => (
+                    <ObiectPaleta
+                      key={forma}
+                      obiect={`masa:${forma}`}
+                      eticheta={SABLOANE_MASA[forma].eticheta}
+                      latime={SABLOANE_MASA[forma].latime}
+                      inaltime={SABLOANE_MASA[forma].inaltime}
+                      rotund={forma === 'rotunda'}
+                      clasa="bg-status-liber-soft ring-1 ring-status-liber"
+                      onAseaza={() => asazaObiect(`masa:${forma}`, centrulPlanului())}
+                    />
+                  ))}
+
+                  <p className="mt-2 text-xs font-medium text-muted-foreground">Structură</p>
+                  {TIPURI_STRUCTURA.map((tip) => (
+                    <ObiectPaleta
+                      key={tip}
+                      obiect={`structura:${tip}`}
+                      eticheta={SABLOANE_STRUCTURA[tip].eticheta}
+                      latime={SABLOANE_STRUCTURA[tip].latime}
+                      inaltime={SABLOANE_STRUCTURA[tip].inaltime}
+                      rotund={tip === 'planta'}
+                      clasa={CLASA_PICTOGRAMA[tip]}
+                      onAseaza={() => asazaObiect(`structura:${tip}`, centrulPlanului())}
+                    />
                   ))}
                 </div>
 
-                <div className="grid gap-1.5">
-                  <Label htmlFor="grid">Pas grid</Label>
-                  <Input
-                    id="grid"
-                    type="number"
-                    min={5}
-                    max={100}
-                    step={5}
-                    key={`grid-${zonaCurenta.id}`}
-                    defaultValue={String(zonaCurenta.grid_marime)}
-                    className="h-8 w-24 tabular-nums"
-                    onBlur={(e) => {
-                      const valoare = Number(e.target.value)
-                      if (!Number.isFinite(valoare) || valoare === zonaCurenta.grid_marime) return
-                      salveazaZona.mutate({
-                        id: zonaCurenta.id,
-                        modificari: { grid_marime: valoare },
-                      })
-                    }}
-                  />
-                </div>
+                <p className="border-t border-border/60 p-3 text-xs text-muted-foreground">
+                  {strat === 'mese'
+                    ? `${meseZona.length} mese în zonă.`
+                    : `${elemente.length} elemente de structură.`}{' '}
+                  Cu obiectul selectat, săgețile îl mută cu un pas de grid, iar Shift + săgeți cu un
+                  pixel.
+                </p>
+              </aside>
 
-                <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
-                  <Label htmlFor="zona-activa" className="text-sm">
-                    Zonă activă
-                  </Label>
-                  <Switch
-                    id="zona-activa"
-                    checked={zonaCurenta.activa}
-                    onCheckedChange={(activa) =>
-                      salveazaZona.mutate({ id: zonaCurenta.id, modificari: { activa } })
+              {/* Golul din mijloc ramane al planului: aici se trage vederea. */}
+              <div className="flex-1" />
+
+              {/* ── Proprietatile obiectului selectat ── */}
+              <aside className="pointer-events-auto flex w-72 flex-col overflow-y-auto rounded-xl border border-border bg-card/80 shadow-sm backdrop-blur-md">
+                {strat === 'mese' && masa ? (
+                  <PanouMasa
+                    masa={masa}
+                    onSalveaza={salveazaMasa.mutate}
+                    onCereStergere={() =>
+                      setStergere({ tip: 'masa', id: masa.id, nume: masa.numar_masa })
                     }
                   />
-                </div>
-
-                <Button
-                  variant="destructive"
-                  size="xs"
-                  className="justify-self-start"
-                  onClick={() =>
-                    setStergere({ tip: 'zona', id: zonaCurenta.id, nume: zonaCurenta.nume })
-                  }
-                >
-                  <Trash2Icon />
-                  Șterge zona
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {strat === 'mese' && masa && (
-            <PanouMasa
-              masa={masa}
-              onSalveaza={salveazaMasa.mutate}
-              onCereStergere={() =>
-                setStergere({ tip: 'masa', id: masa.id, nume: masa.numar_masa })
-              }
-            />
-          )}
-
-          {strat === 'structura' && zonaCurenta && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Stratul de structură</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
-                  <Label htmlFor="strat-vizibil" className="text-sm">
-                    Vizibil
-                  </Label>
-                  <Switch
-                    id="strat-vizibil"
-                    checked={layer1.data?.vizibil ?? true}
-                    onCheckedChange={(vizibil) => salveazaStructura.mutate({ vizibil })}
+                ) : strat === 'structura' && element && structuraSelectata !== null ? (
+                  <PanouStructura
+                    element={element}
+                    onSalveaza={(modificari) =>
+                      schimbaStructura({
+                        elemente: elemente.map((el, i) =>
+                          i === structuraSelectata ? { ...el, ...modificari } : el,
+                        ),
+                      })
+                    }
+                    onSterge={() => {
+                      schimbaStructura({
+                        elemente: elemente.filter((_, i) => i !== structuraSelectata),
+                      })
+                      // Indicii se decaleaza dupa stergere, deci selectia veche
+                      // ar arata alt element. O golim.
+                      setStructuraSelectata(null)
+                    }}
                   />
-                </div>
-                <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
-                  <Label htmlFor="strat-publicat" className="text-sm">
-                    Publicat
-                  </Label>
-                  <Switch
-                    id="strat-publicat"
-                    checked={layer1.data?.publicat ?? false}
-                    onCheckedChange={(publicat) => salveazaStructura.mutate({ publicat })}
+                ) : (
+                  <PanouZona
+                    zona={zonaCurenta}
+                    onSalveaza={salveazaZona.mutate}
+                    onCereStergere={() =>
+                      setStergere({ tip: 'zona', id: zonaCurenta.id, nume: zonaCurenta.nume })
+                    }
                   />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Structura ajunge în widgetul public doar dacă e și vizibilă, și publicată —
-                  vederea structura_publica cere ambele. Mesele nu depind de asta.
-                </p>
+                )}
 
-                {/* ── Istoricul versiunilor publicate (§40) ── */}
-                <div className="grid gap-1.5 border-t border-border pt-3">
-                  <p className="text-sm font-medium">Versiuni publicate</p>
-                  {(istoric.data ?? []).length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      Încă nicio versiune. Fiecare publicare a structurii lasă un instantaneu
-                      aici, ca o greșeală să nu fie definitivă.
-                    </p>
-                  ) : (
-                    <ul className="grid max-h-56 gap-1 overflow-y-auto">
-                      {(istoric.data ?? []).map((versiune) => (
-                        <li
-                          key={versiune.id}
-                          className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5 text-xs"
-                        >
-                          <span className="min-w-0">
-                            <span className="block font-medium">{versiune.nume}</span>
-                            <span className="block text-muted-foreground tabular-nums">
-                              {versiune.publicat_la
-                                ? new Date(versiune.publicat_la).toLocaleString('ro-RO', {
-                                    dateStyle: 'short',
-                                    timeStyle: 'short',
-                                  })
-                                : '—'}
-                            </span>
-                          </span>
-                          {versiune.status === 'published' ? (
-                            <Badge variant="secondary">Acum</Badge>
-                          ) : (
-                            <Button
-                              size="xs"
-                              variant="outline"
-                              disabled={revino.isPending}
-                              onClick={() => revino.mutate(versiune.id)}
+                {strat === 'structura' && (
+                  <>
+                    <Sectiune titlu="Stratul de structură">
+                      <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
+                        <Label htmlFor="strat-vizibil" className="text-sm">
+                          Vizibil
+                        </Label>
+                        <Switch
+                          id="strat-vizibil"
+                          checked={layer1.data?.vizibil ?? true}
+                          onCheckedChange={(vizibil) => schimbaStructura({ vizibil })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
+                        <Label htmlFor="strat-publicat" className="text-sm">
+                          Publicat
+                        </Label>
+                        <Switch
+                          id="strat-publicat"
+                          checked={layer1.data?.publicat ?? false}
+                          onCheckedChange={(publicat) => schimbaStructura({ publicat })}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Structura ajunge în widgetul public doar dacă e și vizibilă, și publicată —
+                        vederea structura_publica cere ambele. Mesele nu depind de asta.
+                      </p>
+                    </Sectiune>
+
+                    {/* ── Istoricul versiunilor publicate (§40) ── */}
+                    <Sectiune titlu="Versiuni publicate">
+                      {(istoric.data ?? []).length === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          Încă nicio versiune. Fiecare publicare a structurii lasă un instantaneu
+                          aici, ca o greșeală să nu fie definitivă.
+                        </p>
+                      ) : (
+                        <ul className="grid max-h-56 gap-1 overflow-y-auto">
+                          {(istoric.data ?? []).map((versiune) => (
+                            <li
+                              key={versiune.id}
+                              className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5 text-xs"
                             >
-                              Revino
-                            </Button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Revenirea nu șterge nimic: scrie versiunea aleasă ca versiune nouă, deci se
-                    poate reveni și din ea.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {strat === 'structura' && element && structuraSelectata !== null && (
-            <PanouStructura
-              element={element}
-              onSalveaza={(modificari) =>
-                salveazaStructura.mutate({
-                  elemente: elemente.map((el, i) =>
-                    i === structuraSelectata ? { ...el, ...modificari } : el,
-                  ),
-                })
-              }
-              onSterge={() => {
-                salveazaStructura.mutate({
-                  elemente: elemente.filter((_, i) => i !== structuraSelectata),
-                })
-                // Indicii se decaleaza dupa stergere, deci selectia veche ar
-                // arata alt element. O golim.
-                setStructuraSelectata(null)
-              }}
-            />
-          )}
-        </div>
-      </main>
+                              <span className="min-w-0">
+                                <span className="block font-medium">{versiune.nume}</span>
+                                <span className="block text-muted-foreground tabular-nums">
+                                  {versiune.publicat_la
+                                    ? new Date(versiune.publicat_la).toLocaleString('ro-RO', {
+                                        dateStyle: 'short',
+                                        timeStyle: 'short',
+                                      })
+                                    : '—'}
+                                </span>
+                              </span>
+                              {versiune.status === 'published' ? (
+                                <Badge variant="secondary">Acum</Badge>
+                              ) : (
+                                <Button
+                                  size="xs"
+                                  variant="outline"
+                                  disabled={revino.isPending}
+                                  onClick={() => revino.mutate(versiune.id)}
+                                >
+                                  Revino
+                                </Button>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Revenirea nu șterge nimic: scrie versiunea aleasă ca versiune nouă, deci se
+                        poate reveni și din ea.
+                      </p>
+                    </Sectiune>
+                  </>
+                )}
+              </aside>
+            </div>
+          </div>
+        )}
+      </div>
 
       {importDeschis && zonaCurenta && (
         <Dialog open onOpenChange={(deschis) => !deschis && !importInLucru && setImportDeschis(false)}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Importă geometrie în „{zonaCurenta.nume}"</DialogTitle>
+              <DialogTitle>Importă geometrie în „{zonaCurenta.nume}”</DialogTitle>
               <DialogDescription>
                 Lipește geometria în format JSON. Structura se adaugă peste ce există deja, iar
                 mesele se creează numerotate automat. Nimic nu se publică — verifici pe plan
@@ -1039,17 +1218,9 @@ export function EditorPlanPage() {
         </Dialog>
       )}
 
-      {dialogZonaNoua && (
-        <DialogZonaNoua
-          inLucru={zonaNoua.isPending}
-          onInchide={() => setDialogZonaNoua(false)}
-          onCreeaza={(nume) => zonaNoua.mutate(nume)}
-        />
-      )}
-
       {stergere && (
         <DialogStergere
-          titlu={stergere.tip === 'zona' ? `Ștergi zona „${stergere.nume}"?` : `Ștergi masa ${stergere.nume}?`}
+          titlu={stergere.tip === 'zona' ? `Ștergi zona „${stergere.nume}”?` : `Ștergi masa ${stergere.nume}?`}
           descriere={
             stergere.tip === 'zona'
               ? 'Se șterg și toate mesele din ea. Dacă zona are rezervări viitoare, baza de date refuză ștergerea — dezactiveaz-o în loc.'
@@ -1068,6 +1239,182 @@ export function EditorPlanPage() {
   )
 }
 
+/**
+ * Nu avem pe ce lucra: ori cererea nu spune nicio zona si restaurantul n-are
+ * niciuna, ori crearea automata e in curs sau a esuat. Ecranul spune care din
+ * ele, fiindca remediul difera.
+ */
+function PanouFaraZona({
+  numeZonaCeruta,
+  inLucru,
+  aEsuat,
+  onReincearca,
+}: {
+  numeZonaCeruta: string
+  inLucru: boolean
+  aEsuat: boolean
+  onReincearca: () => void
+}) {
+  return (
+    <div className="absolute inset-0 grid place-items-center p-6">
+      <div className="grid max-w-md gap-3 rounded-xl border border-border bg-card p-6 text-center">
+        {!numeZonaCeruta ? (
+          <>
+            <p className="text-sm font-semibold">Nicio zonă de desenat</p>
+            <p className="text-sm text-muted-foreground">
+              Restaurantul nu are nicio cerere activă și nicio zonă. Builderul lucrează pe zona
+              scrisă în cerere, deci aici nu are ce desena încă.
+            </p>
+          </>
+        ) : inLucru ? (
+          <>
+            <p className="text-sm font-semibold">Se creează zona „{numeZonaCeruta}”...</p>
+            <p className="text-sm text-muted-foreground">
+              Zona cerută nu exista încă pentru acest restaurant.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold">Zona „{numeZonaCeruta}” nu există</p>
+            <p className="text-sm text-muted-foreground">
+              {aEsuat
+                ? 'Crearea automată a eșuat. Încearcă din nou.'
+                : 'Zona cerută a fost ștearsă. Creeaz-o la loc ca să poți desena planul.'}
+            </p>
+            <Button className="justify-self-center" onClick={onReincearca}>
+              Creează zona „{numeZonaCeruta}”
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Proprietatile zonei — ce se vede cand nimic nu e selectat. Aici sta si
+ * incadrarea publicata (`zoom_implicit`): e o proprietate a zonei, nu unealta
+ * de lucru. Zoom-ul din bara de sus e al operatorului si nu se salveaza nicaieri;
+ * asta e valoarea pe care o vad Adminul, ospatarul si widgetul public.
+ */
+function PanouZona({
+  zona,
+  onSalveaza,
+  onCereStergere,
+}: {
+  zona: Zona
+  onSalveaza: (argumente: { id: string; modificari: Parameters<typeof actualizeazaZona>[1] }) => void
+  onCereStergere: () => void
+}) {
+  const salveaza = (modificari: Parameters<typeof actualizeazaZona>[1]) =>
+    onSalveaza({ id: zona.id, modificari })
+
+  return (
+    <Sectiune titlu={`Zona „${zona.nume}”`}>
+      <div className="grid gap-1.5">
+        <Label htmlFor="nume-zona">Nume</Label>
+        <Input
+          id="nume-zona"
+          key={`nume-${zona.id}`}
+          defaultValue={zona.nume}
+          className="h-8"
+          onBlur={(e) => {
+            const nume = e.target.value.trim()
+            if (!nume || nume === zona.nume) return
+            salveaza({ nume })
+          }}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {(
+          [
+            ['canvas_latime', 'Lățime'],
+            ['canvas_inaltime', 'Înălțime'],
+          ] as const
+        ).map(([cheie, eticheta]) => (
+          <div key={cheie} className="grid gap-1.5">
+            <Label htmlFor={cheie}>{eticheta}</Label>
+            <Input
+              id={cheie}
+              type="number"
+              min={200}
+              max={5000}
+              step={20}
+              key={`${cheie}-${zona.id}`}
+              defaultValue={String(zona[cheie])}
+              className="h-8 tabular-nums"
+              onBlur={(e) => {
+                const valoare = Number(e.target.value)
+                if (!Number.isFinite(valoare) || valoare === zona[cheie]) return
+                salveaza({ [cheie]: valoare })
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-1.5">
+        <Label htmlFor="grid">Pas grid</Label>
+        <Input
+          id="grid"
+          type="number"
+          min={5}
+          max={100}
+          step={5}
+          key={`grid-${zona.id}`}
+          defaultValue={String(zona.grid_marime)}
+          className="h-8 w-24 tabular-nums"
+          onBlur={(e) => {
+            const valoare = Number(e.target.value)
+            if (!Number.isFinite(valoare) || valoare === zona.grid_marime) return
+            salveaza({ grid_marime: valoare })
+          }}
+        />
+      </div>
+
+      <div className="grid gap-1.5">
+        <Label htmlFor="zoom-implicit">Încadrarea publicată</Label>
+        <div className="flex items-center gap-2">
+          <input
+            id="zoom-implicit"
+            type="range"
+            min={40}
+            max={400}
+            step={5}
+            value={Math.round((zona.zoom_implicit ?? 1) * 100)}
+            onChange={(e) => salveaza({ zoom_implicit: Number(e.target.value) / 100 })}
+            className="w-32 accent-primary"
+            aria-label="Încadrarea cu care restaurantul vede planul"
+          />
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {Math.round((zona.zoom_implicit ?? 1) * 100)}%
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Cu ea se deschide planul pentru restaurant și în widgetul public.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
+        <Label htmlFor="zona-activa" className="text-sm">
+          Zonă activă
+        </Label>
+        <Switch
+          id="zona-activa"
+          checked={zona.activa}
+          onCheckedChange={(activa) => salveaza({ activa })}
+        />
+      </div>
+
+      <Button variant="destructive" size="xs" className="justify-self-start" onClick={onCereStergere}>
+        <Trash2Icon />
+        Șterge zona
+      </Button>
+    </Sectiune>
+  )
+}
+
 function PanouMasa({
   masa,
   onSalveaza,
@@ -1081,120 +1428,110 @@ function PanouMasa({
     onSalveaza({ id: masa.id, modificari })
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Masa {masa.numar_masa}</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="grid gap-1.5">
-            <Label htmlFor="numar">Număr</Label>
-            <Input
-              id="numar"
-              key={`numar-${masa.id}`}
-              defaultValue={masa.numar_masa}
-              className="h-8"
-              onBlur={(e) => {
-                const numar_masa = e.target.value.trim()
-                if (!numar_masa || numar_masa === masa.numar_masa) return
-                salveaza({ numar_masa })
-              }}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="capacitate">Locuri</Label>
-            <Input
-              id="capacitate"
-              type="number"
-              min={1}
-              max={24}
-              key={`cap-${masa.id}`}
-              defaultValue={String(masa.capacitate)}
-              className="h-8 tabular-nums"
-              onBlur={(e) => {
-                const capacitate = Number(e.target.value)
-                if (!Number.isFinite(capacitate) || capacitate === masa.capacitate) return
-                salveaza({ capacitate })
-              }}
-            />
-          </div>
-        </div>
-
+    <Sectiune titlu={`Masa ${masa.numar_masa}`}>
+      <div className="grid grid-cols-2 gap-2">
         <div className="grid gap-1.5">
-          <Label htmlFor="forma">Formă</Label>
-          <Select
-            value={masa.forma}
-            onValueChange={(forma) => salveaza({ forma: forma as Enums<'masa_forma'> })}
-          >
-            <SelectTrigger id="forma" className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(ETICHETE_FORMA).map(([valoare, eticheta]) => (
-                <SelectItem key={valoare} value={valoare}>
-                  {eticheta}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          {(
-            [
-              ['latime', 'Lățime'],
-              ['inaltime', 'Înălțime'],
-              ['rotatie', 'Rotație'],
-            ] as const
-          ).map(([cheie, eticheta]) => (
-            <div key={cheie} className="grid gap-1.5">
-              <Label htmlFor={cheie}>{eticheta}</Label>
-              <Input
-                id={cheie}
-                type="number"
-                min={cheie === 'rotatie' ? 0 : 20}
-                max={cheie === 'rotatie' ? 359 : 400}
-                step={cheie === 'rotatie' ? 15 : 10}
-                key={`${cheie}-${masa.id}`}
-                defaultValue={String(masa[cheie])}
-                className="h-8 tabular-nums"
-                onBlur={(e) => {
-                  const valoare = Number(e.target.value)
-                  if (!Number.isFinite(valoare) || valoare === Number(masa[cheie])) return
-                  salveaza({ [cheie]: valoare })
-                }}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
-          <Label htmlFor="masa-activa" className="text-sm">
-            Masă activă
-          </Label>
-          <Switch
-            id="masa-activa"
-            checked={masa.activa}
-            onCheckedChange={(activa) => salveaza({ activa })}
+          <Label htmlFor="numar">Număr</Label>
+          <Input
+            id="numar"
+            key={`numar-${masa.id}`}
+            defaultValue={masa.numar_masa}
+            className="h-8"
+            onBlur={(e) => {
+              const numar_masa = e.target.value.trim()
+              if (!numar_masa || numar_masa === masa.numar_masa) return
+              salveaza({ numar_masa })
+            }}
           />
         </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="capacitate">Locuri</Label>
+          <Input
+            id="capacitate"
+            type="number"
+            min={1}
+            max={24}
+            key={`cap-${masa.id}`}
+            defaultValue={String(masa.capacitate)}
+            className="h-8 tabular-nums"
+            onBlur={(e) => {
+              const capacitate = Number(e.target.value)
+              if (!Number.isFinite(capacitate) || capacitate === masa.capacitate) return
+              salveaza({ capacitate })
+            }}
+          />
+        </div>
+      </div>
 
-        <p className="text-xs text-muted-foreground">
-          O masă cu rezervări viitoare nu poate fi ștearsă — dezactiveaz-o, ca să nu rămână
-          rezervări fără masă. Regula e impusă de baza de date.
-        </p>
-
-        <Button
-          variant="destructive"
-          size="xs"
-          className="justify-self-start"
-          onClick={onCereStergere}
+      <div className="grid gap-1.5">
+        <Label htmlFor="forma">Formă</Label>
+        <Select
+          value={masa.forma}
+          onValueChange={(forma) => salveaza({ forma: forma as Enums<'masa_forma'> })}
         >
-          <Trash2Icon />
-          Șterge masa
-        </Button>
-      </CardContent>
-    </Card>
+          <SelectTrigger id="forma" className="h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(ETICHETE_FORMA).map(([valoare, eticheta]) => (
+              <SelectItem key={valoare} value={valoare}>
+                {eticheta}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {(
+          [
+            ['latime', 'Lățime'],
+            ['inaltime', 'Înălțime'],
+            ['rotatie', 'Rotație'],
+          ] as const
+        ).map(([cheie, eticheta]) => (
+          <div key={cheie} className="grid gap-1.5">
+            <Label htmlFor={cheie}>{eticheta}</Label>
+            <Input
+              id={cheie}
+              type="number"
+              min={cheie === 'rotatie' ? 0 : 20}
+              max={cheie === 'rotatie' ? 359 : 400}
+              step={cheie === 'rotatie' ? 15 : 10}
+              key={`${cheie}-${masa.id}`}
+              defaultValue={String(masa[cheie])}
+              className="h-8 tabular-nums"
+              onBlur={(e) => {
+                const valoare = Number(e.target.value)
+                if (!Number.isFinite(valoare) || valoare === Number(masa[cheie])) return
+                salveaza({ [cheie]: valoare })
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
+        <Label htmlFor="masa-activa" className="text-sm">
+          Masă activă
+        </Label>
+        <Switch
+          id="masa-activa"
+          checked={masa.activa}
+          onCheckedChange={(activa) => salveaza({ activa })}
+        />
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        O masă cu rezervări viitoare nu poate fi ștearsă — dezactiveaz-o, ca să nu rămână
+        rezervări fără masă. Regula e impusă de baza de date.
+      </p>
+
+      <Button variant="destructive" size="xs" className="justify-self-start" onClick={onCereStergere}>
+        <Trash2Icon />
+        Șterge masa
+      </Button>
+    </Sectiune>
   )
 }
 
@@ -1218,82 +1555,77 @@ function PanouStructura({
   const cheie = `${element.tip}-${element.x}-${element.y}`
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{sablon.eticheta}</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        <div className="grid grid-cols-3 gap-2">
-          {(
-            [
-              ['latime', 'Lățime'],
-              ['inaltime', 'Înălțime'],
-              ['rotatie', 'Rotație'],
-            ] as const
-          ).map(([camp, eticheta]) => (
-            <div key={camp} className="grid gap-1.5">
-              <Label htmlFor={`str-${camp}`}>{eticheta}</Label>
-              <Input
-                id={`str-${camp}`}
-                type="number"
-                min={camp === 'rotatie' ? 0 : 10}
-                max={camp === 'rotatie' ? 359 : 2000}
-                step={camp === 'rotatie' ? 15 : 10}
-                key={`${camp}-${cheie}`}
-                defaultValue={String(element[camp] ?? 0)}
-                className="h-8 tabular-nums"
-                onBlur={(e) => {
-                  const valoare = Number(e.target.value)
-                  if (!Number.isFinite(valoare) || valoare === (element[camp] ?? 0)) return
-                  onSalveaza({ [camp]: valoare })
-                }}
-              />
-            </div>
-          ))}
-        </div>
+    <Sectiune titlu={sablon.eticheta}>
+      <div className="grid grid-cols-3 gap-2">
+        {(
+          [
+            ['latime', 'Lățime'],
+            ['inaltime', 'Înălțime'],
+            ['rotatie', 'Rotație'],
+          ] as const
+        ).map(([camp, eticheta]) => (
+          <div key={camp} className="grid gap-1.5">
+            <Label htmlFor={`str-${camp}`}>{eticheta}</Label>
+            <Input
+              id={`str-${camp}`}
+              type="number"
+              min={camp === 'rotatie' ? 0 : 10}
+              max={camp === 'rotatie' ? 359 : 2000}
+              step={camp === 'rotatie' ? 15 : 10}
+              key={`${camp}-${cheie}`}
+              defaultValue={String(element[camp] ?? 0)}
+              className="h-8 tabular-nums"
+              onBlur={(e) => {
+                const valoare = Number(e.target.value)
+                if (!Number.isFinite(valoare) || valoare === (element[camp] ?? 0)) return
+                onSalveaza({ [camp]: valoare })
+              }}
+            />
+          </div>
+        ))}
+      </div>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="str-eticheta">Etichetă</Label>
-          <Input
-            id="str-eticheta"
-            key={`eticheta-${cheie}`}
-            defaultValue={element.eticheta ?? ''}
-            className="h-8"
-            placeholder="Se scrie doar pe elementele mari"
-            onBlur={(e) => {
-              const eticheta = e.target.value.trim()
-              if (eticheta === (element.eticheta ?? '')) return
-              onSalveaza({ eticheta: eticheta || undefined })
-            }}
-          />
-        </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="str-eticheta">Etichetă</Label>
+        <Input
+          id="str-eticheta"
+          key={`eticheta-${cheie}`}
+          defaultValue={element.eticheta ?? ''}
+          className="h-8"
+          placeholder="Se scrie doar pe elementele mari"
+          onBlur={(e) => {
+            const eticheta = e.target.value.trim()
+            if (eticheta === (element.eticheta ?? '')) return
+            onSalveaza({ eticheta: eticheta || undefined })
+          }}
+        />
+      </div>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="str-z">Ordine de desenare (z)</Label>
-          <Input
-            id="str-z"
-            type="number"
-            min={0}
-            max={99}
-            key={`z-${cheie}`}
-            defaultValue={String(element.z ?? 0)}
-            className="h-8 w-24 tabular-nums"
-            onBlur={(e) => {
-              const z = Number(e.target.value)
-              if (!Number.isFinite(z) || z === (element.z ?? 0)) return
-              onSalveaza({ z })
-            }}
-          />
-          <p className="text-xs text-muted-foreground">
-            Mai mare = desenat deasupra. Util ca o plantă să stea peste bar.
-          </p>
-        </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="str-z">Ordine de desenare (z)</Label>
+        <Input
+          id="str-z"
+          type="number"
+          min={0}
+          max={99}
+          key={`z-${cheie}`}
+          defaultValue={String(element.z ?? 0)}
+          className="h-8 w-24 tabular-nums"
+          onBlur={(e) => {
+            const z = Number(e.target.value)
+            if (!Number.isFinite(z) || z === (element.z ?? 0)) return
+            onSalveaza({ z })
+          }}
+        />
+        <p className="text-xs text-muted-foreground">
+          Mai mare = desenat deasupra. Util ca o plantă să stea peste bar.
+        </p>
+      </div>
 
-        <Button variant="destructive" size="xs" className="justify-self-start" onClick={onSterge}>
-          <Trash2Icon />
-          Șterge elementul
-        </Button>
-      </CardContent>
-    </Card>
+      <Button variant="destructive" size="xs" className="justify-self-start" onClick={onSterge}>
+        <Trash2Icon />
+        Șterge elementul
+      </Button>
+    </Sectiune>
   )
 }

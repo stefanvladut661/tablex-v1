@@ -569,7 +569,31 @@ export function EditorZona({
      * Un canvas alb la editare si unul inchis in sala ar insemna ca se aleg
      * pozitii si dimensiuni pe o imagine pe care n-o vede nimeni in realitate.
      */
-    <div className={cn('dark relative overflow-hidden rounded-lg border border-border', className)}>
+    <div
+      className={cn(
+        'dark relative overflow-hidden rounded-lg border border-border',
+        // Inelul de aterizare: singurul semnal ca zona chiar primeste obiectul
+        // purtat. Fara el, o tragere lasata langa canvas pare pur si simplu
+        // pierduta.
+        tragereDeasupra && 'ring-2 ring-canvas-selectie',
+        className,
+      )}
+      onDragOver={(eveniment) => {
+        if (!onDropObiect) return
+        // Fara preventDefault, browserul refuza drop-ul: implicit, o zona HTML
+        // NU e tinta valida de tragere.
+        eveniment.preventDefault()
+        eveniment.dataTransfer.dropEffect = 'copy'
+        if (!tragereDeasupra) setTragereDeasupra(true)
+      }}
+      onDragLeave={(eveniment) => {
+        // Trecerea peste copiii SVG produce dragleave; ne intereseaza doar
+        // iesirea din canvas cu totul.
+        if (eveniment.currentTarget.contains(eveniment.relatedTarget as Node | null)) return
+        setTragereDeasupra(false)
+      }}
+      onDrop={laDrop}
+    >
       <svg
         ref={refSvg}
         viewBox={`0 0 ${zona.canvas_latime} ${zona.canvas_inaltime}`}
@@ -578,7 +602,7 @@ export function EditorZona({
         aria-label={`Editor pentru zona ${zona.nume}, stratul ${editezStructura ? 'structură' : 'mese'}`}
         className={cn(
           'h-full w-full touch-none bg-canvas-fundal select-none',
-          modAdaugare ? 'cursor-copy' : 'cursor-default',
+          tragereDeasupra ? 'cursor-copy' : 'cursor-default',
         )}
         onPointerDown={laPointerDown}
         onPointerMove={laPointerMove}
