@@ -19,15 +19,13 @@ import {
 
 import { HartaZona } from '@/components/floor-plan/HartaZona'
 import { LegendaStatus } from '@/components/floor-plan/LegendaStatus'
-import { useAuth } from '@/hooks/useAuth'
-import { ruteDupaLogin } from '@/lib/rute'
 import { Button } from '@/components/ui/button'
 import { CtaBand } from '@/components/ui/cta-band'
 import { FAQ, type IntrebareFaq } from '@/components/ui/faq-tabs'
 import { Hero } from '@/components/hero/Hero'
-import { Navbar } from '@/components/hero/Navbar'
+import { CadruPublic } from '@/components/layout/CadruPublic'
 import {
-  DarkBand,
+  Banda,
   FeatureRow,
   ProblemCards,
   QuoteCards,
@@ -422,25 +420,9 @@ export function LandingPage() {
   const [masaAleasa, setMasaAleasa] = useState<string | null>(null)
   const detaliiMasa = mese.find((m) => m.id === masaAleasa) ?? null
 
-  /**
-   * Navbarul stia deja sa schimbe „Autentificare" cu „Deschide panoul" pentru
-   * cine e conectat; SUBSOLUL nu stia, fiindca pagina asta nu se uita deloc la
-   * sesiune. Rezultatul era o pagina care se contrazicea singura: sus scria ca
-   * esti conectat, jos te invita sa-ti faci cont.
-   */
-  const { esteAutentificat, profil } = useAuth()
-  const numeCont =
-    profil?.tip === 'admin'
-      ? profil.restaurant.nume
-      : profil?.tip === 'super_admin'
-        ? 'echipa TableX'
-        : null
-
   return (
-    <div className="tema-landing min-h-svh bg-background">
-      <Navbar />
-
-      <main>
+    <CadruPublic cuIntro>
+      <>
         {/* Hero — coregrafia completa: mana + telefon, atmosfera, text */}
         <Hero />
 
@@ -462,7 +444,7 @@ export function LandingPage() {
             tot citeste a generat, fiindca nu exprima nicio judecata despre ce
             conteaza mai mult. Sectiunile-cheie (functionalitati, preturi)
             respira mai mult decat cele de sprijin (ce primesti, testimoniale). */}
-        <section id="problema" className="wrap-landing scroll-mt-20 py-20">
+        <Banda id="problema" ton="alt" className="py-20">
           <SectionHeading
             titlu={
               <>
@@ -474,10 +456,10 @@ export function LandingPage() {
           <div className="mt-12">
             <ProblemCards probleme={PROBLEME} />
           </div>
-        </section>
+        </Banda>
 
         {/* Randuri de functionalitati */}
-        <section id="functionalitati" className="wrap-landing scroll-mt-20 py-28">
+        <Banda id="functionalitati" className="py-28">
           <SectionHeading
             eticheta="Funcționalități"
             titlu="Tot ce îți trebuie ca să pornești"
@@ -489,10 +471,10 @@ export function LandingPage() {
               <FeatureRow key={rand.eticheta} {...rand} inversat={indice % 2 === 1} />
             ))}
           </div>
-        </section>
+        </Banda>
 
         {/* Harta 2D — demonstratie reala, nu substitut */}
-        <section id="harta" className="wrap-landing scroll-mt-20 py-24">
+        <Banda id="harta" ton="alt" className="py-24">
           <SectionHeading
             eticheta="Demonstrație"
             titlu={
@@ -562,10 +544,10 @@ export function LandingPage() {
               <Link to={RUTE.demoHarta}>Deschide demonstrația completă</Link>
             </Button>
           </div>
-        </section>
+        </Banda>
 
         {/* Ce primesti — grila scurta, cu reveal in cascada si hover lift */}
-        <section className="wrap-landing py-14">
+        <Banda className="py-14">
           <SectionHeading eticheta="Pe scurt" titlu="Ce primești" />
           <div ref={primestiRef} className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CARACTERISTICI.map(({ icoana: Icoana, titlu, text }, indice) => (
@@ -575,7 +557,7 @@ export function LandingPage() {
                 timelineRef={primestiRef}
                 className="h-full"
               >
-                <div className="sticla h-full rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div className="plan-ridicat h-full rounded-lg p-6 transition-colors duration-200">
                   <Icoana className="size-5 text-primary" />
                   <h3 className="mt-3 font-semibold">{titlu}</h3>
                   <p className="mt-1 text-sm text-muted-foreground text-pretty">{text}</p>
@@ -583,12 +565,13 @@ export function LandingPage() {
               </TimelineContent>
             ))}
           </div>
-        </section>
+        </Banda>
 
         {/* Cum pornesti — pasii, pe grid-ul discret al hero-ului */}
-        <section
+        <Banda
           id="cum-functioneaza"
-          className="relative wrap-landing scroll-mt-20 py-24"
+          className="relative py-24"
+          ton="alt"
         >
           <div aria-hidden className="hero-grid pointer-events-none absolute inset-0 -z-10 opacity-70" />
           <StepsSection
@@ -604,10 +587,10 @@ export function LandingPage() {
               </Link>
             </Button>
           </div>
-        </section>
+        </Banda>
 
         {/* Preturi */}
-        <section id="preturi" className="wrap-landing scroll-mt-20 py-28">
+        <Banda id="preturi" className="py-28">
           <SectionHeading
             eticheta="Prețuri"
             titlu={
@@ -620,11 +603,11 @@ export function LandingPage() {
           <div className="mt-10 flex justify-center">
             <Preturi />
           </div>
-        </section>
+        </Banda>
 
         {/* Testimoniale — banda intunecata */}
-        <section id="clienti" className="wrap-landing scroll-mt-20 py-4">
-          <DarkBand>
+        <Banda id="clienti" ton="inchis" className="py-24">
+          <>
             <SectionHeading
               peFundalInchis
               eticheta="Ce spun clienții"
@@ -633,21 +616,21 @@ export function LandingPage() {
             <div className="mt-10">
               <QuoteCards testimoniale={TESTIMONIALE} />
             </div>
-          </DarkBand>
-        </section>
+          </>
+        </Banda>
 
         {/* Intrebari */}
-        <section id="intrebari" className="wrap-landing scroll-mt-20 py-20">
+        <Banda id="intrebari" className="py-20">
           <FAQ
             title="Întrebări frecvente"
             subtitle="Alege o categorie și deschide răspunsul care te interesează."
             categories={CATEGORII_INTREBARI}
             faqData={INTREBARI}
           />
-        </section>
+        </Banda>
 
         {/* Chemare finala la actiune */}
-        <section className="wrap-landing pt-8 pb-24">
+        <Banda ton="alt" className="pt-8 pb-24">
           <CtaBand
             titlu="Sala ta, pe ecran, începând de azi"
             subtitlu="Creezi contul și iei prima rezervare în aceeași zi. Planul 2D vine de la noi."
@@ -657,109 +640,8 @@ export function LandingPage() {
             ]}
             nota="Facturare lunară, fără contract pe termen lung."
           />
-        </section>
-      </main>
-
-      {/* Subsolul merge cap la cap, nu pe coloana de 60vw: e talpa paginii,
-          iar o coloana ingusta acolo ar rupe banda in doua margini goale. */}
-      <footer className="border-t border-border bg-card">
-        <div className="w-full px-6 py-12 sm:px-10 lg:px-16">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="lg:col-span-2">
-              <span className="text-lg font-semibold tracking-tight">
-                Table<span className="text-primary">X</span>
-              </span>
-              <p className="mt-2 max-w-xs text-sm text-muted-foreground text-pretty">
-                Management de rezervări pentru restaurante, baruri și terase, construit în jurul
-                planului real al sălii.
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium">Produs</p>
-              <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
-                <li>
-                  <a href="#problema" className="hover:text-foreground">
-                    Problema
-                  </a>
-                </li>
-                <li>
-                  <a href="#functionalitati" className="hover:text-foreground">
-                    Ce primești
-                  </a>
-                </li>
-                <li>
-                  <a href="#harta" className="hover:text-foreground">
-                    Harta 2D
-                  </a>
-                </li>
-                <li>
-                  <a href="#cum-functioneaza" className="hover:text-foreground">
-                    Cum pornești
-                  </a>
-                </li>
-                <li>
-                  <a href="#preturi" className="hover:text-foreground">
-                    Prețuri
-                  </a>
-                </li>
-                <li>
-                  <a href="#intrebari" className="hover:text-foreground">
-                    Întrebări frecvente
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium">Cont</p>
-              <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
-                <li>
-                  <Link to={RUTE.demoHarta} className="hover:text-foreground">
-                    Demonstrație
-                  </Link>
-                </li>
-                {esteAutentificat ? (
-                  <li>
-                    <Link
-                      to={ruteDupaLogin(profil?.tip ?? null)}
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      Deschide panoul
-                    </Link>
-                    {numeCont && (
-                      <span className="block text-xs">Conectat ca {numeCont}</span>
-                    )}
-                  </li>
-                ) : (
-                  <>
-                    <li>
-                      <Link to={RUTE.login} className="hover:text-foreground">
-                        Autentificare
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to={RUTE.signup} className="hover:text-foreground">
-                        Cont nou
-                      </Link>
-                    </li>
-                  </>
-                )}
-                <li>
-                  <Link to={RUTE.confidentialitate} className="hover:text-foreground">
-                    Confidențialitate
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-10 border-t border-border pt-6 text-sm text-muted-foreground">
-            Table<span className="text-primary">X</span> — management de rezervări pentru
-            restaurante.
-          </div>
-        </div>
-      </footer>
-    </div>
+        </Banda>
+      </>
+    </CadruPublic>
   )
 }

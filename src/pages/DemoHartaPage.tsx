@@ -20,6 +20,7 @@ import {
 } from '@/lib/harta-demo'
 import { ETICHETE_STATUS } from '@/types/floor-plan'
 import { RUTE } from '@/lib/rute'
+import { CadruPublic } from '@/components/layout/CadruPublic'
 
 export function DemoHartaPage() {
   const [zonaId, setZonaId] = useState(ZONE_DEMO[0].id)
@@ -51,27 +52,30 @@ export function DemoHartaPage() {
   }
 
   return (
-    <div className="min-h-svh bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="icon-sm" aria-label="Înapoi">
-              <Link to={RUTE.acasa}>
-                <ArrowLeftIcon />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="font-semibold tracking-tight">Harta 2D — demonstrație</h1>
-              <p className="text-xs text-muted-foreground">
-                Date fictive. Aceeași formă pe care o are planul unui restaurant real.
-              </p>
-            </div>
+    <CadruPublic>
+      {/* Antetul propriu a disparut: pagina purta alta bara decat landing-ul,
+          cu alt logo si alt buton de intoarcere. Acum poarta bara comuna, iar
+          titlul ramane doar continut. */}
+      <div className="wrap-landing flex items-center justify-between gap-4 pt-10 pb-6">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon-sm" aria-label="Înapoi">
+            <Link to={RUTE.acasa}>
+              <ArrowLeftIcon />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+              Harta 2D — demonstrație
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Date fictive. Aceeași formă pe care o are planul unui restaurant real.
+            </p>
           </div>
-          <Badge variant="secondary">demo</Badge>
         </div>
-      </header>
+        <Badge variant="secondary">demo</Badge>
+      </div>
 
-      <main className="mx-auto grid max-w-6xl gap-4 px-6 py-6 lg:grid-cols-[1fr_18rem]">
+      <div className="wrap-landing grid gap-4 pb-16 lg:grid-cols-[1fr_18rem]">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Tabs value={zonaId} onValueChange={schimbaZona}>
@@ -191,7 +195,7 @@ export function DemoHartaPage() {
             </CardContent>
           </Card>
         </aside>
-      </main>
-    </div>
+      </div>
+    </CadruPublic>
   )
 }

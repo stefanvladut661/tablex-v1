@@ -18,18 +18,33 @@ import { useDelayScurs } from './useParallax'
  * Linkurile sunt in romana, ca tot site-ul; "Blog" nu exista ca pagina.
  */
 
+/**
+ * Ancorele sunt scrise cu ruta in fata, nu doar `#harta`. Bara asta apare acum
+ * si pe /demo si pe /confidentialitate, iar acolo un `#harta` gol ar schimba
+ * hash-ul paginii curente fara sa duca nicaieri — sectiunile nu exista.
+ * Cu ruta in fata, linkul functioneaza din orice pagina.
+ */
 const LINKURI = [
-  { text: 'Produs', href: '#functionalitati' },
-  { text: 'Planul sălii', href: '#harta' },
-  { text: 'Prețuri', href: '#preturi' },
-  { text: 'Clienți', href: '#clienti' },
+  { text: 'Produs', sectiune: 'functionalitati' },
+  { text: 'Planul sălii', sectiune: 'harta' },
+  { text: 'Prețuri', sectiune: 'preturi' },
+  { text: 'Clienți', sectiune: 'clienti' },
 ] as const
 
+interface NavbarProps {
+  /**
+   * Doar pe landing bara asteapta coregrafia hero-ului (intra la 2.10s).
+   * Pe restul paginilor nu exista hero, deci o bara care intarzie doua secunde
+   * ar arata a pagina care nu s-a incarcat.
+   */
+  cuIntro?: boolean
+}
 
-export function Navbar() {
+export function Navbar({ cuIntro = false }: NavbarProps) {
   const { esteAutentificat, profil } = useAuth()
   const { temaEfectiva, comutaTema } = useTema()
-  const redus = !!useReducedMotion()
+  const reducedMotion = !!useReducedMotion()
+  const redus = reducedMotion || !cuIntro
   const [mobil] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches,
   )
@@ -69,7 +84,7 @@ export function Navbar() {
         }
 
   return (
-    <header className="sticky top-0 z-[80] border-b border-border bg-background/85 backdrop-blur">
+    <header className="sticla sticky top-0 z-[80] border-b border-border">
       <div className="wrap-landing flex items-center justify-between py-3">
         <motion.span
           className="text-lg font-semibold tracking-tight"
@@ -81,15 +96,15 @@ export function Navbar() {
         </motion.span>
 
         <nav className="hidden items-center gap-6 md:flex" aria-label="Principală">
-          {LINKURI.map(({ text, href }, i) => (
-            <motion.a
-              key={href}
-              href={href}
-              className="text-[15px] font-medium tracking-[-0.01em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
-              {...aparitie(TIMELINE.nav.linkuri + i * 0.05)}
-            >
-              {text}
-            </motion.a>
+          {LINKURI.map(({ text, sectiune }, i) => (
+            <motion.span key={sectiune} {...aparitie(TIMELINE.nav.linkuri + i * 0.05)}>
+              <Link
+                to={`${RUTE.acasa}#${sectiune}`}
+                className="text-[15px] font-medium tracking-[-0.01em] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
+              >
+                {text}
+              </Link>
+            </motion.span>
           ))}
         </nav>
 
@@ -104,7 +119,7 @@ export function Navbar() {
             <motion.span {...aparitieSpring(TIMELINE.nav.actiuni + 0.06)}>
               <Link
                 to={ruteDupaLogin(profil?.tip ?? null)}
-                className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[15px] font-medium tracking-[-0.01em] text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
+                className="inline-flex h-9 items-center rounded-lg bg-foreground px-4 text-[15px] font-medium tracking-[-0.01em] text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
               >
                 Deschide panoul
               </Link>
@@ -122,7 +137,7 @@ export function Navbar() {
               <motion.span {...aparitieSpring(TIMELINE.nav.actiuni + 0.06)}>
                 <Link
                   to={RUTE.signup}
-                  className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[15px] font-medium tracking-[-0.01em] text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
+                  className="inline-flex h-9 items-center rounded-lg bg-foreground px-4 text-[15px] font-medium tracking-[-0.01em] text-background transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
                 >
                   Începe acum
                 </Link>

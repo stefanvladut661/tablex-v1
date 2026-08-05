@@ -34,6 +34,44 @@ import { cn } from '@/lib/utils'
  */
 export const PILULA = 'rounded-lg'
 
+/* ────────────────────────────── Banda de sectiune ─────────────────────── */
+
+/**
+ * O sectiune care merge CAP LA CAP, cu continutul pe coloana inauntru.
+ *
+ * Pana acum fiecare sectiune era ea insasi coloana de 60vw, deci pagina arata
+ * ca un teanc de dale asezate pe acelasi fundal: intre ele nu se intampla
+ * nimic, iar ochiul le citea drept cutii separate. Cu fundalul dus pana in
+ * marginea ferestrei, sectiunile se leaga una de alta si pagina curge.
+ *
+ * `ton` alterneaza suprafata. Nu e decor: alternanta e ce SEPARA doua sectiuni
+ * vecine fara sa fie nevoie de o linie sau de un card — prima treapta din
+ * ierarhia de separare, inaintea conturului.
+ */
+const TONURI_BANDA = {
+  baza: '',
+  alt: 'bg-card',
+  inchis: 'bg-sidebar text-sidebar-foreground',
+} as const
+
+export function Banda({
+  id,
+  ton = 'baza',
+  className,
+  children,
+}: {
+  id?: string
+  ton?: keyof typeof TONURI_BANDA
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <section id={id} className={cn('scroll-mt-20', TONURI_BANDA[ton], className)}>
+      <div className="wrap-landing">{children}</div>
+    </section>
+  )
+}
+
 /* ─────────────────────────── Eticheta de sectiune ─────────────────────── */
 
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
@@ -66,7 +104,7 @@ export function SectionHeading({
   eticheta,
   titlu,
   subtitlu,
-  aliniere = 'centru',
+  aliniere = 'stanga',
   peFundalInchis = false,
   className,
 }: SectionHeadingProps) {
@@ -93,9 +131,11 @@ export function SectionHeading({
         animationNum={1}
         timelineRef={ref}
         className={cn(
-          // Majuscule si corp mare, ca in referinta: titlul e ancora sectiunii,
-          // nu o propozitie de citit. Tracking-ul strans il tine compact.
-          'text-4xl leading-[1.1] font-extrabold tracking-[-0.03em] text-balance uppercase sm:text-5xl',
+          // Propozitie, nu majuscule, si aliniat la stanga: asa se citeste
+          // editorial, nu ca un banner. Ierarhia vine din SALTUL de marime fata
+          // de corpul de text (~3x), nu din strigat — majusculele costau si
+          // lizibilitate in romana, unde diacriticele aglomereaza randul.
+          'text-4xl leading-[1.05] font-bold tracking-[-0.035em] text-balance sm:text-5xl lg:text-6xl',
           // Fara eticheta deasupra, mt-3 ar fi un spatiu care nu separa nimic.
           eticheta && 'mt-3',
           peFundalInchis && 'text-sidebar-foreground',
@@ -208,7 +248,7 @@ export function ProblemCards({ probleme }: { probleme: Problema[] }) {
     <div ref={ref} className="grid gap-4 md:grid-cols-3">
       {probleme.map(({ titlu, text, icoana: Icoana }, indice) => (
         <TimelineContent key={titlu} animationNum={indice} timelineRef={ref} className="h-full">
-          <div className="sticla h-full rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div className="plan-ridicat h-full rounded-lg p-6 transition-colors duration-200">
             <span className="grid size-11 place-content-center rounded-full bg-destructive">
               <Icoana className="size-5 text-destructive-foreground" />
             </span>
@@ -383,7 +423,7 @@ export function QuoteCards({ testimoniale }: { testimoniale: Testimonial[] }) {
     <div ref={ref} className="grid gap-4 md:grid-cols-3">
       {testimoniale.map(({ citat, autor, locatie }, indice) => (
         <TimelineContent key={autor} animationNum={indice} timelineRef={ref} className="h-full">
-          <figure className="sticla flex h-full flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <figure className="flex h-full flex-col rounded-lg bg-sidebar-accent/40 p-6">
             <QuoteIcon className="size-6 shrink-0 text-primary" />
             <blockquote className="mt-4 grow text-sm text-card-foreground text-pretty">
               {citat}

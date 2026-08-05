@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { RUTE } from '@/lib/rute'
+import { CadruPublic } from '@/components/layout/CadruPublic'
 
 /**
  * Politica de Confidentialitate (§22.1).
@@ -29,13 +30,12 @@ function Sectiune({ titlu, children }: { titlu: string; children: React.ReactNod
 
 export function ConfidentialitatePage() {
   return (
-    <div className="min-h-svh bg-background px-4 py-10">
-      <div className="mx-auto grid max-w-2xl gap-8">
+    <CadruPublic>
+      {/* Logo-ul propriu a disparut din antet: pagina il purta fiindca n-avea
+          bara. Acum o are, iar un al doilea logo sub primul arata a greseala. */}
+      <div className="mx-auto grid max-w-2xl gap-8 px-6 pt-12 pb-16">
         <header className="grid gap-2">
-          <Link to={RUTE.acasa} className="text-lg font-semibold tracking-tight">
-            Table<span className="text-primary">X</span>
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">Politica de Confidențialitate</h1>
+          <h1 className="text-3xl font-semibold tracking-[-0.02em]">Politica de Confidențialitate</h1>
           <p className="text-sm text-muted-foreground">Ultima actualizare: {ACTUALIZAT}</p>
         </header>
 
@@ -164,6 +164,6 @@ export function ConfidentialitatePage() {
           </Link>
         </footer>
       </div>
-    </div>
+    </CadruPublic>
   )
 }

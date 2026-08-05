@@ -414,19 +414,40 @@
      Cine o foloseste TREBUIE sa scoata `bg-card` si `border-border`: in
      Tailwind v4 utilitarele bat @layer components, deci ar rescrie fundalul
      si muchia de aici, iar sticla ar disparea fara nicio eroare. */
+  /**
+   * Sticla a ramas EXCLUSIV pe bara lipita de sus. Acolo chiar trece continut
+   * pe dedesubt la derulare, deci materialul are ce estompa si are un motiv.
+   * Pe carduri, asezate pe fundal plat, nu avea ce estompa: efectul se citea
+   * ca un card palid, nu ca sticla.
+   */
   .sticla {
-    background-color: color-mix(in oklab, var(--card) 55%, transparent);
+    background-color: color-mix(in oklab, var(--background) 72%, transparent);
     /* 18px, nu mai mult: peste 20px blur-ul de fundal devine obositor la
-       citit (Axess Lab), iar cardurile astea poarta text mic. */
+       citit, iar sub bara trec titluri intregi. */
     -webkit-backdrop-filter: blur(18px) saturate(180%);
     backdrop-filter: blur(18px) saturate(180%);
-    /* FARA bordura perimetrala, deliberat: contur subtire PLUS umbra lata pe
-       acelasi element e tiparul care face cardurile sa arate a sablon — un
-       design asumat alege una dintre ele. Ramane doar muchia de lumina de
-       sus, care nu e contur de definire, ci reflexia ce face materialul. */
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, #ffffff 55%, transparent),
-      0 14px 38px -22px color-mix(in oklab, var(--foreground) 45%, transparent);
+  }
+
+  /**
+   * Suprafata plata a paginilor publice — ce a inlocuit cardurile de sticla.
+   * Separarea vine din fundal, nu din contur: 3-4% diferenta de luminozitate
+   * fata de pagina e destul cat sa se vada blocul, si e prima treapta din
+   * ierarhia corecta (spatiu → fundal → elevatie → bordura). Bordura ramane
+   * ultima solutie, nu prima, iar contur PLUS umbra pe acelasi element nu se
+   * intampla niciodata.
+   */
+  .plan-ridicat {
+    background-color: var(--card);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--foreground) 6%, transparent);
+  }
+
+  /**
+   * Separatorul dintre randuri, in locul cardurilor individuale. Uber asaza
+   * continutul pe linii subtiri si spatiu, nu in cutii — de-aia paginile lui
+   * arata continue, nu ca un teanc de dale.
+   */
+  .rand-separat {
+    border-top: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
   }
 
   /* Coloana paginii de prezentare. Exista ca sa fie UN SINGUR loc care decide

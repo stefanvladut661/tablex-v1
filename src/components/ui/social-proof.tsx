@@ -35,7 +35,7 @@ function initiale(nume: string) {
 
 function CardRecenzie({ nume, locatie, text, stele = 5 }: RecenzieScurta) {
   return (
-    <figure className="sticla w-72 shrink-0 rounded-2xl p-5 sm:w-80">
+    <figure className="plan-ridicat w-72 shrink-0 rounded-lg p-5 sm:w-80">
       <div className="flex items-center gap-3">
         <span
           aria-hidden
@@ -84,11 +84,10 @@ export function SocialProof({
 
   return (
     <div className={cn('relative flex w-full flex-col items-center', className)}>
-      {/* py-6 nu e decor: Marquee taie cu overflow-hidden (obligatoriu pe
-          orizontala, altfel se vede banda iesind), iar umbra cardurilor de
-          sticla coboara ~22px sub ele. Cu p-2 implicit se reteza drept.
-          overflow-y: visible nu e o iesire — CSS il promoveaza la auto cand
-          overflow-x e hidden, deci ar aparea o bara de derulare. */}
+      {/* py-6: Marquee taie cu overflow-hidden (obligatoriu pe orizontala,
+          altfel se vede banda iesind), iar cu p-2 implicit inelul cardurilor
+          se reteza la margine. overflow-y: visible nu e o iesire — CSS il
+          promoveaza la auto cand overflow-x e hidden, deci ar aparea o bara. */}
       {/* Cheia e indicele: recenziile pot avea acelasi nume, iar lista nu se
           reordoneaza niciodata. */}
       <Marquee pauseOnHover className="w-full py-6 [--duration:44s]">
