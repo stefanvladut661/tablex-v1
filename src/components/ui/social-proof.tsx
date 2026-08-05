@@ -92,13 +92,13 @@ export function SocialProof({
           reordoneaza niciodata. */}
       <Marquee pauseOnHover className="w-full py-6 [--duration:44s]">
         {randSus.map((recenzie, indice) => (
-          <CardRecenzie key={indice} {...recenzie} />
+          <CardRecenzie key={`sus-${indice}`} {...recenzie} />
         ))}
       </Marquee>
 
       <Marquee reverse pauseOnHover className="w-full py-6 [--duration:52s]">
         {randJos.map((recenzie, indice) => (
-          <CardRecenzie key={indice} {...recenzie} />
+          <CardRecenzie key={`jos-${indice}`} {...recenzie} />
         ))}
       </Marquee>
 

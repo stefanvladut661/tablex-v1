@@ -422,7 +422,7 @@ export function QuoteCards({ testimoniale }: { testimoniale: Testimonial[] }) {
   return (
     <div ref={ref} className="grid gap-4 md:grid-cols-3">
       {testimoniale.map(({ citat, autor, locatie }, indice) => (
-        <TimelineContent key={autor} animationNum={indice} timelineRef={ref} className="h-full">
+        <TimelineContent key={`${autor}-${indice}`} animationNum={indice} timelineRef={ref} className="h-full">
           <figure className="flex h-full flex-col rounded-lg bg-sidebar-accent/40 p-6">
             <QuoteIcon className="size-6 shrink-0 text-primary" />
             <blockquote className="mt-4 grow text-sm text-card-foreground text-pretty">
